@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_application_1/core/money.dart';
-import 'package:flutter_application_1/data/seed.dart';
-import 'package:flutter_application_1/logic/balances.dart';
-import 'package:flutter_application_1/logic/settlements.dart';
-import 'package:flutter_application_1/logic/splits.dart';
-import 'package:flutter_application_1/models/models.dart';
+import 'package:hissa/core/money.dart';
+import 'package:hissa/data/seed.dart';
+import 'package:hissa/logic/balances.dart';
+import 'package:hissa/logic/settlements.dart';
+import 'package:hissa/logic/splits.dart';
+import 'package:hissa/models/models.dart';
 
 void main() {
   group('SplitCalculator', () {
@@ -16,8 +16,11 @@ void main() {
         participantIds: ['a', 'b', 'c'],
       );
       expect(SplitCalculator.totalShares(shares), const Money(280000));
-      expect(shares.map((s) => s.amount.paisa).toSet().length, 2,
-          reason: 'one participant absorbs the leftover paisa');
+      expect(
+        shares.map((s) => s.amount.paisa).toSet().length,
+        2,
+        reason: 'one participant absorbs the leftover paisa',
+      );
     });
 
     test('percentage split sums to the expense amount', () {
@@ -94,9 +97,7 @@ void main() {
           amount: const Money(1000000),
           participantIds: ['u_ram', 'u_sita'],
         ),
-        settlements: [
-          _settlement('s1', 'u_sita', 'u_ram', 500000, 'c'),
-        ],
+        settlements: [_settlement('s1', 'u_sita', 'u_ram', 500000, 'c')],
       );
       final ram = balances.firstWhere((b) => b.userId == 'u_ram');
       final sita = balances.firstWhere((b) => b.userId == 'u_sita');
@@ -138,7 +139,9 @@ void main() {
     test('seeded repository balances match the spec example', () {
       final repo = buildSeedRepository();
       final household = repo.households.first;
-      final cycle = repo.cycles.firstWhere((c) => c.status == CycleStatus.active);
+      final cycle = repo.cycles.firstWhere(
+        (c) => c.status == CycleStatus.active,
+      );
       final balances = BalanceCalculator.compute(
         household: household,
         members: repo.members,
@@ -168,15 +171,17 @@ final Household _household = Household(
 
 final List<HouseholdMember> _members = [
   HouseholdMember(
-      userId: 'u_ram',
-      name: 'Ram',
-      role: MemberRole.owner,
-      joinedAt: DateTime(2026, 1, 1)),
+    userId: 'u_ram',
+    name: 'Ram',
+    role: MemberRole.owner,
+    joinedAt: DateTime(2026, 1, 1),
+  ),
   HouseholdMember(
-      userId: 'u_sita',
-      name: 'Sita',
-      role: MemberRole.member,
-      joinedAt: DateTime(2026, 1, 1)),
+    userId: 'u_sita',
+    name: 'Sita',
+    role: MemberRole.member,
+    joinedAt: DateTime(2026, 1, 1),
+  ),
 ];
 
 final Cycle _cycle = Cycle(
