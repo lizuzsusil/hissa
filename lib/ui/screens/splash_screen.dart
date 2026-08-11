@@ -41,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.heroGradient),
+        color: const Color(0xFFFEFAF6),
         child: SafeArea(
           child: Center(
             child: FadeTransition(
@@ -78,7 +78,7 @@ class _SplashScreenState extends State<SplashScreen>
                     const Text(
                       'Hissa',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.primary,
                         fontSize: 34,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
@@ -88,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
                     Text(
                       'Who paid · Who owes · How much',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: AppColors.textSecondary.withValues(alpha: 0.9),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
