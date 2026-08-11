@@ -102,24 +102,24 @@ class _AmountFieldState extends State<AmountField> {
           ],
           onChanged: _onChanged,
           style: const TextStyle(
-            fontSize: 34,
+            fontSize: 30,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
           ),
           decoration: InputDecoration(
             hintText: widget.hint ?? '0.00',
-            prefixIcon: Padding(
-              padding: const EdgeInsets.only(left: 18, right: 6),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: 16),
               child: Text(
                 'Rs.',
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
                 ),
               ),
             ),
-            prefixIconConstraints:
+            suffixIconConstraints:
                 const BoxConstraints(minWidth: 0, minHeight: 0),
           ),
         ),

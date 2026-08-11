@@ -200,7 +200,7 @@ class _SettlementFormState extends State<SettlementForm> {
           controller: _noteController,
           decoration: const InputDecoration(
             hintText: 'Add a note (optional)',
-            prefixIcon: Icon(Icons.sticky_note_2_outlined),
+            suffixIcon: Icon(Icons.sticky_note_2_outlined, size: 18),
           ),
         ),
         const SizedBox(height: 20),

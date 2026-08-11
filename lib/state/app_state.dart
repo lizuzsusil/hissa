@@ -21,12 +21,14 @@ import '../models/models.dart';
 /// dataset is seeded on demand via [signInDemo] instead of at startup (P3).
 class AppState extends ChangeNotifier {
   static const _sessionKey = 'Hissa_session_v1';
+  static const _introKey = 'Hissa_intro_seen_v1';
 
   ExpenseRepository _repo = InMemoryRepository();
   String? _currentUserId;
   String? _householdId;
   String? _cycleId;
   String? _onboardingMode;
+  bool _introSeen = false;
   bool _loaded = false;
 
   ExpenseRepository get repo => _repo;
@@ -35,11 +37,20 @@ class AppState extends ChangeNotifier {
   String? get currentUserId => _currentUserId;
   bool get isLoggedIn => _currentUserId != null;
   bool get hasHousehold => _householdId != null;
+  bool get introSeen => _introSeen;
+
+  /// Marks the feature-intro carousel as seen so it only shows on first run.
+  Future<void> markIntroSeen() async {
+    _introSeen = true;
+    final prefs = SharedPreferencesAsync();
+    await prefs.setBool(_introKey, true);
+  }
 
   // ---- session ----
 
   Future<void> load() async {
     final prefs = SharedPreferencesAsync();
+    _introSeen = await prefs.getBool(_introKey) ?? false;
     final sessionRaw = await prefs.getString(_sessionKey);
     if (sessionRaw != null) {
       try {

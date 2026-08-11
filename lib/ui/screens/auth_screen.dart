@@ -134,7 +134,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
                     labelText: 'Your name',
-                    prefixIcon: Icon(Icons.person_outline),
+                    suffixIcon: Icon(Icons.person_outline, size: 18),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -145,7 +145,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 autocorrect: false,
                 decoration: const InputDecoration(
                   labelText: 'Email address',
-                  prefixIcon: Icon(Icons.alternate_email_rounded),
+                  suffixIcon: Icon(Icons.alternate_email_rounded, size: 18),
                 ),
               ),
               const SizedBox(height: 14),
@@ -154,7 +154,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 obscureText: true,
                 decoration: const InputDecoration(
                   labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock_outline_rounded),
+                  suffixIcon: Icon(Icons.lock_outline_rounded, size: 18),
                 ),
               ),
               const SizedBox(height: 24),

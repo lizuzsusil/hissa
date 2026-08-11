@@ -1,42 +1,46 @@
 import 'package:flutter/material.dart';
 
-/// Central design tokens for a modern, premium look.
+/// Central design tokens. The palette is derived from the brand logo:
+/// warm terracotta/coral primary, teal secondary, amber accent and soft
+/// cream surfaces.
 class AppColors {
   AppColors._();
 
   // Brand
-  static const primary = Color(0xFF4F46E5);
-  static const primaryDark = Color(0xFF4338CA);
-  static const secondary = Color(0xFF7C3AED);
-  static const accent = Color(0xFFF59E0B);
-  static const gradientTop = Color(0xFF6D5BFF);
-  static const gradientBottom = Color(0xFF4F46E5);
+  static const primary = Color(0xFFD9603A);
+  static const primaryDark = Color(0xFFC04E2C);
+  static const primaryDeep = Color(0xFFB04727);
+  static const secondary = Color(0xFF17858C);
+  static const secondaryDark = Color(0xFF0F6B72);
+  static const accent = Color(0xFFE8A33D);
+  static const gradientTop = Color(0xFFF08B5F);
+  static const gradientBottom = Color(0xFFD6572F);
 
   // Semantic
-  static const positive = Color(0xFF059669);
-  static const positiveSoft = Color(0xFFDCFCE7);
-  static const negative = Color(0xFFE11D48);
-  static const negativeSoft = Color(0xFFFFE4E6);
-  static const warning = Color(0xFFD97706);
-  static const warningSoft = Color(0xFFFEF3C7);
+  static const positive = Color(0xFF2E9B6E);
+  static const positiveSoft = Color(0xFFE2F2EA);
+  static const negative = Color(0xFFD6453D);
+  static const negativeSoft = Color(0xFFFBE9E6);
+  static const warning = Color(0xFFDD9518);
+  static const warningSoft = Color(0xFFFBF0DC);
 
-  // Surfaces (light)
-  static const bg = Color(0xFFF6F7FB);
+  // Surfaces (light) — warm cream
+  static const bg = Color(0xFFF8F5F1);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceAlt = Color(0xFFF0F2F8);
-  static const border = Color(0xFFE6E9F2);
-  static const textPrimary = Color(0xFF0B1020);
-  static const textSecondary = Color(0xFF687083);
-  static const textMuted = Color(0xFF9AA2B5);
+  static const surfaceAlt = Color(0xFFF1ECE5);
+  static const border = Color(0xFFE5DED4);
+  static const textPrimary = Color(0xFF2C2620);
+  static const textSecondary = Color(0xFF6F675D);
+  static const textMuted = Color(0xFF9C9185);
 
-  // Surfaces (dark)
-  static const bgDark = Color(0xFF0E1117);
-  static const surfaceDark = Color(0xFF171B23);
-  static const surfaceAltDark = Color(0xFF1E232E);
-  static const borderDark = Color(0xFF272E3A);
-  static const textPrimaryDark = Color(0xFFF2F4F9);
-  static const textSecondaryDark = Color(0xFF9AA3B2);
-  static const textMutedDark = Color(0xFF6B7486);
+  // Surfaces (dark) — warm near-black
+  static const bgDark = Color(0xFF1C1917);
+  static const surfaceDark = Color(0xFF25211D);
+  static const surfaceAltDark = Color(0xFF2F2A25);
+  static const borderDark = Color(0xFF3B342D);
+  static const textPrimaryDark = Color(0xFFF4EFE8);
+  static const textSecondaryDark = Color(0xFFB5AC9F);
+  static const textMutedDark = Color(0xFF7E7468);
 
   static const heroGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -47,7 +51,7 @@ class AppColors {
   static const shimmerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF8B7BFF), Color(0xFF5B51E8), Color(0xFF3E3799)],
+    colors: [Color(0xFFF2905F), Color(0xFFE2703E), Color(0xFFC94E2C)],
   );
 }
 
@@ -128,39 +132,52 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+        fillColor: isDark ? AppColors.surfaceAltDark : Colors.white,
         hintStyle: TextStyle(
-          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+          color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
         ),
+        labelStyle: TextStyle(
+          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+          fontWeight: FontWeight.w600,
+          fontSize: 12.5,
+        ),
+        suffixIconColor: isDark ? AppColors.textMutedDark : AppColors.textMuted,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(13),
+          borderSide: BorderSide(
+            color: isDark ? AppColors.borderDark : AppColors.border,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(13),
+          borderSide: BorderSide(
+            color: isDark ? AppColors.borderDark : AppColors.border,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
+          borderRadius: BorderRadius.circular(13),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(13),
           borderSide: BorderSide(
-              color: isDark ? AppColors.negative : AppColors.negative),
+            color: isDark ? AppColors.negative : AppColors.negative,
+          ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.negative, width: 1.6),
+          borderRadius: BorderRadius.circular(13),
+          borderSide: const BorderSide(color: AppColors.negative, width: 1.8),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark ? AppColors.surfaceAltDark : const Color(0xFF141927),
+        backgroundColor: isDark
+            ? AppColors.surfaceAltDark
+            : const Color(0xFF221D18),
         contentTextStyle: const TextStyle(color: Colors.white),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,

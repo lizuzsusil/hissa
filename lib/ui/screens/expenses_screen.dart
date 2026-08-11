@@ -84,7 +84,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               onChanged: (v) => setState(() => _query = v),
               decoration: const InputDecoration(
                 hintText: 'Search expenses',
-                prefixIcon: Icon(Icons.search_rounded),
+                suffixIcon: Icon(Icons.search_rounded, size: 18),
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Full-width pill button with the brand gradient and soft shadow.
+/// Full-width solid primary button with a subtle shadow.
 class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -21,35 +21,35 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final disabled = onPressed == null;
     final button = AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      height: 54,
+      height: 48,
       decoration: BoxDecoration(
-        gradient: onPressed == null ? null : AppColors.heroGradient,
-        color: onPressed == null
-            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)
-            : null,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: onPressed == null
+        color: disabled
+            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08)
+            : AppColors.primary,
+        borderRadius: BorderRadius.circular(13),
+        boxShadow: disabled
             ? null
             : [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.35),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
+                  color: AppColors.primary.withValues(alpha: 0.22),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
                 ),
               ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(13),
           onTap: onPressed,
           child: Center(
             child: loading
                 ? const SizedBox(
-                    width: 22,
-                    height: 22,
+                    width: 20,
+                    height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.4,
                       color: Colors.white,
@@ -60,14 +60,19 @@ class PrimaryButton extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (icon != null) ...[
-                        Icon(icon, size: 20, color: Colors.white),
-                        const SizedBox(width: 10),
+                        Icon(icon, size: 19, color: Colors.white),
+                        const SizedBox(width: 9),
                       ],
                       Text(
                         label,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                        style: TextStyle(
+                          color: disabled
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.38)
+                              : Colors.white,
+                          fontSize: 15.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -82,7 +87,7 @@ class PrimaryButton extends StatelessWidget {
   }
 }
 
-/// Outlined secondary pill button.
+/// Outlined secondary button.
 class SecondaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -100,17 +105,18 @@ class SecondaryButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       width: double.infinity,
-      height: 54,
+      height: 48,
       child: Material(
         color: isDark ? AppColors.surfaceAltDark : Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(13),
           side: BorderSide(
             color: isDark ? AppColors.borderDark : AppColors.border,
+            width: 1.2,
           ),
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(13),
           onTap: onPressed,
           child: Center(
             child: Row(
@@ -119,15 +125,18 @@ class SecondaryButton extends StatelessWidget {
                 if (icon != null) ...[
                   Icon(
                     icon,
-                    size: 20,
-                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                    size: 19,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimary,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 9),
                 ],
                 Text(
                   label,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
+                    fontSize: 15.5,
                     color: isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimary,

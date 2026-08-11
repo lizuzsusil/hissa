@@ -135,7 +135,7 @@ class _SetupScreenState extends State<SetupScreen> {
           decoration: const InputDecoration(
             labelText: 'Household name',
             hintText: 'e.g. Our Home',
-            prefixIcon: Icon(Icons.home_outlined),
+            suffixIcon: Icon(Icons.home_outlined, size: 18),
           ),
         ),
         const SizedBox(height: 14),
@@ -175,7 +175,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Add a member',
                   hintText: 'Name',
-                  prefixIcon: Icon(Icons.person_add_alt_1_outlined),
+                  suffixIcon: Icon(Icons.person_add_alt_1_outlined, size: 18),
                 ),
                 onSubmitted: (_) => _addMember(),
               ),
@@ -205,7 +205,7 @@ class _SetupScreenState extends State<SetupScreen> {
         DropdownButtonFormField<String>(
           initialValue: _currency,
           decoration: const InputDecoration(
-            prefixIcon: Icon(Icons.currency_rupee),
+            suffixIcon: Icon(Icons.currency_rupee, size: 18),
           ),
           items: const [
             DropdownMenuItem(value: 'NPR', child: Text('NPR - Nepalese Rupee')),
@@ -254,7 +254,7 @@ class _SetupScreenState extends State<SetupScreen> {
           decoration: const InputDecoration(
             labelText: 'Invite code',
             hintText: 'SUNNY9',
-            prefixIcon: Icon(Icons.vpn_key_outlined),
+            suffixIcon: Icon(Icons.vpn_key_outlined, size: 18),
           ),
         ),
         const SizedBox(height: 12),

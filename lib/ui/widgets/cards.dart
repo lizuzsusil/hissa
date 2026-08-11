@@ -27,7 +27,7 @@ class SurfaceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final shape = RoundedRectangleBorder(
-      borderRadius: radius ?? BorderRadius.circular(22),
+      borderRadius: radius ?? BorderRadius.circular(18),
     );
     return Container(
       margin: margin,
@@ -43,7 +43,7 @@ class SurfaceCard extends StatelessWidget {
             : shape,
         child: InkWell(
           onTap: onTap,
-          borderRadius: radius ?? BorderRadius.circular(22),
+          borderRadius: radius ?? BorderRadius.circular(18),
           child: Padding(padding: padding, child: child),
         ),
       ),
@@ -68,12 +68,12 @@ class HeroCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         gradient: AppColors.heroGradient,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
+            color: AppColors.primary.withValues(alpha: 0.28),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../state/app_state.dart';
 import '../ui/screens/auth_screen.dart';
+import '../ui/screens/intro_screen.dart';
 import '../ui/screens/onboarding_screen.dart';
 import '../ui/screens/setup_screen.dart';
 import '../ui/screens/shell_screen.dart';
@@ -42,7 +43,7 @@ class _AppView extends StatelessWidget {
   }
 }
 
-enum _FlowStep { splash, onboarding, auth, setup, app }
+enum _FlowStep { splash, intro, onboarding, auth, setup, app }
 
 class RootGate extends StatefulWidget {
   const RootGate({super.key});
@@ -66,10 +67,26 @@ class _RootGateState extends State<RootGate> {
     final state = context.read<AppState>();
     await state.load();
     if (!mounted) return;
+    // Give the branded splash a moment to breathe.
+    await Future.delayed(const Duration(milliseconds: 1100));
+    if (!mounted) return;
     setState(() {
-      _step = state.isLoggedIn
-          ? (state.hasHousehold ? _FlowStep.app : _FlowStep.setup)
-          : _FlowStep.onboarding;
+      if (!state.introSeen) {
+        _step = _FlowStep.intro;
+      } else if (state.isLoggedIn) {
+        _step = state.hasHousehold ? _FlowStep.app : _FlowStep.setup;
+      } else {
+        _step = _FlowStep.onboarding;
+      }
+    });
+  }
+
+  Future<void> _finishIntro() async {
+    final state = context.read<AppState>();
+    await state.markIntroSeen();
+    if (!mounted) return;
+    setState(() {
+      _step = state.isLoggedIn ? _FlowStep.setup : _FlowStep.onboarding;
     });
   }
 
@@ -80,6 +97,8 @@ class _RootGateState extends State<RootGate> {
     switch (_step) {
       case _FlowStep.splash:
         return const SplashScreen();
+      case _FlowStep.intro:
+        return IntroScreen(onDone: _finishIntro);
       case _FlowStep.onboarding:
         return OnboardingScreen(
           onContinue: (mode) {

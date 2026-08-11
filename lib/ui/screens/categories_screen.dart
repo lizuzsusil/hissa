@@ -184,7 +184,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
             decoration: const InputDecoration(
               labelText: 'Category name',
               hintText: 'e.g. Kids, Pets, Gym',
-              prefixIcon: Icon(Icons.label_outline),
+              suffixIcon: Icon(Icons.label_outline, size: 18),
             ),
           ),
           const SizedBox(height: 20),

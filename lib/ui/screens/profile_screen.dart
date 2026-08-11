@@ -74,7 +74,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             controller: _nameController,
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.badge_outlined),
+              suffixIcon: Icon(Icons.badge_outlined, size: 18),
             ),
             onChanged: (_) => setState(() {}),
           ),

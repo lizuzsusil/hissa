@@ -123,7 +123,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               decoration: const InputDecoration(
                 labelText: 'Description',
                 hintText: 'What was this for?',
-                prefixIcon: Icon(Icons.edit_outlined),
+                suffixIcon: Icon(Icons.edit_outlined, size: 18),
               ),
             ),
             const SizedBox(height: 24),
@@ -151,7 +151,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
                 hintText: 'Add a note (optional)',
-                prefixIcon: Icon(Icons.sticky_note_2_outlined),
+                suffixIcon: Icon(Icons.sticky_note_2_outlined, size: 18),
               ),
             ),
             const SizedBox(height: 28),

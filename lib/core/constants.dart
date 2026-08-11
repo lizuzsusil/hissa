@@ -50,20 +50,20 @@ class CategoryPreset {
 }
 
 const List<CategoryPreset> kDefaultCategories = [
-  CategoryPreset(name: 'Groceries', icon: Icons.shopping_basket_outlined, color: Color(0xFF16A34A)),
-  CategoryPreset(name: 'Rent', icon: Icons.home_outlined, color: Color(0xFF6366F1)),
-  CategoryPreset(name: 'Electricity', icon: Icons.bolt_outlined, color: Color(0xFFF59E0B)),
-  CategoryPreset(name: 'Water', icon: Icons.water_drop_outlined, color: Color(0xFF0EA5E9)),
-  CategoryPreset(name: 'Internet', icon: Icons.wifi_outlined, color: Color(0xFF8B5CF6)),
-  CategoryPreset(name: 'Food', icon: Icons.restaurant_outlined, color: Color(0xFFF97316)),
-  CategoryPreset(name: 'Transportation', icon: Icons.directions_bus_outlined, color: Color(0xFFEC4899)),
-  CategoryPreset(name: 'Medical', icon: Icons.medical_services_outlined, color: Color(0xFFEF4444)),
-  CategoryPreset(name: 'Household', icon: Icons.chair_outlined, color: Color(0xFF14B8A6)),
-  CategoryPreset(name: 'Maintenance', icon: Icons.handyman_outlined, color: Color(0xFF78716C)),
-  CategoryPreset(name: 'Education', icon: Icons.school_outlined, color: Color(0xFF06B6D4)),
-  CategoryPreset(name: 'Entertainment', icon: Icons.movie_outlined, color: Color(0xFFA855F7)),
-  CategoryPreset(name: 'Shopping', icon: Icons.shopping_bag_outlined, color: Color(0xFF3B82F6)),
-  CategoryPreset(name: 'Other', icon: Icons.more_horiz, color: Color(0xFF64748B)),
+  CategoryPreset(name: 'Groceries', icon: Icons.shopping_basket_outlined, color: Color(0xFF2E9B6E)),
+  CategoryPreset(name: 'Rent', icon: Icons.home_outlined, color: Color(0xFFD9603A)),
+  CategoryPreset(name: 'Electricity', icon: Icons.bolt_outlined, color: Color(0xFFE8A33D)),
+  CategoryPreset(name: 'Water', icon: Icons.water_drop_outlined, color: Color(0xFF3E9CB8)),
+  CategoryPreset(name: 'Internet', icon: Icons.wifi_outlined, color: Color(0xFF7B63C2)),
+  CategoryPreset(name: 'Food', icon: Icons.restaurant_outlined, color: Color(0xFFE2734E)),
+  CategoryPreset(name: 'Transportation', icon: Icons.directions_bus_outlined, color: Color(0xFF17858C)),
+  CategoryPreset(name: 'Medical', icon: Icons.medical_services_outlined, color: Color(0xFFD6453D)),
+  CategoryPreset(name: 'Household', icon: Icons.chair_outlined, color: Color(0xFFA0763F)),
+  CategoryPreset(name: 'Maintenance', icon: Icons.handyman_outlined, color: Color(0xFF8A7D6F)),
+  CategoryPreset(name: 'Education', icon: Icons.school_outlined, color: Color(0xFF3E7BB8)),
+  CategoryPreset(name: 'Entertainment', icon: Icons.movie_outlined, color: Color(0xFF9C5BB0)),
+  CategoryPreset(name: 'Shopping', icon: Icons.shopping_bag_outlined, color: Color(0xFF5A6FD6)),
+  CategoryPreset(name: 'Other', icon: Icons.more_horiz, color: Color(0xFF7A7168)),
 ];
 
 const List<String> kPaymentMethods = [
