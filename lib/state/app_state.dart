@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/ids.dart';
 import '../core/money.dart';
-import '../data/codec.dart';
 import '../data/in_memory_repository.dart';
 import '../data/repository.dart';
 import '../data/seed.dart';
@@ -15,10 +14,12 @@ import '../logic/splits.dart';
 import '../models/models.dart';
 
 /// Central application state. Owns the repository and exposes a small,
-/// imperative API that the UI calls; every mutation notifies listeners and
-/// persists to local storage so the demo survives relaunches.
+/// imperative API that the UI calls.
+///
+/// Until the Firestore backend lands, state is held in memory only: the
+/// whole-repo SharedPreferences blob has been removed (P4) and the demo
+/// dataset is seeded on demand via [signInDemo] instead of at startup (P3).
 class AppState extends ChangeNotifier {
-  static const _prefsKey = 'Hissa_repo_v1';
   static const _sessionKey = 'Hissa_session_v1';
 
   ExpenseRepository _repo = InMemoryRepository();
@@ -43,9 +44,16 @@ class AppState extends ChangeNotifier {
     if (sessionRaw != null) {
       try {
         final json = jsonDecode(sessionRaw) as Map<String, dynamic>;
-        _currentUserId = json['userId'] as String?;
-        _householdId = json['householdId'] as String?;
-        _cycleId = json['cycleId'] as String?;
+        final userId = json['userId'] as String?;
+        // Restore a session only when the user still exists in the current
+        // repository. The whole-repo blob is gone, so once the Firestore
+        // repository lands this check moves to the cloud; until then a
+        // relaunch simply starts signed out.
+        if (userId != null && _repo.users.any((u) => u.id == userId)) {
+          _currentUserId = userId;
+          _householdId = json['householdId'] as String?;
+          _cycleId = json['cycleId'] as String?;
+        }
         _onboardingMode = json['mode'] as String?;
       } catch (_) {
         _currentUserId = null;
@@ -54,26 +62,12 @@ class AppState extends ChangeNotifier {
       }
     }
 
-    final dataRaw = await prefs.getString(_prefsKey);
-    if (dataRaw != null) {
-      try {
-        _repo = RepositoryCodec.decode(
-          jsonDecode(dataRaw) as Map<String, dynamic>,
-        );
-      } catch (_) {
-        _repo = buildSeedRepository();
-      }
-    } else {
-      _repo = buildSeedRepository();
-    }
-
     _loaded = true;
     notifyListeners();
   }
 
   Future<void> _persist() async {
     final prefs = SharedPreferencesAsync();
-    await prefs.setString(_prefsKey, jsonEncode(RepositoryCodec.encode(_repo)));
     await prefs.setString(
       _sessionKey,
       jsonEncode({
@@ -97,22 +91,24 @@ class AppState extends ChangeNotifier {
     await _persist();
   }
 
-  Future<void> signIn({required String email, String? password}) async {
+  Future<bool> signIn({required String email, String? password}) async {
     final normalized = email.trim().toLowerCase();
-    var user = _repo.users
+    final user = _repo.users
         .where((u) => u.email.toLowerCase() == normalized)
         .firstOrNull;
-    if (user == null) {
-      final name = normalized.split('@').first;
-      user = User(
-        id: 'u_${genId(8)}',
-        name: _capitalize(name),
-        email: normalized,
-        createdAt: DateTime.now(),
-      );
-      _repo.saveUser(user);
-    }
+    if (user == null) return false;
     _currentUserId = user.id;
+    await _commit();
+    return true;
+  }
+
+  /// Demo login: seeds the repository with the worked demo dataset on demand
+  /// and signs in as Ram inside the "Our Home" household.
+  Future<void> signInDemo() async {
+    _repo = buildSeedRepository();
+    _currentUserId = 'u_ram';
+    _householdId = 'h_demo';
+    _cycleId = null;
     await _commit();
   }
 

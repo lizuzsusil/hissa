@@ -53,7 +53,15 @@ class _AuthScreenState extends State<AuthScreen> {
         password: _passwordController.text,
       );
     } else {
-      await state.signIn(email: email, password: _passwordController.text);
+      final ok = await state.signIn(
+        email: email,
+        password: _passwordController.text,
+      );
+      if (mounted && !ok) {
+        setState(() => _loading = false);
+        _toast('No account found with that email. Create one first.');
+        return;
+      }
     }
     if (mounted) {
       setState(() => _loading = false);
@@ -64,7 +72,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _demo() async {
     setState(() => _loading = true);
     final state = context.read<AppState>();
-    await state.signIn(email: 'ram@hissa.app');
+    await state.signInDemo();
     if (mounted) {
       setState(() => _loading = false);
       widget.onAuthenticated();

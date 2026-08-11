@@ -90,7 +90,10 @@ class _RootGateState extends State<RootGate> {
         );
       case _FlowStep.auth:
         return AuthScreen(
-          onAuthenticated: () => _go(_FlowStep.setup),
+          onAuthenticated: () {
+            final state = context.read<AppState>();
+            _go(state.hasHousehold ? _FlowStep.app : _FlowStep.setup);
+          },
           onBack: () => _go(_FlowStep.onboarding),
         );
       case _FlowStep.setup:
