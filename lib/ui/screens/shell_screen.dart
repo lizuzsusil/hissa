@@ -47,9 +47,12 @@ class _ShellScreenState extends State<ShellScreen> {
               IndexedStack(index: _tabController.index, children: _screens),
         ),
         floatingActionButton: _FloatingAddButton(),
-        bottomNavigationBar: _NavBar(
-          index: _tabController.index,
-          onChanged: _tabController.switchTo,
+        bottomNavigationBar: ListenableBuilder(
+          listenable: _tabController,
+          builder: (context, _) => _NavBar(
+            index: _tabController.index,
+            onChanged: _tabController.switchTo,
+          ),
         ),
       ),
     );
