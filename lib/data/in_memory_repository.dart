@@ -1,8 +1,11 @@
 import '../models/models.dart';
 import 'repository.dart';
 
-/// Simple in-memory repository used for the demo build. All data is held
-/// in lists so the UI can be rebuilt eagerly after each mutation.
+/// Simple in-memory repository used for the demo build and unit tests. All
+/// data is held in lists so the UI can be rebuilt eagerly after each
+/// mutation. The async methods complete immediately: bodies run synchronously
+/// so callers that do not await (seed builders, tests) still observe the
+/// mutation right away.
 class InMemoryRepository implements ExpenseRepository {
   final List<User> _users = [];
   final List<Household> _households = [];
@@ -38,7 +41,7 @@ class InMemoryRepository implements ExpenseRepository {
   List<Category> get categories => List.unmodifiable(_categories);
 
   @override
-  void saveUser(User user) {
+  Future<void> saveUser(User user) async {
     final idx = _users.indexWhere((u) => u.id == user.id);
     if (idx >= 0) {
       _users[idx] = user;
@@ -48,7 +51,7 @@ class InMemoryRepository implements ExpenseRepository {
   }
 
   @override
-  void saveHousehold(Household household) {
+  Future<void> saveHousehold(Household household) async {
     final idx = _households.indexWhere((h) => h.id == household.id);
     if (idx >= 0) {
       _households[idx] = household;
@@ -58,7 +61,7 @@ class InMemoryRepository implements ExpenseRepository {
   }
 
   @override
-  void saveMember(HouseholdMember member) {
+  Future<void> saveMember(HouseholdMember member, [String? householdId]) async {
     final idx = _members.indexWhere((m) => m.userId == member.userId);
     if (idx >= 0) {
       _members[idx] = member;
@@ -68,13 +71,12 @@ class InMemoryRepository implements ExpenseRepository {
   }
 
   @override
-  void removeMember(String userId, String householdId) {
-    _members.removeWhere((m) =>
-        m.userId == userId);
+  Future<void> removeMember(String userId, String householdId) async {
+    _members.removeWhere((m) => m.userId == userId);
   }
 
   @override
-  void saveCycle(Cycle cycle) {
+  Future<void> saveCycle(Cycle cycle) async {
     final idx = _cycles.indexWhere((c) => c.id == cycle.id);
     if (idx >= 0) {
       _cycles[idx] = cycle;
@@ -84,7 +86,7 @@ class InMemoryRepository implements ExpenseRepository {
   }
 
   @override
-  void saveExpense(Expense expense, List<ExpenseShare> shares) {
+  Future<void> saveExpense(Expense expense, List<ExpenseShare> shares) async {
     final idx = _expenses.indexWhere((e) => e.id == expense.id);
     if (idx >= 0) {
       _expenses[idx] = expense;
@@ -96,19 +98,19 @@ class InMemoryRepository implements ExpenseRepository {
   }
 
   @override
-  void deleteExpense(String expenseId) {
+  Future<void> deleteExpense(String expenseId) async {
     _expenses.removeWhere((e) => e.id == expenseId);
     _shares.removeWhere((s) => s.expenseId == expenseId);
   }
 
   @override
-  void addShare(ExpenseShare share) {
+  Future<void> addShare(ExpenseShare share) async {
     _shares.removeWhere((s) => s.id == share.id);
     _shares.add(share);
   }
 
   @override
-  void saveSettlement(Settlement settlement) {
+  Future<void> saveSettlement(Settlement settlement) async {
     final idx = _settlements.indexWhere((s) => s.id == settlement.id);
     if (idx >= 0) {
       _settlements[idx] = settlement;
@@ -118,7 +120,7 @@ class InMemoryRepository implements ExpenseRepository {
   }
 
   @override
-  void saveCategory(Category category) {
+  Future<void> saveCategory(Category category) async {
     final idx = _categories.indexWhere((c) => c.id == category.id);
     if (idx >= 0) {
       _categories[idx] = category;
@@ -136,5 +138,23 @@ class InMemoryRepository implements ExpenseRepository {
   List<ExpenseShare> sharesForCycle(List<Expense> expenses) {
     final ids = expenses.map((e) => e.id).toSet();
     return _shares.where((s) => ids.contains(s.expenseId)).toList();
+  }
+
+  @override
+  Future<Household?> findHouseholdByInviteCode(String code) async {
+    final normalized = code.trim().toUpperCase();
+    for (final h in _households) {
+      if (h.inviteCode.toUpperCase() == normalized) return h;
+    }
+    return null;
+  }
+
+  @override
+  Future<String?> findHouseholdIdForUser(String userId) async {
+    for (final h in _households) {
+      final joined = _members.any((m) => m.userId == userId);
+      if (joined) return h.id;
+    }
+    return null;
   }
 }

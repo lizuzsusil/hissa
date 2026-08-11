@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -37,6 +38,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _submit() async {
     final email = _emailController.text.trim();
+    final password = _passwordController.text;
     if (email.isEmpty || !email.contains('@')) {
       _toast('Please enter a valid email address');
       return;
@@ -45,22 +47,31 @@ class _AuthScreenState extends State<AuthScreen> {
       _toast('Please tell us your name');
       return;
     }
+    if (password.length < 6) {
+      _toast('Password must be at least 6 characters');
+      return;
+    }
     setState(() => _loading = true);
     final state = context.read<AppState>();
     if (_isSignUp) {
-      await state.signUp(
-        name: _nameController.text.trim(),
-        email: email,
-        password: _passwordController.text,
-      );
+      try {
+        await state.signUp(
+          name: _nameController.text.trim(),
+          email: email,
+          password: password,
+        );
+      } on Exception catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          _toast(_friendlyAuthMessage(e));
+          return;
+        }
+      }
     } else {
-      final ok = await state.signIn(
-        email: email,
-        password: _passwordController.text,
-      );
+      final ok = await state.signIn(email: email, password: password);
       if (mounted && !ok) {
         setState(() => _loading = false);
-        _toast('No account found with that email. Create one first.');
+        _toast('Incorrect email or password. Try again or create an account.');
         return;
       }
     }
@@ -84,6 +95,24 @@ class _AuthScreenState extends State<AuthScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _friendlyAuthMessage(Object error) {
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'email-already-in-use':
+          return 'An account already exists for that email. Log in instead.';
+        case 'weak-password':
+          return 'That password is too weak. Use at least 6 characters.';
+        case 'invalid-email':
+          return 'That email address does not look valid.';
+        case 'invalid-credential':
+          return 'Incorrect email or password.';
+        case 'too-many-requests':
+          return 'Too many attempts. Please wait and try again.';
+      }
+    }
+    return 'Something went wrong. Please try again.';
   }
 
   @override

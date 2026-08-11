@@ -60,7 +60,25 @@ class _RootGateState extends State<RootGate> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _bootstrap();
+      final state = context.read<AppState>();
+      state.addListener(_onStateChanged);
     });
+  }
+
+  @override
+  void dispose() {
+    context.read<AppState>().removeListener(_onStateChanged);
+    super.dispose();
+  }
+
+  /// Sends the user back to onboarding when they sign out from inside the
+  /// app shell.
+  void _onStateChanged() {
+    if (!mounted) return;
+    final state = context.read<AppState>();
+    if (_step == _FlowStep.app && !state.isLoggedIn) {
+      setState(() => _step = _FlowStep.onboarding);
+    }
   }
 
   Future<void> _bootstrap() async {

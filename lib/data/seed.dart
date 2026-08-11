@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../core/constants.dart';
 import '../core/money.dart';
 import '../logic/splits.dart';
 import '../models/models.dart';
+import 'firestore_repository.dart';
 import 'in_memory_repository.dart';
 
 /// Builds a fully populated demo dataset so the app can be explored
@@ -379,4 +382,123 @@ String _monthName(DateTime d) {
     'December',
   ];
   return months[d.month - 1];
+}
+
+/// Writes the demo dataset to Firestore for the "explore the demo" login.
+/// The demo household is signed in anonymously, so the seeded owner (Ram,
+/// `u_ram`) is remapped to the anonymous user's [uid] so security rules treat
+/// them as a member of `h_demo`.
+Future<void> seedDemoFirestore(FirebaseFirestore db, String uid) async {
+  final seed = buildSeedRepository();
+  final data = _remapDemo(seed, uid);
+  await FirestoreRepository(db).writeAll(
+    users: data.users,
+    households: data.households,
+    members: data.members,
+    membersHouseholdId: 'h_demo',
+    cycles: data.cycles,
+    expenses: data.expenses,
+    shares: data.shares,
+    settlements: data.settlements,
+    categories: data.categories,
+  );
+}
+
+class _DemoData {
+  final List<User> users;
+  final List<Household> households;
+  final List<HouseholdMember> members;
+  final List<Cycle> cycles;
+  final List<Expense> expenses;
+  final List<ExpenseShare> shares;
+  final List<Settlement> settlements;
+  final List<Category> categories;
+
+  const _DemoData({
+    required this.users,
+    required this.households,
+    required this.members,
+    required this.cycles,
+    required this.expenses,
+    required this.shares,
+    required this.settlements,
+    required this.categories,
+  });
+}
+
+_DemoData _remapDemo(InMemoryRepository seed, String uid) {
+  String map(String id) => id == 'u_ram' ? uid : id;
+
+  final users = seed.users.map((u) {
+    if (u.id == 'u_ram') {
+      return User(
+        id: uid,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        avatarUrl: u.avatarUrl,
+        createdAt: u.createdAt,
+      );
+    }
+    return u;
+  }).toList();
+
+  final members = seed.members
+      .map(
+        (m) => HouseholdMember(
+          userId: map(m.userId),
+          name: m.name,
+          role: m.role,
+          joinedAt: m.joinedAt,
+          avatarUrl: m.avatarUrl,
+        ),
+      )
+      .toList();
+
+  final expenses = seed.expenses
+      .map((e) => e.copyWith(paidByUserId: map(e.paidByUserId)))
+      .toList();
+
+  final shares = seed.shares
+      .map(
+        (s) => ExpenseShare(
+          id: s.id,
+          expenseId: s.expenseId,
+          userId: map(s.userId),
+          amount: s.amount,
+          percentage: s.percentage,
+          shares: s.shares,
+        ),
+      )
+      .toList();
+
+  final settlements = seed.settlements
+      .map(
+        (s) => Settlement(
+          id: s.id,
+          householdId: s.householdId,
+          cycleId: s.cycleId,
+          fromUserId: map(s.fromUserId),
+          toUserId: map(s.toUserId),
+          amount: s.amount,
+          currency: s.currency,
+          paymentMethod: s.paymentMethod,
+          date: s.date,
+          note: s.note,
+          status: s.status,
+          createdAt: s.createdAt,
+        ),
+      )
+      .toList();
+
+  return _DemoData(
+    users: users,
+    households: seed.households.toList(),
+    members: members,
+    cycles: seed.cycles.toList(),
+    expenses: expenses,
+    shares: shares,
+    settlements: settlements,
+    categories: seed.categories.toList(),
+  );
 }

@@ -1,8 +1,9 @@
 import '../models/models.dart';
 
-/// Persistence boundary. The in-memory implementation backs the demo,
-/// and can later be swapped for a Firebase Firestore backed repository
-/// without touching the UI or domain layers.
+/// Persistence boundary. [InMemoryRepository] backs the demo build and unit
+/// tests; [FirestoreRepository] persists to Firebase. Read access is
+/// synchronous over locally-cached lists so the UI can rebuild eagerly;
+/// mutations are async and await the underlying write.
 abstract class ExpenseRepository {
   List<User> get users;
   List<Household> get households;
@@ -13,17 +14,20 @@ abstract class ExpenseRepository {
   List<Settlement> get settlements;
   List<Category> get categories;
 
-  void saveUser(User user);
-  void saveHousehold(Household household);
-  void saveMember(HouseholdMember member);
-  void removeMember(String userId, String householdId);
-  void saveCycle(Cycle cycle);
-  void saveExpense(Expense expense, List<ExpenseShare> shares);
-  void deleteExpense(String expenseId);
-  void addShare(ExpenseShare share);
-  void saveSettlement(Settlement settlement);
-  void saveCategory(Category category);
+  Future<void> saveUser(User user);
+  Future<void> saveHousehold(Household household);
+  Future<void> saveMember(HouseholdMember member, [String? householdId]);
+  Future<void> removeMember(String userId, String householdId);
+  Future<void> saveCycle(Cycle cycle);
+  Future<void> saveExpense(Expense expense, List<ExpenseShare> shares);
+  Future<void> deleteExpense(String expenseId);
+  Future<void> addShare(ExpenseShare share);
+  Future<void> saveSettlement(Settlement settlement);
+  Future<void> saveCategory(Category category);
 
   List<ExpenseShare> sharesForExpense(String expenseId);
   List<ExpenseShare> sharesForCycle(List<Expense> expenses);
+
+  Future<Household?> findHouseholdByInviteCode(String code);
+  Future<String?> findHouseholdIdForUser(String userId);
 }

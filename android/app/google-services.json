@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "398063641965",
+    "project_id": "hissa-expense-tracker",
+    "storage_bucket": "hissa-expense-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398063641965:android:147bfdff0b5f1023286664",
+        "android_client_info": {
+          "package_name": "app.hissa.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzRd-jpewG7M1nGpTFQO2sAAIITOmwTm0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

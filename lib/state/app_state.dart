@@ -1,10 +1,14 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/constants.dart';
 import '../core/ids.dart';
 import '../core/money.dart';
+import '../data/firestore_repository.dart';
 import '../data/in_memory_repository.dart';
 import '../data/repository.dart';
 import '../data/seed.dart';
@@ -16,9 +20,10 @@ import '../models/models.dart';
 /// Central application state. Owns the repository and exposes a small,
 /// imperative API that the UI calls.
 ///
-/// Until the Firestore backend lands, state is held in memory only: the
-/// whole-repo SharedPreferences blob has been removed (P4) and the demo
-/// dataset is seeded on demand via [signInDemo] instead of at startup (P3).
+/// Authentication is handled by Firebase Auth; account state is persisted
+/// natively by the SDK and mirrored to a session blob for the household /
+/// cycle selections. When signed in, the repository is a [FirestoreRepository]
+/// that keeps local caches in sync via realtime listeners.
 class AppState extends ChangeNotifier {
   static const _sessionKey = 'Hissa_session_v1';
   static const _introKey = 'Hissa_intro_seen_v1';
@@ -52,25 +57,31 @@ class AppState extends ChangeNotifier {
     final prefs = SharedPreferencesAsync();
     _introSeen = await prefs.getBool(_introKey) ?? false;
     final sessionRaw = await prefs.getString(_sessionKey);
+
+    String? userId;
+    String? householdId;
+    String? cycleId;
     if (sessionRaw != null) {
       try {
         final json = jsonDecode(sessionRaw) as Map<String, dynamic>;
-        final userId = json['userId'] as String?;
-        // Restore a session only when the user still exists in the current
-        // repository. The whole-repo blob is gone, so once the Firestore
-        // repository lands this check moves to the cloud; until then a
-        // relaunch simply starts signed out.
-        if (userId != null && _repo.users.any((u) => u.id == userId)) {
-          _currentUserId = userId;
-          _householdId = json['householdId'] as String?;
-          _cycleId = json['cycleId'] as String?;
-        }
+        userId = json['userId'] as String?;
+        householdId = json['householdId'] as String?;
+        cycleId = json['cycleId'] as String?;
         _onboardingMode = json['mode'] as String?;
       } catch (_) {
-        _currentUserId = null;
-        _householdId = null;
-        _cycleId = null;
+        // Ignore a corrupt session; the user simply starts signed out.
       }
+    }
+
+    // Firebase Auth persists the signed-in user across launches, so a cold
+    // start can restore a session without a password.
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser != null) {
+      final restore = userId != null && userId == authUser.uid;
+      _currentUserId = authUser.uid;
+      _householdId = restore ? householdId : null;
+      _cycleId = restore ? cycleId : null;
+      await _attachRepository();
     }
 
     _loaded = true;
@@ -95,6 +106,37 @@ class AppState extends ChangeNotifier {
     await _persist();
   }
 
+  @override
+  void dispose() {
+    if (_repo is FirestoreRepository) {
+      (_repo as FirestoreRepository).stop();
+    }
+    super.dispose();
+  }
+
+  /// Replaces the repository with a fresh Firestore-backed one subscribed to
+  /// the current user's profile and household (derived from their
+  /// membership, so it stays correct even after joining a new household).
+  Future<void> _attachRepository() async {
+    final uid = _currentUserId;
+    if (uid == null) return;
+    if (_repo is FirestoreRepository) {
+      (_repo as FirestoreRepository).stop();
+    }
+
+    final repo = FirestoreRepository(FirebaseFirestore.instance);
+    String? householdId;
+    try {
+      householdId = await repo.findHouseholdIdForUser(uid);
+    } catch (_) {
+      householdId = null;
+    }
+    if (householdId == null) _cycleId = null;
+    _householdId = householdId;
+    _repo = repo;
+    await repo.start(uid: uid, householdId: householdId, onChanged: notifyListeners);
+  }
+
   // ---- auth ----
 
   Future<void> setOnboardingMode(String mode) async {
@@ -102,50 +144,77 @@ class AppState extends ChangeNotifier {
     await _persist();
   }
 
-  Future<bool> signIn({required String email, String? password}) async {
+  Future<bool> signIn({
+    required String email,
+    required String password,
+  }) async {
     final normalized = email.trim().toLowerCase();
-    final user = _repo.users
-        .where((u) => u.email.toLowerCase() == normalized)
-        .firstOrNull;
-    if (user == null) return false;
-    _currentUserId = user.id;
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: normalized,
+        password: password,
+      );
+    } on FirebaseAuthException {
+      return false;
+    }
+    _currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    _householdId = null;
+    _cycleId = null;
+    await _attachRepository();
     await _commit();
     return true;
   }
 
-  /// Demo login: seeds the repository with the worked demo dataset on demand
-  /// and signs in as Ram inside the "Our Home" household.
+  /// Demo login: seeds the worked demo dataset into Firestore for this
+  /// anonymous account and signs in as Ram inside the "Our Home" household.
   Future<void> signInDemo() async {
-    _repo = buildSeedRepository();
-    _currentUserId = 'u_ram';
+    final cred = await FirebaseAuth.instance.signInAnonymously();
+    final uid = cred.user!.uid;
+    await seedDemoFirestore(FirebaseFirestore.instance, uid);
+    _currentUserId = uid;
     _householdId = 'h_demo';
     _cycleId = null;
+    await _attachRepository();
     await _commit();
   }
 
   Future<void> signUp({
     required String name,
     required String email,
-    String? password,
+    required String password,
   }) async {
     final normalized = email.trim().toLowerCase();
-    final user = User(
-      id: 'u_${genId(8)}',
-      name: name.trim().isEmpty
-          ? _capitalize(normalized.split('@').first)
-          : name.trim(),
+    final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
       email: normalized,
-      createdAt: DateTime.now(),
+      password: password,
     );
-    _repo.saveUser(user);
-    _currentUserId = user.id;
+    final uid = cred.user!.uid;
+    _currentUserId = uid;
+    _householdId = null;
+    _cycleId = null;
+    await _attachRepository();
+    final displayName = name.trim().isEmpty
+        ? _capitalize(normalized.split('@').first)
+        : name.trim();
+    await _repo.saveUser(
+      User(id: uid, name: displayName, email: normalized, createdAt: DateTime.now()),
+    );
     await _commit();
   }
 
   Future<void> signOut() async {
+    if (_repo is FirestoreRepository) {
+      (_repo as FirestoreRepository).stop();
+    }
+    _repo = InMemoryRepository();
     _currentUserId = null;
     _householdId = null;
     _cycleId = null;
+    try {
+      await FirebaseAuth.instance.signOut();
+    } on Exception {
+      // Local session is cleared regardless.
+    }
     await _commit();
   }
 
@@ -154,10 +223,10 @@ class AppState extends ChangeNotifier {
     if (user == null) return;
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
-    _repo.saveUser(user.copyWith(name: trimmed));
+    await _repo.saveUser(user.copyWith(name: trimmed));
     final member = members.where((m) => m.userId == user.id).firstOrNull;
-    if (member != null) {
-      _repo.saveMember(member.copyWith(name: trimmed));
+    if (member != null && _householdId != null) {
+      await _repo.saveMember(member.copyWith(name: trimmed), _householdId);
     }
     await _commit();
   }
@@ -176,8 +245,7 @@ class AppState extends ChangeNotifier {
 
   List<HouseholdMember> get members {
     if (_householdId == null) return const [];
-    final all = _repo.members.toList();
-    return all;
+    return _repo.members.toList();
   }
 
   bool get isOwner {
@@ -217,7 +285,7 @@ class AppState extends ChangeNotifier {
         activeCycle;
   }
 
-  void selectCycle(String cycleId) async {
+  Future<void> selectCycle(String cycleId) async {
     _cycleId = cycleId;
     await _persist();
     notifyListeners();
@@ -248,16 +316,18 @@ class AppState extends ChangeNotifier {
       inviteCode: genInviteCode(),
       createdAt: DateTime.now(),
     );
-    _repo.saveHousehold(household);
-
-    _repo.saveMember(
+    // The owner membership is written before the household so security rules
+    // (which gate household writes on membership) accept the create.
+    await _repo.saveMember(
       HouseholdMember(
         userId: user.id,
         name: user.name,
         role: MemberRole.owner,
         joinedAt: DateTime.now(),
       ),
+      householdId,
     );
+    await _repo.saveHousehold(household);
 
     for (final memberName in memberNames) {
       final trimmed = memberName.trim();
@@ -270,22 +340,24 @@ class AppState extends ChangeNotifier {
             '${trimmed.toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@hissa.app',
         createdAt: DateTime.now(),
       );
-      _repo.saveUser(newUser);
-      _repo.saveMember(
+      await _repo.saveUser(newUser);
+      await _repo.saveMember(
         HouseholdMember(
           userId: newUser.id,
           name: trimmed,
           role: MemberRole.member,
           joinedAt: DateTime.now(),
         ),
+        householdId,
       );
     }
 
-    _seedCategories(householdId);
-    _startCycleFor(householdId, DateTime.now());
+    await _seedCategories(householdId);
+    await _startCycleFor(householdId, DateTime.now());
 
     _householdId = householdId;
     _cycleId = null;
+    await _attachRepository();
     await _commit();
     return true;
   }
@@ -294,41 +366,41 @@ class AppState extends ChangeNotifier {
     final user = currentUser;
     if (user == null) return false;
     final normalized = code.trim().toUpperCase();
-    final household = _repo.households
-        .where((h) => h.inviteCode.toUpperCase() == normalized)
-        .firstOrNull;
+    final household = await _repo.findHouseholdByInviteCode(normalized);
     if (household == null) return false;
 
     if (!_repo.members.any((m) => m.userId == user.id)) {
-      _repo.saveMember(
+      await _repo.saveMember(
         HouseholdMember(
           userId: user.id,
           name: user.name,
           role: MemberRole.member,
           joinedAt: DateTime.now(),
         ),
+        household.id,
       );
     }
     _householdId = household.id;
     _cycleId = null;
+    await _attachRepository();
     await _commit();
     return true;
   }
 
-  void renameHousehold(String name) {
+  Future<void> renameHousehold(String name) async {
     final h = household;
     if (h == null) return;
-    _repo.saveHousehold(
+    await _repo.saveHousehold(
       h.copyWith(name: name.trim().isEmpty ? h.name : name.trim()),
     );
-    _commit();
+    await _commit();
   }
 
-  void renameHouseholdCurrency(String code) {
+  Future<void> renameHouseholdCurrency(String code) async {
     final h = household;
     if (h == null) return;
-    _repo.saveHousehold(h.copyWith(currency: code));
-    _commit();
+    await _repo.saveHousehold(h.copyWith(currency: code));
+    await _commit();
   }
 
   Future<void> addMember(String name) async {
@@ -348,30 +420,31 @@ class AppState extends ChangeNotifier {
           '${trimmed.toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@hissa.app',
       createdAt: DateTime.now(),
     );
-    _repo.saveUser(newUser);
-    _repo.saveMember(
+    await _repo.saveUser(newUser);
+    await _repo.saveMember(
       HouseholdMember(
         userId: newUser.id,
         name: trimmed,
         role: MemberRole.member,
         joinedAt: DateTime.now(),
       ),
+      h.id,
     );
     await _commit();
   }
 
   Future<void> removeMember(String userId) async {
     if (userId == currentUser?.id) return;
-    _repo.removeMember(userId, _householdId ?? '');
+    await _repo.removeMember(userId, _householdId ?? '');
     await _commit();
   }
 
   // ---- categories ----
 
-  void addCategory(String name, IconData icon, Color color) {
+  Future<void> addCategory(String name, IconData icon, Color color) async {
     final h = household;
     if (h == null) return;
-    _repo.saveCategory(
+    await _repo.saveCategory(
       Category(
         id: 'cat_${genId(8)}',
         householdId: h.id,
@@ -381,35 +454,18 @@ class AppState extends ChangeNotifier {
         isDefault: false,
       ),
     );
-    _commit();
+    await _commit();
   }
 
-  void _seedCategories(String householdId) {
-    const presets = [
-      ('Groceries', Icons.shopping_basket_outlined, 0xFF16A34A),
-      ('Rent', Icons.home_outlined, 0xFF6366F1),
-      ('Electricity', Icons.bolt_outlined, 0xFFF59E0B),
-      ('Water', Icons.water_drop_outlined, 0xFF0EA5E9),
-      ('Internet', Icons.wifi_outlined, 0xFF8B5CF6),
-      ('Food', Icons.restaurant_outlined, 0xFFF97316),
-      ('Transportation', Icons.directions_bus_outlined, 0xFFEC4899),
-      ('Medical', Icons.medical_services_outlined, 0xFFEF4444),
-      ('Household', Icons.chair_outlined, 0xFF14B8A6),
-      ('Maintenance', Icons.handyman_outlined, 0xFF78716C),
-      ('Education', Icons.school_outlined, 0xFF06B6D4),
-      ('Entertainment', Icons.movie_outlined, 0xFFA855F7),
-      ('Shopping', Icons.shopping_bag_outlined, 0xFF3B82F6),
-      ('Other', Icons.more_horiz, 0xFF64748B),
-    ];
-    for (final (name, icon, color) in presets) {
-      _repo.saveCategory(
-        Category(
-          id: 'cat_${genId(8)}',
+  Future<void> _seedCategories(String householdId) async {
+    for (final preset in kDefaultCategories) {
+      await _repo.saveCategory(
+        Category.preset(
+          id: 'cat_${preset.name.toLowerCase()}',
           householdId: householdId,
-          name: name,
-          iconCodePoint: icon.codePoint,
-          colorValue: color,
-          isDefault: true,
+          name: preset.name,
+          icon: preset.icon,
+          color: preset.color,
         ),
       );
     }
@@ -417,7 +473,7 @@ class AppState extends ChangeNotifier {
 
   // ---- cycles ----
 
-  void _startCycleFor(String householdId, DateTime anchor) {
+  Future<void> _startCycleFor(String householdId, DateTime anchor) async {
     final start = DateTime(anchor.year, anchor.month, 1);
     final end = DateTime(anchor.year, anchor.month + 1, 0);
     final existing = _repo.cycles
@@ -429,7 +485,7 @@ class AppState extends ChangeNotifier {
         )
         .firstOrNull;
     if (existing != null) return;
-    _repo.saveCycle(
+    await _repo.saveCycle(
       Cycle(
         id: 'c_${genId(8)}',
         householdId: householdId,
@@ -447,7 +503,7 @@ class AppState extends ChangeNotifier {
     final balances = computeBalances(cycle.id);
     final hasOutstanding = balances.any((b) => !b.remaining.isZero);
     if (hasOutstanding) return;
-    _repo.saveCycle(
+    await _repo.saveCycle(
       cycle.copyWith(status: CycleStatus.closed, closedAt: DateTime.now()),
     );
     await _commit();
@@ -459,11 +515,11 @@ class AppState extends ChangeNotifier {
     if (h == null) return;
     final anchor = DateTime.now();
     if (cycle != null && cycle.status == CycleStatus.active) {
-      _repo.saveCycle(
+      await _repo.saveCycle(
         cycle.copyWith(status: CycleStatus.closed, closedAt: DateTime.now()),
       );
     }
-    _startCycleFor(h.id, anchor);
+    await _startCycleFor(h.id, anchor);
     _cycleId = null;
     await _commit();
   }
@@ -509,7 +565,7 @@ class AppState extends ChangeNotifier {
       customAmounts: customAmounts,
       shareUnits: shareUnits,
     );
-    _repo.saveExpense(expense, shares);
+    await _repo.saveExpense(expense, shares);
     await _commit();
   }
 
@@ -544,12 +600,12 @@ class AppState extends ChangeNotifier {
       customAmounts: customAmounts,
       shareUnits: shareUnits,
     );
-    _repo.saveExpense(updated, shares);
+    await _repo.saveExpense(updated, shares);
     await _commit();
   }
 
   Future<void> deleteExpense(String expenseId) async {
-    _repo.deleteExpense(expenseId);
+    await _repo.deleteExpense(expenseId);
     await _commit();
   }
 
@@ -566,7 +622,7 @@ class AppState extends ChangeNotifier {
     final h = household;
     final cycle = selectedCycle;
     if (h == null || cycle == null) return;
-    _repo.saveSettlement(
+    await _repo.saveSettlement(
       Settlement(
         id: 's_${genId(8)}',
         householdId: h.id,
