@@ -23,28 +23,28 @@ const List<IntroSlide> kIntroSlides = [
     title: 'Welcome to Hissa',
     subtitle:
         'The simplest way for households, roommates and families to track shared expenses together.',
-    gradient: [Color(0xFFF08B5F), Color(0xFFD6572F)],
+    gradient: [Color(0xFF57C4B5), Color(0xFF239B8A)],
   ),
   IntroSlide(
     icon: Icons.receipt_long_outlined,
     title: 'Track every expense',
     subtitle:
         'Add expenses in seconds. Split bills equally, by percentage or by custom amounts — Hissa keeps the math exact.',
-    gradient: [Color(0xFF3FB0B6), Color(0xFF17858C)],
+    gradient: [Color(0xFF5BB1C2), Color(0xFF227A8C)],
   ),
   IntroSlide(
     icon: Icons.swap_horiz_rounded,
     title: 'Settle up fairly',
     subtitle:
         'See who owes whom at a glance and record payments with cash, bank transfer, eSewa or Khalti in one tap.',
-    gradient: [Color(0xFFF0B050), Color(0xFFDD9518)],
+    gradient: [Color(0xFFF2B24E), Color(0xFFD99A20)],
   ),
   IntroSlide(
     icon: Icons.donut_small_outlined,
     title: 'Understand your spending',
     subtitle:
         'Monthly insights, category breakdowns and one-tap CSV export keep you on top of where the money goes.',
-    gradient: [Color(0xFF4FB08F), Color(0xFF2E9B6E)],
+    gradient: [Color(0xFF55B79A), Color(0xFF2E9B6E)],
   ),
 ];
 

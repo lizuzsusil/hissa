@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
 /// Central design tokens. The palette is derived from the brand logo:
-/// warm terracotta/coral primary, teal secondary, amber accent and soft
-/// cream surfaces.
+/// deep teal primary, soft mint secondary, clean white surfaces and
+/// charcoal text.
 class AppColors {
   AppColors._();
 
   // Brand
-  static const primary = Color(0xFFD9603A);
-  static const primaryDark = Color(0xFFC04E2C);
-  static const primaryDeep = Color(0xFFB04727);
-  static const secondary = Color(0xFF17858C);
-  static const secondaryDark = Color(0xFF0F6B72);
+  static const primary = Color(0xFF239B8A);
+  static const primaryDark = Color(0xFF1B7F71);
+  static const primaryDeep = Color(0xFF166A5F);
+  static const secondary = Color(0xFF8FD1CB);
+  static const secondaryDark = Color(0xFF5FBDB5);
   static const accent = Color(0xFFE8A33D);
-  static const gradientTop = Color(0xFFF08B5F);
-  static const gradientBottom = Color(0xFFD6572F);
+  static const gradientTop = Color(0xFF4BB8AA);
+  static const gradientBottom = Color(0xFF239B8A);
 
   // Semantic
   static const positive = Color(0xFF2E9B6E);
@@ -24,23 +24,23 @@ class AppColors {
   static const warning = Color(0xFFDD9518);
   static const warningSoft = Color(0xFFFBF0DC);
 
-  // Surfaces (light) — warm cream
-  static const bg = Color(0xFFF8F5F1);
+  // Surfaces (light) — clean white
+  static const bg = Color(0xFFFFFFFF);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceAlt = Color(0xFFF1ECE5);
-  static const border = Color(0xFFE5DED4);
-  static const textPrimary = Color(0xFF2C2620);
-  static const textSecondary = Color(0xFF6F675D);
-  static const textMuted = Color(0xFF9C9185);
+  static const surfaceAlt = Color(0xFFEAF5F2);
+  static const border = Color(0xFFDFECE9);
+  static const textPrimary = Color(0xFF191C1D);
+  static const textSecondary = Color(0xFF5B6B67);
+  static const textMuted = Color(0xFF8A9894);
 
   // Surfaces (dark) — warm near-black
-  static const bgDark = Color(0xFF1C1917);
-  static const surfaceDark = Color(0xFF25211D);
-  static const surfaceAltDark = Color(0xFF2F2A25);
-  static const borderDark = Color(0xFF3B342D);
-  static const textPrimaryDark = Color(0xFFF4EFE8);
-  static const textSecondaryDark = Color(0xFFB5AC9F);
-  static const textMutedDark = Color(0xFF7E7468);
+  static const bgDark = Color(0xFF111413);
+  static const surfaceDark = Color(0xFF191C1D);
+  static const surfaceAltDark = Color(0xFF232B28);
+  static const borderDark = Color(0xFF2E3A36);
+  static const textPrimaryDark = Color(0xFFEFF7F4);
+  static const textSecondaryDark = Color(0xFFA6B5B0);
+  static const textMutedDark = Color(0xFF6E7C77);
 
   static const heroGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -51,7 +51,7 @@ class AppColors {
   static const shimmerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFF2905F), Color(0xFFE2703E), Color(0xFFC94E2C)],
+    colors: [Color(0xFF57C4B5), Color(0xFF2EA799), Color(0xFF1B7F71)],
   );
 }
 
@@ -175,7 +175,7 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark
             ? AppColors.surfaceAltDark
-            : const Color(0xFF221D18),
+            : const Color(0xFF17201D),
         contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

@@ -51,12 +51,12 @@ class CategoryPreset {
 
 const List<CategoryPreset> kDefaultCategories = [
   CategoryPreset(name: 'Groceries', icon: Icons.shopping_basket_outlined, color: Color(0xFF2E9B6E)),
-  CategoryPreset(name: 'Rent', icon: Icons.home_outlined, color: Color(0xFFD9603A)),
+  CategoryPreset(name: 'Rent', icon: Icons.home_outlined, color: Color(0xFF239B8A)),
   CategoryPreset(name: 'Electricity', icon: Icons.bolt_outlined, color: Color(0xFFE8A33D)),
   CategoryPreset(name: 'Water', icon: Icons.water_drop_outlined, color: Color(0xFF3E9CB8)),
   CategoryPreset(name: 'Internet', icon: Icons.wifi_outlined, color: Color(0xFF7B63C2)),
   CategoryPreset(name: 'Food', icon: Icons.restaurant_outlined, color: Color(0xFFE2734E)),
-  CategoryPreset(name: 'Transportation', icon: Icons.directions_bus_outlined, color: Color(0xFF17858C)),
+  CategoryPreset(name: 'Transportation', icon: Icons.directions_bus_outlined, color: Color(0xFF0F6B72)),
   CategoryPreset(name: 'Medical', icon: Icons.medical_services_outlined, color: Color(0xFFD6453D)),
   CategoryPreset(name: 'Household', icon: Icons.chair_outlined, color: Color(0xFFA0763F)),
   CategoryPreset(name: 'Maintenance', icon: Icons.handyman_outlined, color: Color(0xFF8A7D6F)),

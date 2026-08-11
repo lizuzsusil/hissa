@@ -31,8 +31,11 @@ class _AmountFieldState extends State<AmountField> {
   Money _money = Money.zero();
 
   static final NumberFormat _numWhole = NumberFormat.decimalPattern('en_IN');
-  static final NumberFormat _numDecimal =
-      NumberFormat.currency(symbol: '', decimalDigits: 2, locale: 'en_IN');
+  static final NumberFormat _numDecimal = NumberFormat.currency(
+    symbol: '',
+    decimalDigits: 2,
+    locale: 'en_IN',
+  );
 
   @override
   void initState() {
@@ -88,7 +91,9 @@ class _AmountFieldState extends State<AmountField> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
@@ -108,8 +113,8 @@ class _AmountFieldState extends State<AmountField> {
           ),
           decoration: InputDecoration(
             hintText: widget.hint ?? '0.00',
-            suffixIcon: Padding(
-              padding: const EdgeInsets.only(right: 16),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 6),
               child: Text(
                 'Rs.',
                 style: TextStyle(
@@ -119,8 +124,10 @@ class _AmountFieldState extends State<AmountField> {
                 ),
               ),
             ),
-            suffixIconConstraints:
-                const BoxConstraints(minWidth: 0, minHeight: 0),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
           ),
         ),
       ],

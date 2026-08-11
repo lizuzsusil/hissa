@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import '../../core/formatters.dart';
 
 const List<Color> _avatarColors = [
-  Color(0xFFD9603A),
-  Color(0xFF17858C),
-  Color(0xFFE8A33D),
+  Color(0xFF239B8A),
+  Color(0xFF8FD1CB),
+  Color(0xFF0F6B72),
   Color(0xFF2E9B6E),
   Color(0xFF7B63C2),
   Color(0xFF3E9CB8),
-  Color(0xFFD6453D),
+  Color(0xFFE2734E),
   Color(0xFF9C5BB0),
 ];
 
@@ -102,8 +102,8 @@ class AvatarStack extends StatelessWidget {
                 height: size,
                 decoration: BoxDecoration(
                   color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF2B2620)
-                      : const Color(0xFFEDE7DE),
+                      ? const Color(0xFF2A3431)
+                      : const Color(0xFFE4F1EE),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Theme.of(context).colorScheme.surface,
@@ -117,8 +117,8 @@ class AvatarStack extends StatelessWidget {
                     fontSize: size * 0.32,
                     fontWeight: FontWeight.w700,
                     color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF8A8072)
-                        : const Color(0xFF5A5248),
+                        ? const Color(0xFF7E8C87)
+                        : const Color(0xFF52605C),
                   ),
                 ),
               ),

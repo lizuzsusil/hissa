@@ -25,6 +25,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController();
   bool _isSignUp = false;
   bool _loading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -145,16 +146,26 @@ class _AuthScreenState extends State<AuthScreen> {
                 autocorrect: false,
                 decoration: const InputDecoration(
                   labelText: 'Email address',
-                  suffixIcon: Icon(Icons.alternate_email_rounded, size: 18),
+                  prefixIcon: Icon(Icons.alternate_email_rounded, size: 18),
                 ),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
                   labelText: 'Password',
-                  suffixIcon: Icon(Icons.lock_outline_rounded, size: 18),
+                  prefixIcon: Icon(Icons.lock_outline_rounded, size: 18),
+                  suffixIcon: IconButton(
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      size: 20,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),

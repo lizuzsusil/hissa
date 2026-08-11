@@ -41,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: const Color(0xFFFEFAF6),
+        color: Colors.white,
         child: SafeArea(
           child: Center(
             child: FadeTransition(
@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen>
                       height: 108,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEFAF6),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
