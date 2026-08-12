@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -169,53 +170,89 @@ class AppState extends ChangeNotifier {
   }
 
   Future<bool> signInWithGoogle() async {
-    final google = GoogleSignIn.instance;
-    if (!_googleInitialized) {
-      await google.initialize();
-      _googleInitialized = true;
-    }
+    final String uid;
+    final String email;
+    final String name;
+    final String? photoUrl;
 
-    final GoogleSignInAccount googleAccount;
-    try {
-      googleAccount = await google.authenticate();
-    } on GoogleSignInException catch (e) {
-      switch (e.code) {
-        case GoogleSignInExceptionCode.canceled:
-        case GoogleSignInExceptionCode.interrupted:
-        case GoogleSignInExceptionCode.uiUnavailable:
+    if (kIsWeb) {
+      // On web, Firebase Auth performs the Google flow natively (popup) from
+      // the web app's config, so no OAuth client id needs to be wired into
+      // google_sign_in.
+      final UserCredential cred;
+      try {
+        cred = await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'account-exists-with-different-credential') {
+          throw const GoogleAccountConflictException();
+        }
+        if (e.code == 'popup-closed-by-user' ||
+            e.code == 'cancelled-popup-request' ||
+            e.code == 'user-cancelled') {
           return false;
-        default:
-          rethrow;
+        }
+        rethrow;
       }
+      final account = cred.user!;
+      uid = account.uid;
+      email = account.email ?? '';
+      name = account.displayName?.trim().isNotEmpty == true
+          ? account.displayName!.trim()
+          : _capitalize(email.isEmpty ? 'member' : email.split('@').first);
+      photoUrl = account.photoURL;
+    } else {
+      final google = GoogleSignIn.instance;
+      if (!_googleInitialized) {
+        await google.initialize();
+        _googleInitialized = true;
+      }
+
+      final GoogleSignInAccount googleAccount;
+      try {
+        googleAccount = await google.authenticate();
+      } on GoogleSignInException catch (e) {
+        switch (e.code) {
+          case GoogleSignInExceptionCode.canceled:
+          case GoogleSignInExceptionCode.interrupted:
+          case GoogleSignInExceptionCode.uiUnavailable:
+            return false;
+          default:
+            rethrow;
+        }
+      }
+
+      final idToken = googleAccount.authentication.idToken;
+      if (idToken == null) return false;
+      final credential = GoogleAuthProvider.credential(idToken: idToken);
+      try {
+        await FirebaseAuth.instance.signInWithCredential(credential);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'account-exists-with-different-credential') {
+          throw const GoogleAccountConflictException();
+        }
+        rethrow;
+      }
+
+      final authUser = FirebaseAuth.instance.currentUser!;
+      uid = authUser.uid;
+      email = authUser.email ?? '';
+      name = googleAccount.displayName?.trim().isNotEmpty == true
+          ? googleAccount.displayName!.trim()
+          : _capitalize(email.isEmpty ? 'member' : email.split('@').first);
+      photoUrl = authUser.photoURL;
     }
 
-    final idToken = googleAccount.authentication.idToken;
-    if (idToken == null) return false;
-    final credential = GoogleAuthProvider.credential(idToken: idToken);
-    try {
-      await FirebaseAuth.instance.signInWithCredential(credential);
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'account-exists-with-different-credential') {
-        throw const GoogleAccountConflictException();
-      }
-      rethrow;
-    }
-
-    final authUser = FirebaseAuth.instance.currentUser!;
-    _currentUserId = authUser.uid;
+    _currentUserId = uid;
     _householdId = null;
     _cycleId = null;
     await _attachRepository();
     if (currentUser == null) {
-      final name = googleAccount.displayName?.trim().isNotEmpty == true
-          ? googleAccount.displayName!.trim()
-          : _capitalize((authUser.email ?? 'member').split('@').first);
       await _repo.saveUser(
         User(
-          id: authUser.uid,
+          id: uid,
           name: name,
-          email: authUser.email ?? '',
-          avatarUrl: authUser.photoURL,
+          email: email,
+          avatarUrl: photoUrl,
           createdAt: DateTime.now(),
         ),
       );
