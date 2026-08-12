@@ -15,18 +15,31 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late final TextEditingController _nameController;
+  final _nameFocus = FocusNode();
   bool _saving = false;
+  String? _nameError;
 
   @override
   void initState() {
     super.initState();
     final user = context.read<AppState>().currentUser;
     _nameController = TextEditingController(text: user?.name ?? '');
+    _nameFocus.addListener(_handleNameFocus);
+  }
+
+  void _handleNameFocus() {
+    if (_nameFocus.hasFocus) return;
+    setState(() {
+      _nameError = _nameController.text.trim().isEmpty
+          ? 'Enter your name'
+          : null;
+    });
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _nameFocus.dispose();
     super.dispose();
   }
 
@@ -72,11 +85,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 8),
           TextField(
             controller: _nameController,
+            focusNode: _nameFocus,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              suffixIcon: Icon(Icons.badge_outlined, size: 18),
+            decoration: InputDecoration(
+              suffixIcon: const Icon(Icons.badge_outlined, size: 18),
+              errorText: _nameError,
             ),
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) {
+              setState(() {
+                if (_nameError != null) _nameError = null;
+              });
+            },
           ),
           const SizedBox(height: 8),
           Text(

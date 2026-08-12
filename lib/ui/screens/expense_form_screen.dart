@@ -36,6 +36,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   Map<String, double> _percentages = {};
   Map<String, Money> _customAmounts = {};
   Map<String, int> _shareUnits = {};
+  bool _attemptedSave = false;
+  String? _descriptionError;
 
   bool get _isEdit => widget.expense != null;
 
@@ -114,17 +116,26 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               value: _amount,
               label: 'Amount',
               autofocus: !_isEdit,
+              errorText: _attemptedSave && _amount.isZero
+                  ? 'Enter an amount greater than 0'
+                  : null,
               onChanged: (m) => setState(() => _amount = m),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Description',
                 hintText: 'What was this for?',
-                suffixIcon: Icon(Icons.edit_outlined, size: 18),
+                suffixIcon: const Icon(Icons.edit_outlined, size: 18),
+                errorText: _descriptionError,
               ),
+              onChanged: (_) {
+                if (_descriptionError != null) {
+                  setState(() => _descriptionError = null);
+                }
+              },
             ),
             const SizedBox(height: 24),
             _Label('Paid by'),
@@ -157,10 +168,39 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             const SizedBox(height: 28),
             _buildPreview(state),
             const SizedBox(height: 20),
+            if (_attemptedSave && !_canSave(state)) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.negativeSoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.error_outline_rounded,
+                        size: 18, color: AppColors.negative),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _validationMessage(state)!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.negative,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             PrimaryButton(
               label: _isEdit ? 'Save changes' : 'Add expense',
               icon: _isEdit ? Icons.save_rounded : Icons.add_rounded,
-              onPressed: _canSave(state) ? _save : null,
+              onPressed: _save,
             ),
           ],
         ),
@@ -493,27 +533,49 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
   }
 
-  bool _canSave(AppState state) {
-    if (_amount.isZero) return false;
-    if (_participants.isEmpty) return false;
-    if (_paidByUserId == null) return false;
-    if (_splitType == SplitType.percentage) {
-      final sum = _percentages.values.fold<double>(0, (a, b) => a + b);
-      if ((sum - 100).abs() > 0.01) return false;
+  bool _canSave(AppState state) => _validationMessage(state) == null;
+
+  String? _validationMessage(AppState state) {
+    if (_amount.isZero) return 'Enter an amount greater than 0.';
+    if (_descriptionController.text.trim().isEmpty) {
+      return 'Add a short description.';
     }
-    if (_splitType == SplitType.custom) {
-      final sum = _customAmounts.values
-          .fold<int>(0, (a, m) => a + m.paisa);
-      if (sum != _amount.paisa) return false;
+    if (_paidByUserId == null) return 'Choose who paid.';
+    if (_participants.isEmpty) return 'Select at least one participant.';
+    switch (_splitType) {
+      case SplitType.percentage:
+        final sum = _percentages.values.fold<double>(0, (a, b) => a + b);
+        if ((sum - 100).abs() > 0.01) {
+          return 'Percentages must add up to 100%.';
+        }
+        break;
+      case SplitType.custom:
+        final sum = _customAmounts.values
+            .fold<int>(0, (a, m) => a + m.paisa);
+        if (sum != _amount.paisa) {
+          return 'Custom amounts must add up to the total.';
+        }
+        break;
+      case SplitType.shares:
+        if (_shareUnits.values.fold<int>(0, (a, b) => a + b) <= 0) {
+          return 'Enter at least one share unit.';
+        }
+        break;
+      case SplitType.equal:
+        break;
     }
-    if (_splitType == SplitType.shares) {
-      if (_shareUnits.values.fold<int>(0, (a, b) => a + b) <= 0) return false;
-    }
-    return true;
+    return null;
   }
 
   Future<void> _save() async {
+    setState(() {
+      _attemptedSave = true;
+      _descriptionError = _descriptionController.text.trim().isEmpty
+          ? 'Add a short description'
+          : null;
+    });
     final state = context.read<AppState>();
+    if (!_canSave(state)) return;
     final expense = widget.expense;
     final participants = _participants.toList();
     if (expense == null) {

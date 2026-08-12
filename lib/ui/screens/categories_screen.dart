@@ -124,6 +124,8 @@ class _AddCategorySheet extends StatefulWidget {
 
 class _AddCategorySheetState extends State<_AddCategorySheet> {
   final _nameController = TextEditingController();
+  final _nameFocus = FocusNode();
+  String? _nameError;
   int _iconIndex = 0;
   int _colorIndex = 0;
 
@@ -158,7 +160,46 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
   @override
   void dispose() {
     _nameController.dispose();
+    _nameFocus.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _nameFocus.addListener(() {
+      if (_nameFocus.hasFocus) return;
+      setState(() {
+        _nameError = _nameController.text.trim().isEmpty
+            ? 'Enter a category name'
+            : null;
+      });
+    });
+  }
+
+  void _addCategory() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _nameError = 'Enter a category name');
+      return;
+    }
+    if (name.length > 24) {
+      setState(() => _nameError = 'Keep it under 24 characters');
+      return;
+    }
+    final exists = context.read<AppState>().categories.any(
+          (c) => c.name.toLowerCase() == name.toLowerCase(),
+        );
+    if (exists) {
+      setState(() => _nameError = 'That category already exists');
+      return;
+    }
+    context.read<AppState>().addCategory(
+          name,
+          _icons[_iconIndex],
+          _colors[_colorIndex],
+        );
+    Navigator.pop(context);
   }
 
   @override
@@ -179,13 +220,21 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
           const SizedBox(height: 20),
           TextField(
             controller: _nameController,
+            focusNode: _nameFocus,
             textCapitalization: TextCapitalization.words,
             autofocus: true,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Category name',
               hintText: 'e.g. Kids, Pets, Gym',
-              suffixIcon: Icon(Icons.label_outline, size: 18),
+              suffixIcon: const Icon(Icons.label_outline, size: 18),
+              errorText: _nameError,
             ),
+            onChanged: (_) {
+              if (_nameError != null) setState(() => _nameError = null);
+            },
+            onSubmitted: (_) {
+              if (_nameController.text.trim().isNotEmpty) _addCategory();
+            },
           ),
           const SizedBox(height: 20),
           const Text('Icon',
@@ -251,16 +300,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
           PrimaryButton(
             label: 'Add category',
             icon: Icons.add_rounded,
-            onPressed: _nameController.text.trim().isEmpty
-                ? null
-                : () {
-                    context.read<AppState>().addCategory(
-                          _nameController.text,
-                          _icons[_iconIndex],
-                          _colors[_colorIndex],
-                        );
-                    Navigator.pop(context);
-                  },
+            onPressed: _nameController.text.trim().isEmpty ? null : _addCategory,
           ),
         ],
       ),

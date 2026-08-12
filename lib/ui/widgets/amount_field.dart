@@ -11,6 +11,7 @@ class AmountField extends StatefulWidget {
   final ValueChanged<Money> onChanged;
   final String? label;
   final String? hint;
+  final String? errorText;
   final bool autofocus;
 
   const AmountField({
@@ -19,6 +20,7 @@ class AmountField extends StatefulWidget {
     required this.onChanged,
     this.label,
     this.hint,
+    this.errorText,
     this.autofocus = false,
   });
 
@@ -113,6 +115,8 @@ class _AmountFieldState extends State<AmountField> {
           ),
           decoration: InputDecoration(
             hintText: widget.hint ?? '0.00',
+            errorText: widget.errorText,
+            errorMaxLines: 2,
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 16, right: 6),
               child: Text(

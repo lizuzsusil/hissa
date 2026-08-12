@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
+import '../../core/validators.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
@@ -19,6 +20,7 @@ class HouseholdScreen extends StatefulWidget {
 
 class _HouseholdScreenState extends State<HouseholdScreen> {
   final _memberController = TextEditingController();
+  String? _memberError;
 
   @override
   void dispose() {
@@ -174,11 +176,18 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 child: TextField(
                   controller: _memberController,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Add member',
                     hintText: 'Name',
-                    suffixIcon: Icon(Icons.person_add_alt_1_outlined, size: 18),
+                    suffixIcon:
+                        const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                    errorText: _memberError,
                   ),
+                  onChanged: (_) {
+                    if (_memberError != null) {
+                      setState(() => _memberError = null);
+                    }
+                  },
                   onSubmitted: (_) => _addMember(state),
                 ),
               ),
@@ -204,10 +213,16 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
 
   Future<void> _addMember(AppState state) async {
     final name = _memberController.text.trim();
-    if (name.isEmpty) return;
+    final existing = state.members.map((m) => m.name).toSet();
+    final error = validateMemberName(name, existing: existing);
+    if (error != null) {
+      setState(() => _memberError = error);
+      return;
+    }
     await state.addMember(name);
-    _memberController.clear();
     if (!mounted) return;
+    _memberController.clear();
+    setState(() => _memberError = null);
     showToast(context, '$name added to the household', type: ToastType.success);
   }
 

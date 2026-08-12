@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants.dart';
+import '../../core/validators.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
@@ -24,18 +25,43 @@ class _SetupScreenState extends State<SetupScreen> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
   final _memberController = TextEditingController();
+  final _nameFocus = FocusNode();
   final List<String> _members = [];
   String _currency = kDefaultCurrency;
+  String? _nameError;
+  String? _codeError;
+  String? _memberError;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameFocus.addListener(_handleNameFocus);
+  }
+
+  void _handleNameFocus() {
+    if (_nameFocus.hasFocus) return;
+    setState(() {
+      _nameError = _nameController.text.trim().isEmpty
+          ? 'Household name is required'
+          : null;
+    });
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _codeController.dispose();
     _memberController.dispose();
+    _nameFocus.dispose();
     super.dispose();
   }
 
   Future<void> _create() async {
+    final error = validateName(_nameController.text, label: 'Household name');
+    if (error != null) {
+      setState(() => _nameError = error);
+      return;
+    }
     setState(() => _loading = true);
     final state = context.read<AppState>();
     await state.createHousehold(
@@ -50,9 +76,15 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   Future<void> _join() async {
+    final code = _codeController.text.trim();
+    final error = validateInviteCode(code);
+    if (error != null) {
+      setState(() => _codeError = error);
+      return;
+    }
     setState(() => _loading = true);
     final state = context.read<AppState>();
-    final ok = await state.joinHousehold(_codeController.text);
+    final ok = await state.joinHousehold(code);
     if (!mounted) return;
     setState(() => _loading = false);
     if (!ok) {
@@ -68,12 +100,16 @@ class _SetupScreenState extends State<SetupScreen> {
 
   void _addMember() {
     final name = _memberController.text.trim();
-    if (name.isEmpty || _members.contains(name)) {
-      _memberController.clear();
+    final error = validateMemberName(name, existing: _members.toSet());
+    if (error != null) {
+      setState(() => _memberError = error);
       return;
     }
-    setState(() => _members.add(name));
-    _memberController.clear();
+    setState(() {
+      _members.add(name);
+      _memberError = null;
+      _memberController.clear();
+    });
   }
 
   @override
@@ -130,12 +166,17 @@ class _SetupScreenState extends State<SetupScreen> {
       children: [
         TextField(
           controller: _nameController,
+          focusNode: _nameFocus,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Household name',
             hintText: 'e.g. Our Home',
-            suffixIcon: Icon(Icons.home_outlined, size: 18),
+            suffixIcon: const Icon(Icons.home_outlined, size: 18),
+            errorText: _nameError,
           ),
+          onChanged: (_) {
+            if (_nameError != null) setState(() => _nameError = null);
+          },
         ),
         const SizedBox(height: 14),
         Text(
@@ -171,11 +212,16 @@ class _SetupScreenState extends State<SetupScreen> {
               child: TextField(
                 controller: _memberController,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Add a member',
                   hintText: 'Name',
-                  suffixIcon: Icon(Icons.person_add_alt_1_outlined, size: 18),
+                  suffixIcon:
+                      const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                  errorText: _memberError,
                 ),
+                onChanged: (_) {
+                  if (_memberError != null) setState(() => _memberError = null);
+                },
                 onSubmitted: (_) => _addMember(),
               ),
             ),
@@ -219,9 +265,7 @@ class _SetupScreenState extends State<SetupScreen> {
           label: 'Create household',
           icon: Icons.check_circle_outline_rounded,
           loading: _loading,
-          onPressed: _loading
-              ? null
-              : (_nameController.text.trim().isEmpty ? null : _create),
+          onPressed: _loading ? null : _create,
         ),
         const SizedBox(height: 12),
         Center(
@@ -250,11 +294,15 @@ class _SetupScreenState extends State<SetupScreen> {
             fontWeight: FontWeight.w800,
             letterSpacing: 6,
           ),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Invite code',
             hintText: 'ABCDE2',
-            suffixIcon: Icon(Icons.vpn_key_outlined, size: 18),
+            suffixIcon: const Icon(Icons.vpn_key_outlined, size: 18),
+            errorText: _codeError,
           ),
+          onChanged: (_) {
+            if (_codeError != null) setState(() => _codeError = null);
+          },
         ),
         const SizedBox(height: 12),
         Text(

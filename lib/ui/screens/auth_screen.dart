@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
+import '../../core/validators.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 import '../widgets/google_logo.dart';
@@ -30,6 +31,9 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isSignUp = false;
   bool _loading = false;
   bool _obscurePassword = true;
+  String? _nameError;
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void dispose() {
@@ -40,28 +44,21 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _submit() async {
+    final nameError = _isSignUp
+        ? validateName(_nameController.text, label: 'Your name')
+        : null;
+    final emailError = validateEmail(_emailController.text);
+    final passwordError = validatePassword(_passwordController.text);
+    setState(() {
+      _nameError = nameError;
+      _emailError = emailError;
+      _passwordError = passwordError;
+    });
+    if (nameError != null || emailError != null || passwordError != null) {
+      return;
+    }
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    if (email.isEmpty || !email.contains('@')) {
-      showToast(
-        context,
-        'Please enter a valid email address',
-        type: ToastType.danger,
-      );
-      return;
-    }
-    if (_isSignUp && _nameController.text.trim().isEmpty) {
-      showToast(context, 'Please tell us your name', type: ToastType.danger);
-      return;
-    }
-    if (password.length < 6) {
-      showToast(
-        context,
-        'Password must be at least 6 characters',
-        type: ToastType.danger,
-      );
-      return;
-    }
     setState(() => _loading = true);
     final state = context.read<AppState>();
     if (_isSignUp) {
@@ -251,10 +248,14 @@ class _AuthScreenState extends State<AuthScreen> {
                 TextField(
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Your name',
-                    prefixIcon: Icon(Icons.person_outline, size: 18),
+                    prefixIcon: const Icon(Icons.person_outline, size: 18),
+                    errorText: _nameError,
                   ),
+                  onChanged: (_) {
+                    if (_nameError != null) setState(() => _nameError = null);
+                  },
                 ),
                 const SizedBox(height: 14),
               ],
@@ -262,10 +263,14 @@ class _AuthScreenState extends State<AuthScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Email address',
-                  prefixIcon: Icon(Icons.alternate_email_rounded, size: 18),
+                  prefixIcon: const Icon(Icons.alternate_email_rounded, size: 18),
+                  errorText: _emailError,
                 ),
+                onChanged: (_) {
+                  if (_emailError != null) setState(() => _emailError = null);
+                },
               ),
               const SizedBox(height: 14),
               TextField(
@@ -273,7 +278,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock_outline_rounded, size: 18),
+                  prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18),
+                  errorText: _passwordError,
                   suffixIcon: IconButton(
                     onPressed: () =>
                         setState(() => _obscurePassword = !_obscurePassword),
@@ -285,6 +291,11 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
                 ),
+                onChanged: (_) {
+                  if (_passwordError != null) {
+                    setState(() => _passwordError = null);
+                  }
+                },
               ),
               const SizedBox(height: 24),
               PrimaryButton(
@@ -329,7 +340,12 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 24),
               Center(
                 child: GestureDetector(
-                  onTap: () => setState(() => _isSignUp = !_isSignUp),
+                  onTap: () => setState(() {
+                    _isSignUp = !_isSignUp;
+                    _nameError = null;
+                    _emailError = null;
+                    _passwordError = null;
+                  }),
                   child: RichText(
                     text: TextSpan(
                       style: TextStyle(
