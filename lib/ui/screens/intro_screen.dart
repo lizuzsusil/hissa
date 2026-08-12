@@ -1,21 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/constants.dart';
 import '../../l10n/l10n.dart';
+import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 
-class IntroScreen extends StatefulWidget {
-  final void Function(String mode) onContinue;
-
-  const IntroScreen({super.key, required this.onContinue});
+class IntroScreen extends StatelessWidget {
+  const IntroScreen({super.key});
 
   @override
-  State<IntroScreen> createState() => _IntroScreenState();
+  Widget build(BuildContext context) {
+    return const _IntroScreenContent();
+  }
 }
 
-class _IntroScreenState extends State<IntroScreen> {
+class _IntroScreenContent extends StatefulWidget {
+  const _IntroScreenContent();
+
+  @override
+  State<_IntroScreenContent> createState() => _IntroScreenContentState();
+}
+
+class _IntroScreenContentState extends State<_IntroScreenContent> {
   String? _selectedMode;
+
+  Future<void> _continue() async {
+    if (_selectedMode == null) return;
+    final state = context.read<AppState>();
+    await state.setOnboardingMode(_selectedMode!);
+    if (!mounted) return;
+    Navigator.of(context).pushNamed('/auth');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,9 +119,7 @@ class _IntroScreenState extends State<IntroScreen> {
               PrimaryButton(
                 label: l10n.continueLabel,
                 icon: Icons.arrow_forward_rounded,
-                onPressed: _selectedMode == null
-                    ? null
-                    : () => widget.onContinue(_selectedMode!),
+                onPressed: _selectedMode == null ? null : _continue,
               ),
               const SizedBox(height: 20),
             ],

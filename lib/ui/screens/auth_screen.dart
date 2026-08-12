@@ -13,12 +13,10 @@ import '../widgets/toasts.dart';
 
 class AuthScreen extends StatefulWidget {
   final VoidCallback onAuthenticated;
-  final VoidCallback onBack;
 
   const AuthScreen({
     super.key,
     required this.onAuthenticated,
-    required this.onBack,
   });
 
   @override
@@ -35,6 +33,13 @@ class _AuthScreenState extends State<AuthScreen> {
   String? _nameError;
   String? _emailError;
   String? _passwordError;
+
+  @override
+  void initState() {
+    super.initState();
+    // Default to sign-in (login); user can toggle to sign-up
+    _isSignUp = false;
+  }
 
   @override
   void dispose() {
@@ -186,14 +191,6 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  IconAction(
-                    icon: Icons.arrow_back_rounded,
-                    onPressed: widget.onBack,
-                  ),
-                ],
-              ),
               Center(
                 child: Container(
                   width: 80,

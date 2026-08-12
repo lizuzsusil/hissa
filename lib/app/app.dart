@@ -52,6 +52,14 @@ class _AppView extends StatelessWidget {
       ],
       supportedLocales: const [Locale('en'), Locale('ne')],
       home: const RootGate(),
+      routes: {
+        '/auth': (context) => AuthScreen(
+          onAuthenticated: () {
+            final rootGate = context.findAncestorStateOfType<_RootGateState>();
+            rootGate?._go(_FlowStep.setup);
+          },
+        ),
+      },
     );
   }
 }
@@ -107,9 +115,15 @@ class _RootGateState extends State<RootGate> {
     setState(() {
       if (!state.introSeen) {
         _step = _FlowStep.intro;
-      } else if (state.isLoggedIn) {
-        _step = state.hasHousehold ? _FlowStep.app : _FlowStep.setup;
+      } else if (state.onboardingMode != null) {
+        // Mode already selected previously, skip intro
+        if (state.isLoggedIn) {
+          _step = state.hasHousehold ? _FlowStep.app : _FlowStep.setup;
+        } else {
+          _step = _FlowStep.onboarding;
+        }
       } else {
+        // Intro seen but no mode selected yet
         _step = _FlowStep.onboarding;
       }
     });
@@ -120,7 +134,11 @@ class _RootGateState extends State<RootGate> {
     await state.markIntroSeen();
     if (!mounted) return;
     setState(() {
-      _step = state.isLoggedIn ? _FlowStep.setup : _FlowStep.onboarding;
+      if (state.onboardingMode != null) {
+        _step = state.isLoggedIn ? _FlowStep.setup : _FlowStep.onboarding;
+      } else {
+        _step = _FlowStep.onboarding;
+      }
     });
   }
 
@@ -134,20 +152,13 @@ class _RootGateState extends State<RootGate> {
       case _FlowStep.intro:
         return OnboardingScreen(onDone: _finishIntro);
       case _FlowStep.onboarding:
-        return IntroScreen(
-          onContinue: (mode) {
-            final state = context.read<AppState>();
-            state.setOnboardingMode(mode);
-            _go(_FlowStep.auth);
-          },
-        );
+        return const IntroScreen();
       case _FlowStep.auth:
         return AuthScreen(
           onAuthenticated: () {
             final state = context.read<AppState>();
             _go(state.hasHousehold ? _FlowStep.app : _FlowStep.setup);
           },
-          onBack: () => _go(_FlowStep.onboarding),
         );
       case _FlowStep.setup:
         return SetupScreen(onDone: () => _go(_FlowStep.app));
