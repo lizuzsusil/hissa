@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
+import '../widgets/google_logo.dart';
 import '../widgets/toasts.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -42,8 +43,11 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || !email.contains('@')) {
-      showToast(context, 'Please enter a valid email address',
-          type: ToastType.danger);
+      showToast(
+        context,
+        'Please enter a valid email address',
+        type: ToastType.danger,
+      );
       return;
     }
     if (_isSignUp && _nameController.text.trim().isEmpty) {
@@ -51,8 +55,11 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
     if (password.length < 6) {
-      showToast(context, 'Password must be at least 6 characters',
-          type: ToastType.danger);
+      showToast(
+        context,
+        'Password must be at least 6 characters',
+        type: ToastType.danger,
+      );
       return;
     }
     setState(() => _loading = true);
@@ -192,28 +199,51 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ],
               ),
+              Center(
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 28),
-              Text(
-                _isSignUp ? 'Create your account' : 'Welcome back',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.6,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimary,
+              Center(
+                child: Text(
+                  _isSignUp ? 'Create your account' : 'Welcome back',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.6,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimary,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                _isSignUp
-                    ? 'Start tracking shared expenses in seconds.'
-                    : 'Log in to keep your household in sync.',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondary,
+              Center(
+                child: Text(
+                  _isSignUp
+                      ? 'Start tracking shared expenses in seconds.'
+                      : 'Log in to keep your household in sync.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
@@ -223,7 +253,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
                     labelText: 'Your name',
-                    suffixIcon: Icon(Icons.person_outline, size: 18),
+                    prefixIcon: Icon(Icons.person_outline, size: 18),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -293,7 +323,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 14),
               SecondaryButton(
                 label: 'Continue with Google',
-                icon: Icons.g_mobiledata,
+                leading: const GoogleLogo(size: 18),
                 onPressed: _loading ? null : _google,
               ),
               const SizedBox(height: 24),

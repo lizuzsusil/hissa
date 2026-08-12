@@ -93,11 +93,16 @@ class SecondaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final IconData? icon;
 
+  /// Optional custom leading widget (e.g. a brand logo). Takes precedence
+  /// over [icon] when both are provided.
+  final Widget? leading;
+
   const SecondaryButton({
     super.key,
     required this.label,
     this.onPressed,
     this.icon,
+    this.leading,
   });
 
   @override
@@ -122,7 +127,10 @@ class SecondaryButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (icon != null) ...[
+                if (leading != null) ...[
+                  leading!,
+                  const SizedBox(width: 9),
+                ] else if (icon != null) ...[
                   Icon(
                     icon,
                     size: 19,

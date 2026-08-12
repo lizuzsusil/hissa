@@ -33,13 +33,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      gradient: AppColors.heroGradient,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
-                      Icons.home_work_outlined,
-                      color: Colors.white,
-                      size: 24,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 46,
+                        height: 46,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
