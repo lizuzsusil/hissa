@@ -145,14 +145,14 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
   ];
 
   static const List<Color> _colors = [
-    Color(0xFF4F46E5),
-    Color(0xFFEC4899),
-    Color(0xFF14B8A6),
-    Color(0xFFF59E0B),
-    Color(0xFF8B5CF6),
-    Color(0xFF0EA5E9),
-    Color(0xFFEF4444),
-    Color(0xFF10B981),
+    Color(0xFFBF5700), // burnt orange
+    Color(0xFF005F86), // UT blue
+    Color(0xFF43695B), // forest green
+    Color(0xFFF2A900), // gold
+    Color(0xFF382F2D), // cocoa
+    Color(0xFF3B86A5), // sky blue
+    Color(0xFFC14A32), // brick red
+    Color(0xFF9C5BB0), // violet
   ];
 
   @override
