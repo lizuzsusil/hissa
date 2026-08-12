@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
@@ -110,6 +111,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   String _friendlyAuthMessage(Object error) {
+    debugPrint('Auth error: $error');
     if (error is GoogleAccountConflictException) {
       return 'That email already has a password account. Log in with your '
           'email and password instead.';
@@ -123,12 +125,53 @@ class _AuthScreenState extends State<AuthScreen> {
         case 'invalid-email':
           return 'That email address does not look valid.';
         case 'invalid-credential':
+        case 'user-not-found':
+        case 'wrong-password':
           return 'Incorrect email or password.';
+        case 'user-disabled':
+          return 'This account has been disabled.';
         case 'too-many-requests':
           return 'Too many attempts. Please wait and try again.';
+        case 'network-request-failed':
+          return 'No internet connection. Check your connection and retry.';
+        case 'operation-not-allowed':
+          return 'This sign-in method is not enabled yet. Enable it in the '
+              'Firebase console (Authentication > Sign-in method).';
+        case 'invalid-api-key':
+        case 'app-not-authorized':
+          return 'Authentication is not configured correctly. Open the '
+              'Firebase console and check the app config, keys and SHA '
+              'fingerprints.';
       }
     }
-    return 'Something went wrong. Please try again.';
+    if (error is FirebaseException) {
+      switch (error.code) {
+        case 'permission-denied':
+          return 'The database is rejecting this action. Publish the '
+              'firestore.rules file from the project to Firebase.';
+        case 'unavailable':
+        case 'failed-precondition':
+          return 'The database is busy or not ready yet. Please try again.';
+      }
+    }
+    if (error is GoogleSignInException) {
+      switch (error.code) {
+        case GoogleSignInExceptionCode.clientConfigurationError:
+          return 'Google sign-in is not configured yet. In the Firebase '
+              'console, add your Android SHA-1 fingerprint, then re-run '
+              '`flutterfire configure`.';
+        case GoogleSignInExceptionCode.providerConfigurationError:
+          return 'Google Play services is unavailable or misconfigured on '
+              'this device.';
+        case GoogleSignInExceptionCode.uiUnavailable:
+          return 'The Google sign-in window could not be shown right now. '
+              'Please try again.';
+        default:
+          break;
+      }
+    }
+    return 'Something went wrong. Check the debug logs for the exact error '
+        '(${error.runtimeType}).';
   }
 
   @override

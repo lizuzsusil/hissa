@@ -12,7 +12,20 @@
           "package_name": "app.hissa.android"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "398063641965-2adgquis37sg472gimqapfi6gligflni.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.hissa.android",
+            "certificate_hash": "bcc8bf1bf6c8ddb77d6fba5ed31dbfdfa7dc0dec"
+          }
+        },
+        {
+          "client_id": "398063641965-4vmkv5n0a04l6cdofn7ccgbg0g4rcboo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDzRd-jpewG7M1nGpTFQO2sAAIITOmwTm0"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "398063641965-4vmkv5n0a04l6cdofn7ccgbg0g4rcboo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
