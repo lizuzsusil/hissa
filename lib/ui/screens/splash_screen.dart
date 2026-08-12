@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 
 /// Branded launch screen. Shows the logo mark and tagline with a gentle
@@ -39,6 +40,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: Container(
         color: Colors.white,
@@ -86,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Who paid · Who owes · How much',
+                      l10n.tagline,
                       style: TextStyle(
                         color: AppColors.textSecondary.withValues(alpha: 0.9),
                         fontSize: 14,

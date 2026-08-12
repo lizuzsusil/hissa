@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
 import '../../core/money.dart';
+import '../../l10n/generated/app_localizations.dart';
+import '../../l10n/l10n.dart';
 import '../../logic/balances.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
@@ -31,26 +33,27 @@ class InsightsScreen extends StatelessWidget {
 
     final categoryData = _categoryTotals(state);
     final memberPaid = _memberPaidTotals(state, cycleBalances, members);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Insights')),
+      appBar: AppBar(title: Text(l10n.insights)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
         children: [
           if (cycles.length > 1) ...[
-            const SectionHeader(title: 'Monthly spending'),
+            SectionHeader(title: l10n.monthlySpending),
             _MonthlyBarChart(data: monthlyData.reversed.toList()),
             const SizedBox(height: 24),
           ],
           if (cycle != null) ...[
             SectionHeader(
-              title: '${cycle.name} by category',
-              actionLabel: 'Cycle',
+              title: l10n.cycleNameByCategory(cycle.name),
+              actionLabel: l10n.cycle,
               onAction: () => _showCyclePicker(context, state, cycles),
             ),
             _CategoryPie(categories: categories, categoryData: categoryData),
             const SizedBox(height: 24),
-            const SectionHeader(title: 'Who paid this cycle'),
+            SectionHeader(title: l10n.whoPaidThisCycle),
             const SizedBox(height: 4),
             for (final m in members)
               Padding(
@@ -85,9 +88,9 @@ class InsightsScreen extends StatelessWidget {
           shrinkWrap: true,
           padding: const EdgeInsets.all(16),
           children: [
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text('Select cycle',
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(context.l10n.selectCycle,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
             ),
             for (final c in cycles)
@@ -101,7 +104,7 @@ class InsightsScreen extends StatelessWidget {
                       : AppColors.textMuted,
                 ),
                 title: Text(c.name),
-                subtitle: Text(c.status.label),
+                subtitle: Text(_cycleStatusLabel(context.l10n, c.status)),
                 onTap: () {
                   state.selectCycle(c.id);
                   Navigator.pop(context);
@@ -111,6 +114,19 @@ class InsightsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _cycleStatusLabel(AppLocalizations l10n, CycleStatus status) {
+  switch (status) {
+    case CycleStatus.active:
+      return l10n.statusActive;
+    case CycleStatus.readyToSettle:
+      return l10n.statusReady;
+    case CycleStatus.settled:
+      return l10n.statusSettled;
+    case CycleStatus.closed:
+      return l10n.statusClosed;
   }
 }
 
@@ -280,16 +296,17 @@ class _CategoryPie extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
     final total = categoryData.values.fold<Money>(Money.zero(), (a, b) => a + b);
 
     final entries = categoryData.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     if (entries.isEmpty || total.isZero) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.donut_small_outlined,
-        title: 'Nothing to chart yet',
-        message: 'Add expenses to see your spending breakdown.',
+        title: l10n.nothingToChart,
+        message: l10n.nothingToChartMessage,
       );
     }
 
@@ -359,7 +376,7 @@ class _CategoryPie extends StatelessWidget {
                   Expanded(
                     child: Text(
                       categories.where((c) => c.id == e.key).firstOrNull?.name ??
-                          'Other',
+                          l10n.other,
                       style: const TextStyle(
                           fontSize: 13.5, fontWeight: FontWeight.w600),
                     ),
@@ -447,6 +464,7 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final l10n = context.l10n;
     final allExpenses = state.repo.expenses;
     final totalAllTime = allExpenses.fold<Money>(
         Money.zero(), (sum, e) => sum + e.amount);
@@ -465,26 +483,26 @@ class _SummaryRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Lifetime summary',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          Text(l10n.lifetimeSummary,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: _SummaryCell(
-                  label: 'Total spent',
+                  label: l10n.totalSpent,
                   value: formatMoneyCompact(totalAllTime),
                 ),
               ),
               Expanded(
                 child: _SummaryCell(
-                  label: 'Expenses',
+                  label: l10n.expenses,
                   value: '$totalExpenses',
                 ),
               ),
               Expanded(
                 child: _SummaryCell(
-                  label: 'Average',
+                  label: l10n.average,
                   value: formatMoneyCompact(avg),
                 ),
               ),

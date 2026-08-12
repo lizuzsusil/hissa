@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
+import '../../l10n/l10n.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
@@ -17,6 +18,7 @@ class ExportScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final expenses = state.expensesInCycle;
     final cycle = state.selectedCycle;
+    final l10n = context.l10n;
 
     final csv = _buildCsv(state, expenses);
     final lines = csv.split('\n').take(6).toList();
@@ -24,7 +26,7 @@ class ExportScreen extends StatelessWidget {
         lines.join('\n') + (lines.length < csv.split('\n').length ? '\n…' : '');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Export')),
+      appBar: AppBar(title: Text(l10n.export)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
@@ -44,17 +46,17 @@ class ExportScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.table_chart_outlined,
                       color: Colors.white,
                       size: 22,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
-                      'CSV export',
-                      style: TextStyle(
+                      l10n.csvExport,
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -64,7 +66,7 @@ class ExportScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  cycle?.name ?? 'Current cycle',
+                  cycle?.name ?? l10n.currentCycleFallback,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -73,7 +75,10 @@ class ExportScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${expenses.length} expenses · ${formatMoney(state.totalSpent())}',
+                  l10n.expensesAndTotal(
+                    expenses.length,
+                    formatMoney(state.totalSpent()),
+                  ),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 13,
@@ -83,9 +88,9 @@ class ExportScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Preview',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Text(
+            l10n.preview,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
           Container(
@@ -112,21 +117,21 @@ class ExportScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           PrimaryButton(
-            label: 'Copy CSV to clipboard',
+            label: l10n.copyCsv,
             icon: Icons.copy_rounded,
             onPressed: expenses.isEmpty
                 ? null
                 : () async {
                     await Clipboard.setData(ClipboardData(text: csv));
                     if (context.mounted) {
-                      showToast(context, 'CSV copied to clipboard',
+                      showToast(context, l10n.csvCopied,
                           type: ToastType.success);
                     }
                   },
           ),
           const SizedBox(height: 10),
           SecondaryButton(
-            label: 'Share report',
+            label: l10n.shareReport,
             icon: Icons.ios_share_rounded,
             onPressed: expenses.isEmpty
                 ? null
@@ -135,7 +140,7 @@ class ExportScreen extends StatelessWidget {
                     if (context.mounted) {
                       showToast(
                         context,
-                        'CSV copied - paste it anywhere to share',
+                        l10n.csvCopiedShare,
                         type: ToastType.success,
                       );
                     }

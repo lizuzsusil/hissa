@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
 import '../../core/validators.dart';
+import '../../l10n/generated/app_localizations.dart';
+import '../../l10n/l10n.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
@@ -35,13 +37,14 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary =
         isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final l10n = context.l10n;
 
     if (household == null) {
       return const SizedBox.shrink();
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Household')),
+      appBar: AppBar(title: Text(l10n.household)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
@@ -61,12 +64,12 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
                     Icon(Icons.home_work_rounded, color: Colors.white, size: 22),
-                    SizedBox(width: 8),
-                    Text('Household',
-                        style: TextStyle(
+                    const SizedBox(width: 8),
+                    Text(l10n.household,
+                        style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 13,
                             fontWeight: FontWeight.w500)),
@@ -86,7 +89,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 Row(
                   children: [
                     Text(
-                      '${household.currency} · ${state.members.length} members',
+                      '${household.currency} · ${l10n.householdMembersCount(state.members.length)}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 13,
@@ -98,11 +101,11 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Invite code',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          Text(l10n.inviteCode,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           Text(
-            'Share this code so friends and roommates can join your household.',
+            l10n.shareInviteHint,
             style: TextStyle(fontSize: 13, color: textSecondary),
           ),
           const SizedBox(height: 12),
@@ -129,7 +132,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 InkResponse(
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: household.inviteCode));
-                    showToast(context, 'Invite code copied',
+                    showToast(context, l10n.inviteCodeCopied,
                         type: ToastType.success);
                   },
                   child: Container(
@@ -148,11 +151,11 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           const SizedBox(height: 28),
           Row(
             children: [
-              const Text('Members',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              Text(l10n.members,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               const Spacer(),
               Text(
-                '${state.members.length}',
+                l10n.householdMembersCount(state.members.length),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -177,8 +180,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   controller: _memberController,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
-                    labelText: 'Add member',
-                    hintText: 'Name',
+                    labelText: l10n.addMember,
+                    hintText: l10n.name,
                     suffixIcon:
                         const Icon(Icons.person_add_alt_1_outlined, size: 18),
                     errorText: _memberError,
@@ -203,7 +206,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Members you add will appear in expense splits automatically.',
+            l10n.addMemberHelper,
             style: TextStyle(fontSize: 12, color: textSecondary),
           ),
         ],
@@ -214,7 +217,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   Future<void> _addMember(AppState state) async {
     final name = _memberController.text.trim();
     final existing = state.members.map((m) => m.name).toSet();
-    final error = validateMemberName(name, existing: existing);
+    final vm = ValidatorMessages.fromL10n(context.l10n);
+    final error = validateMemberName(name, existing: existing, messages: vm);
     if (error != null) {
       setState(() => _memberError = error);
       return;
@@ -223,25 +227,25 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     if (!mounted) return;
     _memberController.clear();
     setState(() => _memberError = null);
-    showToast(context, '$name added to the household', type: ToastType.success);
+    showToast(context, context.l10n.addedMember(name),
+        type: ToastType.success);
   }
 
   Future<void> _confirmRemove(AppState state, HouseholdMember member) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Remove ${member.name}?'),
-        content: const Text(
-          'Their past expenses stay in the history, but they will no longer see this household.',
-        ),
+        title: Text(l10n.removeMemberTitle(member.name)),
+        content: Text(l10n.removeMemberMessage),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(l10n.cancel)),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.negative),
-            child: const Text('Remove'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -268,6 +272,7 @@ class _MemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Container(
@@ -303,9 +308,9 @@ class _MemberRow extends StatelessWidget {
                             color: AppColors.primary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            'You',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.you,
+                            style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.primary),
@@ -316,7 +321,10 @@ class _MemberRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${member.role.label} · Joined ${formatShortDate(member.joinedAt)}',
+                    l10n.memberJoinedDate(
+                      _roleLabel(l10n, member.role),
+                      formatShortDate(member.joinedAt),
+                    ),
                     style: TextStyle(
                       fontSize: 12.5,
                       color: isDark
@@ -344,5 +352,16 @@ class _MemberRow extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _roleLabel(AppLocalizations l10n, MemberRole role) {
+  switch (role) {
+    case MemberRole.owner:
+      return l10n.roleOwner;
+    case MemberRole.admin:
+      return l10n.roleAdmin;
+    case MemberRole.member:
+      return l10n.roleMember;
   }
 }

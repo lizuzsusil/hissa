@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
+import '../../l10n/l10n.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
@@ -20,15 +21,16 @@ class ExpenseDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
     final cycle = state.selectedCycle;
     final canEdit = cycle == null || cycle.status == CycleStatus.active;
     final category = state.categoryFor(expense.categoryId);
     final shares = state.sharesForExpense(expense.id);
-    final payer = state.memberName(expense.paidByUserId) ?? 'Unknown';
+    final payer = state.memberName(expense.paidByUserId) ?? l10n.unknown;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expense details'),
+        title: Text(l10n.expenseDetails),
         actions: [
           if (canEdit)
             IconAction(
@@ -65,7 +67,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                 CategoryIcon(category: category, size: 64),
                 const SizedBox(height: 16),
                 Text(
-                  expense.description ?? 'Expense',
+                  expense.description ?? l10n.expense,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white,
@@ -85,7 +87,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${category?.name ?? 'General'} · ${formatFullDate(expense.date)}',
+                  '${category?.name ?? l10n.general} · ${formatFullDate(expense.date)}',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 13,
@@ -101,20 +103,20 @@ class ExpenseDetailScreen extends StatelessWidget {
               children: [
                 _InfoRow(
                   icon: Icons.person_outline,
-                  label: 'Paid by',
+                  label: l10n.paidBy,
                   value: payer,
                 ),
                 const SizedBox(height: 14),
                 _InfoRow(
                   icon: Icons.receipt_long_outlined,
-                  label: 'Split',
-                  value: '${shares.length} person${shares.length == 1 ? '' : 's'}',
+                  label: l10n.split,
+                  value: l10n.splitPersons(shares.length),
                 ),
                 if (expense.note != null) ...[
                   const SizedBox(height: 14),
                   _InfoRow(
                     icon: Icons.sticky_note_2_outlined,
-                    label: 'Note',
+                    label: l10n.note,
                     value: expense.note!,
                   ),
                 ],
@@ -122,15 +124,15 @@ class ExpenseDetailScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                   _InfoRow(
                     icon: Icons.receipt_outlined,
-                    label: 'Receipt',
-                    value: 'Attached',
+                    label: l10n.receipt,
+                    value: l10n.attached,
                   ),
                 ],
               ],
             ),
           ),
           const SizedBox(height: 20),
-          const SectionHeaderLocal('Who pays what'),
+          SectionHeaderLocal(l10n.whoPaysWhat),
           const SizedBox(height: 8),
           SurfaceCard(
             padding: const EdgeInsets.all(20),
@@ -156,7 +158,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(right: 10),
                             child: Text(
-                              'Paid',
+                              l10n.paid,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -179,7 +181,7 @@ class ExpenseDetailScreen extends StatelessWidget {
             const SizedBox(height: 20),
             Center(
               child: Text(
-                'This cycle is closed, so expenses can no longer be edited.',
+                l10n.cycleClosedHint,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
@@ -194,22 +196,21 @@ class ExpenseDetailScreen extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, AppState state) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete this expense?'),
-        content: const Text(
-          'Deleting an expense changes the current household balances for everyone.',
-        ),
+        title: Text(l10n.deleteExpenseTitle),
+        content: Text(l10n.deleteExpenseMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.negative),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

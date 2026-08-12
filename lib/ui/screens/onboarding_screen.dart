@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants.dart';
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 
@@ -18,6 +19,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: SafeArea(
@@ -58,7 +60,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 44),
               Text(
-                'How are you\nsharing expenses?',
+                l10n.onboardingTitle,
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
@@ -71,7 +73,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Pick the setup that matches your household. You can change it anytime.',
+                l10n.onboardingSubtitle,
                 style: TextStyle(
                   fontSize: 15,
                   height: 1.4,
@@ -98,7 +100,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 12),
               PrimaryButton(
-                label: 'Continue',
+                label: l10n.continueLabel,
                 icon: Icons.arrow_forward_rounded,
                 onPressed: _selectedMode == null
                     ? null
@@ -126,7 +128,27 @@ class _ModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    late final String title;
+    late final String subtitle;
+    switch (mode.title) {
+      case 'Two People':
+        title = l10n.modeTwoPeople;
+        subtitle = l10n.modeTwoPeopleSubtitle;
+      case 'Family':
+        title = l10n.modeFamily;
+        subtitle = l10n.modeFamilySubtitle;
+      case 'Roommates':
+        title = l10n.modeRoommates;
+        subtitle = l10n.modeRoommatesSubtitle;
+      case 'Other':
+        title = l10n.modeOther;
+        subtitle = l10n.modeOtherSubtitle;
+      default:
+        title = mode.title;
+        subtitle = mode.subtitle;
+    }
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       decoration: BoxDecoration(
@@ -173,7 +195,7 @@ class _ModeCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        mode.title,
+                        title,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -181,7 +203,7 @@ class _ModeCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        mode.subtitle,
+                        subtitle,
                         style: TextStyle(
                           fontSize: 13,
                           color: isDark

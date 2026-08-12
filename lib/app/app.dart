@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/generated/app_localizations.dart';
 import '../state/app_state.dart';
 import '../ui/screens/auth_screen.dart';
 import '../ui/screens/intro_screen.dart';
@@ -8,6 +10,7 @@ import '../ui/screens/onboarding_screen.dart';
 import '../ui/screens/setup_screen.dart';
 import '../ui/screens/shell_screen.dart';
 import '../ui/screens/splash_screen.dart';
+import '../ui/state/locale_controller.dart';
 import '../ui/state/theme_controller.dart';
 import '../ui/theme/app_theme.dart';
 
@@ -20,6 +23,7 @@ class ExpenseApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AppState()),
         ChangeNotifierProvider(create: (_) => ThemeModeController()),
+        ChangeNotifierProvider(create: (_) => LocaleController()),
       ],
       child: const _AppView(),
     );
@@ -32,12 +36,21 @@ class _AppView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeController = context.watch<ThemeModeController>();
+    final localeController = context.watch<LocaleController>();
     return MaterialApp(
       title: 'Hissa',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeController.mode,
+      locale: localeController.locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('ne')],
       home: const RootGate(),
     );
   }
@@ -83,7 +96,10 @@ class _RootGateState extends State<RootGate> {
 
   Future<void> _bootstrap() async {
     final state = context.read<AppState>();
-    await state.load();
+    await Future.wait([
+      state.load(),
+      context.read<LocaleController>().load(),
+    ]);
     if (!mounted) return;
     // Give the branded splash a moment to breathe.
     await Future.delayed(const Duration(milliseconds: 1100));

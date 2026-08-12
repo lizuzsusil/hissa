@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
 import '../../core/money.dart';
+import '../../l10n/l10n.dart';
 import '../../logic/settlements.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
@@ -22,9 +23,10 @@ class SettleScreen extends StatelessWidget {
     final history = state.settlementsInCycle;
     final totalOutstanding = balances.fold<int>(
         0, (sum, b) => sum + (b.remaining.isNegative ? -b.remaining.paisa : 0));
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settle up')),
+      appBar: AppBar(title: Text(l10n.settleUp)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
         children: [
@@ -33,7 +35,7 @@ class SettleScreen extends StatelessWidget {
           else ...[
             _OutstandingCard(totalOutstanding: Money(totalOutstanding)),
             const SizedBox(height: 20),
-            const SectionHeader(title: 'Who owes whom'),
+            SectionHeader(title: l10n.whoOwesWhom),
             const SizedBox(height: 4),
             for (final proposal in proposals)
               Padding(
@@ -56,7 +58,7 @@ class SettleScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Record a payment once it’s made. Balances update automatically.',
+                      l10n.settleHint,
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
@@ -71,7 +73,7 @@ class SettleScreen extends StatelessWidget {
           ],
           if (history.isNotEmpty) ...[
             const SizedBox(height: 28),
-            const SectionHeader(title: 'Settlement history'),
+            SectionHeader(title: l10n.settlementHistory),
             const SizedBox(height: 4),
             for (final settlement in history)
               Padding(
@@ -94,6 +96,7 @@ class _OutstandingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -125,7 +128,7 @@ class _OutstandingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'To be settled',
+                  l10n.toBeSettled,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 13,
@@ -158,6 +161,7 @@ class _AllSettledCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
@@ -184,9 +188,9 @@ class _AllSettledCard extends StatelessWidget {
                 color: AppColors.positive, size: 40),
           ),
           const SizedBox(height: 18),
-          const Text(
-            'All settled up!',
-            style: TextStyle(
+          Text(
+            l10n.allSettled,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
               color: AppColors.positive,
@@ -194,7 +198,7 @@ class _AllSettledCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Everyone in this cycle is even. Nice teamwork.',
+            l10n.allSettledMessage,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -218,6 +222,7 @@ class _ProposalCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fromName = state.memberName(proposal.fromUserId) ?? '?';
     final toName = state.memberName(proposal.toUserId) ?? '?';
+    final l10n = context.l10n;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -237,7 +242,7 @@ class _ProposalCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$fromName owes $toName',
+                  l10n.owes(fromName, toName),
                   style: const TextStyle(
                       fontSize: 14, fontWeight: FontWeight.w700),
                 ),
@@ -262,9 +267,9 @@ class _ProposalCard extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                'Settle',
-                style: TextStyle(
+              child: Text(
+                l10n.settleAction,
+                style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
@@ -342,6 +347,7 @@ class _HistoryRow extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fromName = state.memberName(settlement.fromUserId) ?? '?';
     final toName = state.memberName(settlement.toUserId) ?? '?';
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -369,13 +375,16 @@ class _HistoryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$fromName → $toName',
+                  l10n.fromTo(fromName, toName),
                   style: const TextStyle(
                       fontSize: 14, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${settlement.paymentMethod} · ${formatRelativeDay(settlement.date)}',
+                  l10n.settlementMethodDay(
+                    settlement.paymentMethod,
+                    formatRelativeDay(settlement.date, l10n: l10n),
+                  ),
                   style: TextStyle(
                     fontSize: 12.5,
                     color: isDark

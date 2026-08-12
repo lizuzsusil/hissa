@@ -1,0 +1,403 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Hissa",
+  "tagline": "Who paid · Who owes · How much",
+
+  "home": "Home",
+  "expenses": "Expenses",
+  "settle": "Settle",
+  "insights": "Insights",
+  "settings": "Settings",
+  "add": "Add",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "save": "Save",
+  "saveChanges": "Save changes",
+  "continueLabel": "Continue",
+  "next": "Next",
+  "skip": "Skip",
+  "getStarted": "Get started",
+  "apply": "Apply",
+  "review": "Review",
+  "viewAll": "View all",
+  "all": "All",
+  "cycle": "Cycle",
+  "even": "Even",
+  "you": "You",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "ok": "OK",
+  "general": "General",
+  "unknown": "Unknown",
+  "attached": "Attached",
+  "other": "Other",
+  "expense": "Expense",
+
+  "@settlementsWaiting": {
+    "description": "Count of pending settlement proposals",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "settlementsWaiting": "{count, plural, =1{1 settlement waiting} other{{count} settlements waiting}}",
+
+  "@splitPersons": {
+    "description": "Number of people in a split",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "splitPersons": "{count, plural, =1{1 person} other{{count} people}}",
+
+  "@expensesAndTotal": {
+    "description": "Export header summary, e.g. '3 expenses · Rs. 1,000'",
+    "placeholders": {
+      "count": { "type": "int" },
+      "total": { "type": "String" }
+    }
+  },
+  "expensesAndTotal": "{count, plural, =1{1 expense · {total}} other{{count} expenses · {total}}}",
+
+  "@memberPaidShare": {
+    "placeholders": {
+      "paid": { "type": "String" },
+      "share": { "type": "String" }
+    }
+  },
+  "memberPaidShare": "Paid {paid} · Share {share}",
+
+  "@paidByMemberDay": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "day": { "type": "String" }
+    }
+  },
+  "paidByMemberDay": "{name} paid · {day}",
+
+  "@owes": {
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" }
+    }
+  },
+  "owes": "{from} owes {to}",
+
+  "@fromTo": {
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" }
+    }
+  },
+  "fromTo": "{from} → {to}",
+
+  "@settlementMethodDay": {
+    "placeholders": {
+      "method": { "type": "String" },
+      "day": { "type": "String" }
+    }
+  },
+  "settlementMethodDay": "{method} · {day}",
+
+  "@memberJoinedDate": {
+    "placeholders": {
+      "role": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
+  "memberJoinedDate": "{role} · Joined {date}",
+
+  "@cycleNameByCategory": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "cycleNameByCategory": "{name} by category",
+
+  "@addedMember": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "addedMember": "{name} added to the household",
+
+  "@removeMemberTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "removeMemberTitle": "Remove {name}?",
+
+  "@closeCycleTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "closeCycleTitle": "Close {name}?",
+
+  "@householdMembersCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "householdMembersCount": "{count, plural, =1{1 member} other{{count} members}}",
+
+  "category": "Category",
+  "amount": "Amount",
+  "description": "Description",
+  "descriptionHint": "What was this for?",
+  "paidBy": "Paid by",
+  "date": "Date",
+  "splitBetween": "Split between",
+  "note": "Note",
+  "noteOptionalHint": "Add a note (optional)",
+  "splitPreview": "Split preview",
+  "total": "Total",
+  "selectParticipant": "Select at least one participant.",
+  "splitLabelEqual": "Equal",
+  "splitLabelPercent": "Percent",
+  "splitLabelAmounts": "Amounts",
+  "splitLabelShares": "Shares",
+  "assigned": "Assigned",
+  "editExpense": "Edit expense",
+  "addExpense": "Add expense",
+  "yourBalance": "Your balance",
+  "youPaid": "You paid",
+  "yourShare": "Your share",
+  "youReceive": "You receive",
+  "youOwe": "You owe",
+  "totalSpending": "Total spending",
+  "householdBalances": "Household balances",
+  "recentExpenses": "Recent expenses",
+  "noExpensesYet": "No expenses yet",
+  "noExpensesMessage": "Tap the + button to add your first shared expense.",
+  "settleUp": "Settle up",
+  "searchExpenses": "Search expenses",
+  "filterExpenses": "Filter expenses",
+  "everyone": "Everyone",
+  "noMatchingExpenses": "No matching expenses",
+  "noMatchingMessage": "Try a different search or filter, or add a new expense.",
+  "expenseDetails": "Expense details",
+  "split": "Split",
+  "receipt": "Receipt",
+  "whoPaysWhat": "Who pays what",
+  "paid": "Paid",
+  "cycleClosedHint": "This cycle is closed, so expenses can no longer be edited.",
+  "deleteExpenseTitle": "Delete this expense?",
+  "deleteExpenseMessage": "Deleting an expense changes the current household balances for everyone.",
+  "monthlySpending": "Monthly spending",
+  "whoPaidThisCycle": "Who paid this cycle",
+  "selectCycle": "Select cycle",
+  "nothingToChart": "Nothing to chart yet",
+  "nothingToChartMessage": "Add expenses to see your spending breakdown.",
+  "lifetimeSummary": "Lifetime summary",
+  "totalSpent": "Total spent",
+  "average": "Average",
+
+  "introTitle1": "Welcome to Hissa",
+  "introSubtitle1": "The simplest way for households, roommates and families to track shared expenses together.",
+  "introTitle2": "Track every expense",
+  "introSubtitle2": "Add expenses in seconds. Split bills equally, by percentage or by custom amounts — Hissa keeps the math exact.",
+  "introTitle3": "Settle up fairly",
+  "introSubtitle3": "See who owes whom at a glance and record payments with cash, bank transfer, eSewa or Khalti in one tap.",
+  "introTitle4": "Understand your spending",
+  "introSubtitle4": "Monthly insights, category breakdowns and one-tap CSV export keep you on top of where the money goes.",
+
+  "onboardingTitle": "How are you\nsharing expenses?",
+  "onboardingSubtitle": "Pick the setup that matches your household. You can change it anytime.",
+  "modeTwoPeople": "Two People",
+  "modeTwoPeopleSubtitle": "A couple or duo sharing life and bills",
+  "modeFamily": "Family",
+  "modeFamilySubtitle": "Parents, kids and the whole household",
+  "modeRoommates": "Roommates",
+  "modeRoommatesSubtitle": "Flatmates splitting rent and utilities",
+  "modeOther": "Other",
+  "modeOtherSubtitle": "Any small group sharing expenses",
+
+  "setUpHousehold": "Set up your household",
+  "setUpSubtitle": "Create a new household or join one with an invite code.",
+  "create": "Create",
+  "join": "Join",
+  "householdName": "Household name",
+  "householdNameHint": "e.g. Our Home",
+  "whoLivesHere": "Who lives here?",
+  "addMember": "Add a member",
+  "name": "Name",
+  "currency": "Currency",
+  "createHousehold": "Create household",
+  "inviteLater": "You can invite more people later from Settings",
+  "inviteCode": "Invite code",
+  "inviteCodeHint": "ABCDE2",
+  "inviteCodeHelp": "Ask the household owner for their invite code. Codes are shown in Settings → Household.",
+  "joinHousehold": "Join household",
+  "inviteNotFound": "Invite code not found. Check the code and try again.",
+  "householdNameRequired": "Household name is required",
+  "enterMemberNameError": "Enter a member name",
+  "duplicateMemberError": "That name is already in the list",
+  "enterInviteCodeError": "Enter the invite code",
+  "inviteCodeFormatError": "Invite codes are 6 characters long",
+
+  "createAccount": "Create account",
+  "logIn": "Log in",
+  "createYourAccount": "Create your account",
+  "welcomeBack": "Welcome back",
+  "authSignupSubtitle": "Start tracking shared expenses in seconds.",
+  "authLoginSubtitle": "Log in to keep your household in sync.",
+  "yourName": "Your name",
+  "emailAddress": "Email address",
+  "password": "Password",
+  "continueWithGoogle": "Continue with Google",
+  "or": "or",
+  "alreadyHaveAccount": "Already have an account? ",
+  "logInLink": "Log in",
+  "newToHissa": "New to Hissa? ",
+  "createOne": "Create one",
+  "errEmailRequired": "Email address is required",
+  "errEmailInvalid": "Enter a valid email address",
+  "errPasswordRequired": "Password is required",
+  "errPasswordShort": "Password must be at least 6 characters",
+  "errPasswordLong": "Password must be 64 characters or fewer",
+  "errNameRequired": "Your name is required",
+  "errFieldRequired": "This field is required",
+  "errTooLong": "Name must be 40 characters or fewer",
+  "errIncorrectCredentials": "Incorrect email or password. Try again or create an account.",
+
+  "authGoogleConflict": "That email already has a password account. Log in with your email and password instead.",
+  "authEmailInUse": "An account already exists for that email. Log in instead.",
+  "authWeakPassword": "That password is too weak. Use at least 6 characters.",
+  "authInvalidEmail": "That email address does not look valid.",
+  "authIncorrect": "Incorrect email or password.",
+  "authUserDisabled": "This account has been disabled.",
+  "authTooManyRequests": "Too many attempts. Please wait and try again.",
+  "authNetwork": "No internet connection. Check your connection and retry.",
+  "authOperationNotAllowed": "This sign-in method is not enabled yet. Enable it in the Firebase console.",
+  "authConfigError": "Authentication is not configured correctly. Check the Firebase console app config and keys.",
+  "authFirestoreDenied": "The database is rejecting this action. Publish the firestore.rules file to Firebase.",
+  "authFirestoreUnavailable": "The database is busy or not ready yet. Please try again.",
+  "authGoogleConfig": "Google sign-in is not configured yet. Add your Android SHA-1 fingerprint in the Firebase console, then re-run `flutterfire configure`.",
+  "authGooglePlayServices": "Google Play services is unavailable or misconfigured on this device.",
+  "authGoogleUi": "The Google sign-in window could not be shown right now. Please try again.",
+  "authSomethingWentWrong": "Something went wrong. Check the debug logs for the exact error.",
+
+  "validationFieldRequired": "{label} is required",
+  "@validationFieldRequired": {
+    "placeholders": {
+      "label": { "type": "String" }
+    }
+  },
+  "validationTooLong": "{label} must be {max} characters or fewer",
+  "@validationTooLong": {
+    "placeholders": {
+      "label": { "type": "String" },
+      "max": { "type": "int" }
+    }
+  },
+  "validationNameTooLong": "Name must be 40 characters or fewer",
+  "validationDuplicateMember": "That name is already in the list",
+  "validationEmailInvalid": "Enter a valid email address",
+  "validationPasswordShort": "Password must be at least 6 characters",
+  "validationPasswordLong": "Password must be 64 characters or fewer",
+  "validationInviteFormat": "Invite codes are 6 characters long",
+
+  "recordSettlement": "Record settlement",
+  "pays": "pays",
+  "receives": "receives",
+  "paymentMethod": "Payment method",
+  "confirmPayment": "Confirm payment",
+  "settlementRecorded": "Settlement recorded",
+
+  "toBeSettled": "To be settled",
+  "whoOwesWhom": "Who owes whom",
+  "settleHint": "Record a payment once it’s made. Balances update automatically.",
+  "settlementHistory": "Settlement history",
+  "allSettled": "All settled up!",
+  "allSettledMessage": "Everyone in this cycle is even. Nice teamwork.",
+  "settleAction": "Settle",
+
+  "profile": "Profile",
+  "displayName": "Display name",
+  "displayNameHint": "This name is shared with your household members.",
+  "enterNameError": "Enter your name",
+
+  "household": "Household",
+  "householdAndMembers": "Household & members",
+  "categories": "Categories",
+  "defaultCategories": "Default categories",
+  "customCategories": "Custom categories",
+  "newCategory": "New category",
+  "categoryName": "Category name",
+  "categoryNameHint": "e.g. Kids, Pets, Gym",
+  "icon": "Icon",
+  "colour": "Colour",
+  "addCategory": "Add category",
+  "enterCategoryNameError": "Enter a category name",
+  "categoryTooLongError": "Keep it under 24 characters",
+  "duplicateCategoryError": "That category already exists",
+  "inviteCodeCopied": "Invite code copied",
+  "shareInviteHint": "Share this code so friends and roommates can join your household.",
+  "members": "Members",
+  "addMemberFieldHint": "Name",
+  "addMemberHelper": "Members you add will appear in expense splits automatically.",
+  "removeMemberMessage": "Their past expenses stay in the history, but they will no longer see this household.",
+  "roleOwner": "Owner",
+  "roleAdmin": "Admin",
+  "roleMember": "Member",
+  "statusActive": "Active",
+  "statusReady": "Ready to settle",
+  "statusSettled": "Settled",
+  "statusClosed": "Closed",
+  "statusPending": "Pending",
+  "statusPartiallyPaid": "Partially paid",
+  "statusCancelled": "Cancelled",
+
+  "spendingCycle": "Spending cycle",
+  "currentCycle": "Current cycle",
+  "noActiveCycle": "No active cycle",
+  "ownersCanManage": "Owners can manage cycles",
+  "closeCurrentCycle": "Close current cycle",
+  "startNewCycle": "Start a new cycle",
+  "closeCycle": "Close cycle",
+  "closeCycleMessage": "The cycle becomes read-only and historical. A new cycle will start next month.",
+  "data": "Data",
+  "export": "Export",
+  "csvOfCurrentCycle": "CSV of the current cycle",
+  "notifications": "Notifications",
+  "notificationsSubtitle": "Expenses, balances & reminders",
+  "notificationsSheet": "Push notifications arrive with Firebase Cloud Messaging in the connected build.",
+  "appearance": "Appearance",
+  "darkMode": "Dark mode",
+  "onValue": "On",
+  "offValue": "Off",
+  "signOut": "Sign out",
+  "signOutSubtitle": "Switch account or household",
+  "signOutTitle": "Sign out?",
+  "signOutMessage": "You can sign back in at any time.",
+  "appName": "Hissa · Household Expense Tracker",
+  "version": "v1.0.0",
+  "newCycleStarted": "New cycle started",
+  "cycleClosed": "Cycle closed",
+  "settleBeforeClose": "Settle all balances before closing the cycle",
+
+  "csvExport": "CSV export",
+  "currentCycleFallback": "Current cycle",
+  "preview": "Preview",
+  "copyCsv": "Copy CSV to clipboard",
+  "csvCopied": "CSV copied to clipboard",
+  "shareReport": "Share report",
+  "csvCopiedShare": "CSV copied - paste it anywhere to share",
+  "emptyPreview": "…",
+  "noExpensesForExport": "No expenses to export yet",
+
+  "language": "Language",
+  "languageSubtitle": "App display language",
+  "english": "English",
+  "nepali": "Nepali",
+
+  "expenseAmountError": "Enter an amount greater than 0.",
+  "expenseDescriptionError": "Add a short description.",
+  "expensePayerError": "Choose who paid.",
+  "expenseParticipantError": "Select at least one participant.",
+  "expensePercentError": "Percentages must add up to 100%.",
+  "expenseCustomError": "Custom amounts must add up to the total.",
+  "expenseSharesError": "Enter at least one share unit."
+}

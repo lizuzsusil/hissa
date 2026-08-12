@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 
 /// Visual tone for a [showToast] notification.
@@ -45,7 +46,7 @@ void showToast(
         action: onAction == null
             ? null
             : SnackBarAction(
-                label: actionLabel ?? 'OK',
+                label: actionLabel ?? context.l10n.ok,
                 textColor: style.foreground,
                 onPressed: onAction,
               ),

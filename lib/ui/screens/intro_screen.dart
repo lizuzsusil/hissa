@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 
@@ -11,8 +12,8 @@ class IntroSlide {
 
   const IntroSlide({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    this.title = '',
+    this.subtitle = '',
     required this.gradient,
   });
 }
@@ -20,30 +21,18 @@ class IntroSlide {
 const List<IntroSlide> kIntroSlides = [
   IntroSlide(
     icon: Icons.home_work_outlined,
-    title: 'Welcome to Hissa',
-    subtitle:
-        'The simplest way for households, roommates and families to track shared expenses together.',
     gradient: [Color(0xFF3B86A5), Color(0xFF005F86)],
   ),
   IntroSlide(
     icon: Icons.receipt_long_outlined,
-    title: 'Track every expense',
-    subtitle:
-        'Add expenses in seconds. Split bills equally, by percentage or by custom amounts — Hissa keeps the math exact.',
     gradient: [Color(0xFFE5853B), Color(0xFFBF5700)],
   ),
   IntroSlide(
     icon: Icons.swap_horiz_rounded,
-    title: 'Settle up fairly',
-    subtitle:
-        'See who owes whom at a glance and record payments with cash, bank transfer, eSewa or Khalti in one tap.',
     gradient: [Color(0xFFF7BD3A), Color(0xFFF2A900)],
   ),
   IntroSlide(
     icon: Icons.donut_small_outlined,
-    title: 'Understand your spending',
-    subtitle:
-        'Monthly insights, category breakdowns and one-tap CSV export keep you on top of where the money goes.',
     gradient: [Color(0xFF5A7F70), Color(0xFF43695B)],
   ),
 ];
@@ -84,7 +73,20 @@ class _IntroScreenState extends State<IntroScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titles = [
+      l10n.introTitle1,
+      l10n.introTitle2,
+      l10n.introTitle3,
+      l10n.introTitle4,
+    ];
+    final subtitles = [
+      l10n.introSubtitle1,
+      l10n.introSubtitle2,
+      l10n.introSubtitle3,
+      l10n.introSubtitle4,
+    ];
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -118,9 +120,9 @@ class _IntroScreenState extends State<IntroScreen> {
                           ? AppColors.textSecondaryDark
                           : AppColors.textSecondary,
                     ),
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    child: Text(
+                      l10n.skip,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -133,6 +135,8 @@ class _IntroScreenState extends State<IntroScreen> {
                 onPageChanged: (i) => setState(() => _index = i),
                 itemBuilder: (context, index) => _IntroPage(
                   slide: kIntroSlides[index],
+                  title: titles[index],
+                  subtitle: subtitles[index],
                 ),
               ),
             ),
@@ -143,7 +147,7 @@ class _IntroScreenState extends State<IntroScreen> {
                   _Dots(count: kIntroSlides.length, index: _index),
                   const SizedBox(height: 20),
                   PrimaryButton(
-                    label: _isLast ? 'Get started' : 'Next',
+                    label: _isLast ? l10n.getStarted : l10n.next,
                     icon: Icons.arrow_forward_rounded,
                     onPressed: _next,
                   ),
@@ -159,8 +163,14 @@ class _IntroScreenState extends State<IntroScreen> {
 
 class _IntroPage extends StatelessWidget {
   final IntroSlide slide;
+  final String title;
+  final String subtitle;
 
-  const _IntroPage({required this.slide});
+  const _IntroPage({
+    required this.slide,
+    this.title = '',
+    this.subtitle = '',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -192,7 +202,7 @@ class _IntroPage extends StatelessWidget {
           ),
           const SizedBox(height: 44),
           Text(
-            slide.title,
+            title,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 28,
@@ -205,7 +215,7 @@ class _IntroPage extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            slide.subtitle,
+            subtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15.5,

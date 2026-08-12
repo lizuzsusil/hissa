@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import '../l10n/generated/app_localizations.dart';
 import 'money.dart';
 
 /// Formats a [Money] value as NPR, e.g. "Rs. 1,234.50".
@@ -67,13 +68,13 @@ String formatMonthYear(DateTime date) => _monthYear.format(date);
 String formatYear(DateTime date) => _year.format(date);
 
 /// Returns a friendly label for a [DateTime] relative to today.
-String formatRelativeDay(DateTime date) {
+String formatRelativeDay(DateTime date, {AppLocalizations? l10n}) {
   final today = DateTime.now();
   final d = DateTime(date.year, date.month, date.day);
   final t = DateTime(today.year, today.month, today.day);
   final diff = t.difference(d).inDays;
-  if (diff == 0) return 'Today';
-  if (diff == 1) return 'Yesterday';
+  if (diff == 0) return l10n?.today ?? 'Today';
+  if (diff == 1) return l10n?.yesterday ?? 'Yesterday';
   if (diff > 1 && diff < 7) return formatDay(date);
   return formatShortDate(date);
 }

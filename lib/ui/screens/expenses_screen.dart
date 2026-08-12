@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants.dart';
 import '../../core/formatters.dart';
 import '../../core/money.dart';
+import '../../l10n/l10n.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
@@ -35,6 +36,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     final allExpenses = state.expensesInCycle;
     var filtered = allExpenses;
@@ -64,7 +66,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expenses'),
+        title: Text(l10n.expenses),
         actions: [
           IconAction(
             icon: _memberFilter != null || _categoryFilter != null
@@ -82,11 +84,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             child: TextField(
               controller: _searchController,
               onChanged: (v) => setState(() => _query = v),
-              decoration: const InputDecoration(
-                hintText: 'Search expenses',
-                suffixIcon: Icon(Icons.search_rounded, size: 18),
+              decoration: InputDecoration(
+                hintText: l10n.searchExpenses,
+                suffixIcon: const Icon(Icons.search_rounded, size: 18),
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
             ),
           ),
@@ -97,7 +99,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               children: [
                 _FilterChip(
-                  label: 'All',
+                  label: l10n.all,
                   selected: _categoryFilter == null && _memberFilter == null,
                   onTap: () => setState(() {
                     _categoryFilter = null;
@@ -121,9 +123,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             child: filtered.isEmpty
                 ? EmptyState(
                     icon: Icons.receipt_long_outlined,
-                    title: 'No matching expenses',
-                    message:
-                        'Try a different search or filter, or add a new expense.',
+                    title: l10n.noMatchingExpenses,
+                    message: l10n.noMatchingMessage,
                   )
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
@@ -135,7 +136,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           child: Row(
                             children: [
                               Text(
-                                formatRelativeDay(entry.value.first.date),
+                                formatRelativeDay(entry.value.first.date,
+                                    l10n: l10n),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
@@ -213,12 +215,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Filter expenses',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                Text(
+                  context.l10n.filterExpenses,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 20),
-                Text('Paid by',
+                Text(context.l10n.paidBy,
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -229,7 +231,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   runSpacing: 8,
                   children: [
                     ChoiceChip(
-                      label: const Text('Everyone'),
+                      label: Text(context.l10n.everyone),
                       selected: _memberFilter == null,
                       onSelected: (_) =>
                           setSheetState(() => _memberFilter = null),
@@ -244,7 +246,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text('Category',
+                Text(context.l10n.category,
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -255,7 +257,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   runSpacing: 8,
                   children: [
                     ChoiceChip(
-                      label: const Text('All'),
+                      label: Text(context.l10n.all),
                       selected: _categoryFilter == null,
                       onSelected: (_) =>
                           setSheetState(() => _categoryFilter = null),
@@ -273,7 +275,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 ),
                 const SizedBox(height: 24),
                 PrimaryButtonLocal(
-                  label: 'Apply',
+                  label: context.l10n.apply,
                   onPressed: () {
                     setState(() {});
                     Navigator.pop(context);
@@ -362,6 +364,7 @@ class _ExpenseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final l10n = context.l10n;
     final category = state.categoryFor(expense.categoryId);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
@@ -388,13 +391,16 @@ class _ExpenseRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    expense.description ?? 'Expense',
+                    expense.description ?? l10n.expense,
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${state.memberName(expense.paidByUserId)} paid · ${formatRelativeDay(expense.date)}',
+                    l10n.paidByMemberDay(
+                      state.memberName(expense.paidByUserId) ?? l10n.unknown,
+                      formatRelativeDay(expense.date, l10n: l10n),
+                    ),
                     style: TextStyle(
                       fontSize: 12.5,
                       color: isDark

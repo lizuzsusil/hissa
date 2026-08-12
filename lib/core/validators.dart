@@ -2,75 +2,141 @@
 ///
 /// Each function returns an error message when the value is invalid, or
 /// `null` when it is acceptable. Error strings are shown inline through
-/// [TextField.errorText].
+/// [TextField.errorText]. Pass [ValidatorMessages.fromL10n] to render the
+/// messages in the active app language.
 library;
 
-String? _maxLength(String value, String label, int maxLength) {
-  if (value.length > maxLength) {
-    return '$label must be $maxLength characters or fewer';
-  }
-  return null;
+import 'package:flutter/foundation.dart';
+
+import '../l10n/generated/app_localizations.dart';
+
+/// Localized copy used by the validators. The English defaults are used
+/// whenever a specific locale is not supplied.
+@immutable
+class ValidatorMessages {
+  const ValidatorMessages({
+    required this.requiredField,
+    required this.tooLong,
+    required this.emailInvalid,
+    required this.passwordTooShort,
+    required this.passwordTooLong,
+    required this.duplicateMember,
+    required this.inviteFormat,
+  });
+
+  final String Function(String label) requiredField;
+  final String Function(String label, int max) tooLong;
+  final String emailInvalid;
+  final String passwordTooShort;
+  final String passwordTooLong;
+  final String duplicateMember;
+  final String inviteFormat;
+
+  const ValidatorMessages.en()
+      : requiredField = _enRequiredField,
+        tooLong = _enTooLong,
+        emailInvalid = 'Enter a valid email address',
+        passwordTooShort = 'Password must be at least 6 characters',
+        passwordTooLong = 'Password must be 64 characters or fewer',
+        duplicateMember = 'That name is already in the list',
+        inviteFormat = 'Invite codes are 6 characters long';
+
+  factory ValidatorMessages.fromL10n(AppLocalizations l10n) => ValidatorMessages(
+        requiredField: l10n.validationFieldRequired,
+        tooLong: l10n.validationTooLong,
+        emailInvalid: l10n.validationEmailInvalid,
+        passwordTooShort: l10n.validationPasswordShort,
+        passwordTooLong: l10n.validationPasswordLong,
+        duplicateMember: l10n.validationDuplicateMember,
+        inviteFormat: l10n.validationInviteFormat,
+      );
 }
+
+String _enRequiredField(String label) => '$label is required';
+String _enTooLong(String label, int max) =>
+    '$label must be $max characters or fewer';
 
 /// A required free-text field (trimmed, with an optional length cap).
 String? requiredField(
   String? value, {
   String label = 'This field',
   int? maxLength,
+  ValidatorMessages messages = const ValidatorMessages.en(),
 }) {
   final v = value?.trim() ?? '';
-  if (v.isEmpty) return '$label is required';
-  if (maxLength != null) return _maxLength(v, label, maxLength);
+  if (v.isEmpty) return messages.requiredField(label);
+  if (maxLength != null && v.length > maxLength) {
+    return messages.tooLong(label, maxLength);
+  }
   return null;
 }
 
 /// A person/display name: required, trimmed, reasonably short.
-String? validateName(String? value, {String label = 'Name'}) {
+String? validateName(
+  String? value, {
+  String label = 'Name',
+  ValidatorMessages messages = const ValidatorMessages.en(),
+}) {
   final v = value?.trim() ?? '';
-  if (v.isEmpty) return '$label is required';
-  return _maxLength(v, label, 40);
+  if (v.isEmpty) return messages.requiredField(label);
+  if (v.length > 40) return messages.tooLong(label, 40);
+  return null;
 }
 
 final RegExp _emailRe = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
 /// A well-formed email address (matches what Firebase Auth will accept).
-String? validateEmail(String? value) {
+String? validateEmail(
+  String? value, {
+  ValidatorMessages messages = const ValidatorMessages.en(),
+}) {
   final v = value?.trim() ?? '';
-  if (v.isEmpty) return 'Email address is required';
-  if (!_emailRe.hasMatch(v)) return 'Enter a valid email address';
+  if (v.isEmpty) return messages.requiredField('Email address');
+  if (!_emailRe.hasMatch(v)) return messages.emailInvalid;
   return null;
 }
 
 /// A password of at least 6 characters (Firebase's minimum).
-String? validatePassword(String? value) {
+String? validatePassword(
+  String? value, {
+  ValidatorMessages messages = const ValidatorMessages.en(),
+}) {
   final v = value ?? '';
-  if (v.isEmpty) return 'Password is required';
-  if (v.length < 6) return 'Password must be at least 6 characters';
-  if (v.length > 64) return 'Password must be 64 characters or fewer';
+  if (v.isEmpty) return messages.requiredField('Password');
+  if (v.length < 6) return messages.passwordTooShort;
+  if (v.length > 64) return messages.passwordTooLong;
   return null;
 }
 
 final RegExp _inviteRe = RegExp(r'^[A-Z0-9]{6}$');
 
 /// A household invite code: exactly 6 uppercase letters/digits.
-String? validateInviteCode(String? value) {
+String? validateInviteCode(
+  String? value, {
+  ValidatorMessages messages = const ValidatorMessages.en(),
+}) {
   final v = (value ?? '').trim().toUpperCase();
-  if (v.isEmpty) return 'Enter the invite code';
-  if (!_inviteRe.hasMatch(v)) return 'Invite codes are 6 characters long';
+  if (v.isEmpty) {
+    return messages.requiredField('Invite code');
+  }
+  if (!_inviteRe.hasMatch(v)) return messages.inviteFormat;
   return null;
 }
 
 /// A member name: required, short, and (optionally) not a duplicate.
-String? validateMemberName(String? value, {Set<String>? existing}) {
+String? validateMemberName(
+  String? value, {
+  Set<String>? existing,
+  ValidatorMessages messages = const ValidatorMessages.en(),
+}) {
   final v = value?.trim() ?? '';
-  if (v.isEmpty) return 'Enter a member name';
-  final lenErr = _maxLength(v, 'Name', 40);
-  if (lenErr != null) return lenErr;
+  if (v.isEmpty) return messages.requiredField('Member name');
+  if (v.length > 40) return messages.tooLong('Name', 40);
   if (existing != null) {
     final normalized = v.toLowerCase();
     final isDuplicate =
         existing.any((e) => e.trim().toLowerCase() == normalized);
-    if (isDuplicate) return 'That name is already in the list';
+    if (isDuplicate) return messages.duplicateMember;
   }
   return null;
 }

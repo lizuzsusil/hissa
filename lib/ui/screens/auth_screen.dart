@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../state/app_state.dart';
 import '../../core/validators.dart';
+import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 import '../widgets/google_logo.dart';
@@ -44,11 +45,16 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _submit() async {
+    final vm = ValidatorMessages.fromL10n(context.l10n);
     final nameError = _isSignUp
-        ? validateName(_nameController.text, label: 'Your name')
+        ? validateName(
+            _nameController.text,
+            label: context.l10n.yourName,
+            messages: vm,
+          )
         : null;
-    final emailError = validateEmail(_emailController.text);
-    final passwordError = validatePassword(_passwordController.text);
+    final emailError = validateEmail(_emailController.text, messages: vm);
+    final passwordError = validatePassword(_passwordController.text, messages: vm);
     setState(() {
       _nameError = nameError;
       _emailError = emailError;
@@ -81,7 +87,7 @@ class _AuthScreenState extends State<AuthScreen> {
         setState(() => _loading = false);
         showToast(
           context,
-          'Incorrect email or password. Try again or create an account.',
+          context.l10n.errIncorrectCredentials,
           type: ToastType.danger,
         );
         return;
@@ -116,70 +122,62 @@ class _AuthScreenState extends State<AuthScreen> {
 
   String _friendlyAuthMessage(Object error) {
     debugPrint('Auth error: $error');
+    final l10n = context.l10n;
     if (error is GoogleAccountConflictException) {
-      return 'That email already has a password account. Log in with your '
-          'email and password instead.';
+      return l10n.authGoogleConflict;
     }
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'email-already-in-use':
-          return 'An account already exists for that email. Log in instead.';
+          return l10n.authEmailInUse;
         case 'weak-password':
-          return 'That password is too weak. Use at least 6 characters.';
+          return l10n.authWeakPassword;
         case 'invalid-email':
-          return 'That email address does not look valid.';
+          return l10n.authInvalidEmail;
         case 'invalid-credential':
         case 'user-not-found':
         case 'wrong-password':
-          return 'Incorrect email or password.';
+          return l10n.authIncorrect;
         case 'user-disabled':
-          return 'This account has been disabled.';
+          return l10n.authUserDisabled;
         case 'too-many-requests':
-          return 'Too many attempts. Please wait and try again.';
+          return l10n.authTooManyRequests;
         case 'network-request-failed':
-          return 'No internet connection. Check your connection and retry.';
+          return l10n.authNetwork;
         case 'operation-not-allowed':
-          return 'This sign-in method is not enabled yet. Enable it in the '
-              'Firebase console (Authentication > Sign-in method).';
+          return l10n.authOperationNotAllowed;
         case 'invalid-api-key':
         case 'app-not-authorized':
-          return 'Authentication is not configured correctly. Open the '
-              'Firebase console and check the app config, keys and SHA '
-              'fingerprints.';
+          return l10n.authConfigError;
       }
     }
     if (error is FirebaseException) {
       switch (error.code) {
         case 'permission-denied':
-          return 'The database is rejecting this action. Publish the '
-              'firestore.rules file from the project to Firebase.';
+          return l10n.authFirestoreDenied;
         case 'unavailable':
         case 'failed-precondition':
-          return 'The database is busy or not ready yet. Please try again.';
+          return l10n.authFirestoreUnavailable;
       }
     }
     if (error is GoogleSignInException) {
       switch (error.code) {
         case GoogleSignInExceptionCode.clientConfigurationError:
-          return 'Google sign-in is not configured yet. In the Firebase '
-              'console, add your Android SHA-1 fingerprint, then re-run '
-              '`flutterfire configure`.';
+          return l10n.authGoogleConfig;
         case GoogleSignInExceptionCode.providerConfigurationError:
-          return 'Google Play services is unavailable or misconfigured on '
-              'this device.';
+          return l10n.authGooglePlayServices;
         case GoogleSignInExceptionCode.uiUnavailable:
-          return 'The Google sign-in window could not be shown right now. '
-              'Please try again.';
+          return l10n.authGoogleUi;
         default:
           break;
       }
     }
-    return 'Something went wrong. Check the debug logs for the exact error '
-        '(${error.runtimeType}).';
+    return l10n.authSomethingWentWrong;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: SafeArea(
@@ -217,7 +215,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 28),
               Center(
                 child: Text(
-                  _isSignUp ? 'Create your account' : 'Welcome back',
+                  _isSignUp ? l10n.createYourAccount : l10n.welcomeBack,
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w800,
@@ -231,9 +229,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  _isSignUp
-                      ? 'Start tracking shared expenses in seconds.'
-                      : 'Log in to keep your household in sync.',
+                  _isSignUp ? l10n.authSignupSubtitle : l10n.authLoginSubtitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
@@ -249,7 +245,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
-                    labelText: 'Your name',
+                    labelText: l10n.yourName,
                     prefixIcon: const Icon(Icons.person_outline, size: 18),
                     errorText: _nameError,
                   ),
@@ -264,7 +260,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
                 decoration: InputDecoration(
-                  labelText: 'Email address',
+                  labelText: l10n.emailAddress,
                   prefixIcon: const Icon(Icons.alternate_email_rounded, size: 18),
                   errorText: _emailError,
                 ),
@@ -277,7 +273,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: l10n.password,
                   prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18),
                   errorText: _passwordError,
                   suffixIcon: IconButton(
@@ -299,7 +295,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 24),
               PrimaryButton(
-                label: _isSignUp ? 'Create account' : 'Log in',
+                label: _isSignUp ? l10n.createAccount : l10n.logIn,
                 icon: _isSignUp ? Icons.person_add_alt : Icons.login_rounded,
                 loading: _loading,
                 onPressed: _loading ? null : _submit,
@@ -315,7 +311,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
-                      'or',
+                      l10n.or,
                       style: TextStyle(
                         color: isDark
                             ? AppColors.textMutedDark
@@ -333,7 +329,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 14),
               SecondaryButton(
-                label: 'Continue with Google',
+                label: l10n.continueWithGoogle,
                 leading: const GoogleLogo(size: 18),
                 onPressed: _loading ? null : _google,
               ),
@@ -357,11 +353,11 @@ class _AuthScreenState extends State<AuthScreen> {
                       children: [
                         TextSpan(
                           text: _isSignUp
-                              ? 'Already have an account? '
-                              : 'New to Hissa? ',
+                              ? l10n.alreadyHaveAccount
+                              : l10n.newToHissa,
                         ),
                         TextSpan(
-                          text: _isSignUp ? 'Log in' : 'Create one',
+                          text: _isSignUp ? l10n.logInLink : l10n.createOne,
                           style: const TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w700,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/l10n.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
@@ -31,7 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_nameFocus.hasFocus) return;
     setState(() {
       _nameError = _nameController.text.trim().isEmpty
-          ? 'Enter your name'
+          ? context.l10n.enterNameError
           : null;
     });
   }
@@ -57,10 +58,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final state = context.watch<AppState>();
     final user = state.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
     final name = _nameController.text.trim().isEmpty ? (user?.name ?? 'You') : _nameController.text.trim();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(l10n.profile)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
@@ -78,9 +80,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 28),
-          const Text(
-            'Display name',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          Text(
+            l10n.displayName,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -99,7 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'This name is shared with your household members.',
+            l10n.displayNameHint,
             style: TextStyle(
               fontSize: 12,
               color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
@@ -107,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 28),
           PrimaryButton(
-            label: 'Save changes',
+            label: l10n.saveChanges,
             icon: Icons.save_rounded,
             loading: _saving,
             onPressed: _nameController.text.trim().isEmpty ? null : _save,

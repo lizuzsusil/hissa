@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
@@ -16,10 +17,11 @@ class CategoriesScreen extends StatelessWidget {
     final state = context.watch<AppState>();
     final categories = state.categories;
     final custom = categories.where((c) => !c.isDefault).toList();
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories'),
+        title: Text(l10n.categories),
         actions: [
           IconAction(
             icon: Icons.add_rounded,
@@ -33,11 +35,11 @@ class CategoriesScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          const SectionHeader(title: 'Default categories'),
+          SectionHeader(title: l10n.defaultCategories),
           _CategoryGrid(categories: categories.where((c) => c.isDefault).toList()),
           if (custom.isNotEmpty) ...[
             const SizedBox(height: 20),
-            const SectionHeader(title: 'Custom categories'),
+            SectionHeader(title: l10n.customCategories),
             _CategoryGrid(categories: custom),
           ],
         ],
@@ -171,7 +173,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
       if (_nameFocus.hasFocus) return;
       setState(() {
         _nameError = _nameController.text.trim().isEmpty
-            ? 'Enter a category name'
+            ? context.l10n.enterCategoryNameError
             : null;
       });
     });
@@ -180,18 +182,18 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
   void _addCategory() {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _nameError = 'Enter a category name');
+      setState(() => _nameError = context.l10n.enterCategoryNameError);
       return;
     }
     if (name.length > 24) {
-      setState(() => _nameError = 'Keep it under 24 characters');
+      setState(() => _nameError = context.l10n.categoryTooLongError);
       return;
     }
     final exists = context.read<AppState>().categories.any(
           (c) => c.name.toLowerCase() == name.toLowerCase(),
         );
     if (exists) {
-      setState(() => _nameError = 'That category already exists');
+      setState(() => _nameError = context.l10n.duplicateCategoryError);
       return;
     }
     context.read<AppState>().addCategory(
@@ -204,6 +206,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: EdgeInsets.only(
         left: 24,
@@ -215,8 +218,8 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('New category',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          Text(l10n.newCategory,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
           const SizedBox(height: 20),
           TextField(
             controller: _nameController,
@@ -224,8 +227,8 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
             textCapitalization: TextCapitalization.words,
             autofocus: true,
             decoration: InputDecoration(
-              labelText: 'Category name',
-              hintText: 'e.g. Kids, Pets, Gym',
+              labelText: l10n.categoryName,
+              hintText: l10n.categoryNameHint,
               suffixIcon: const Icon(Icons.label_outline, size: 18),
               errorText: _nameError,
             ),
@@ -237,8 +240,8 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
             },
           ),
           const SizedBox(height: 20),
-          const Text('Icon',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          Text(l10n.icon,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           SizedBox(
             height: 46,
@@ -279,8 +282,8 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text('Colour',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          Text(l10n.colour,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           Wrap(
             spacing: 12,
@@ -298,7 +301,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
           ),
           const SizedBox(height: 24),
           PrimaryButton(
-            label: 'Add category',
+            label: l10n.addCategory,
             icon: Icons.add_rounded,
             onPressed: _nameController.text.trim().isEmpty ? null : _addCategory,
           ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants.dart';
 import '../../core/validators.dart';
+import '../../l10n/l10n.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
@@ -42,7 +43,7 @@ class _SetupScreenState extends State<SetupScreen> {
     if (_nameFocus.hasFocus) return;
     setState(() {
       _nameError = _nameController.text.trim().isEmpty
-          ? 'Household name is required'
+          ? context.l10n.householdNameRequired
           : null;
     });
   }
@@ -57,7 +58,12 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   Future<void> _create() async {
-    final error = validateName(_nameController.text, label: 'Household name');
+    final vm = ValidatorMessages.fromL10n(context.l10n);
+    final error = validateName(
+      _nameController.text,
+      label: context.l10n.householdName,
+      messages: vm,
+    );
     if (error != null) {
       setState(() => _nameError = error);
       return;
@@ -77,7 +83,8 @@ class _SetupScreenState extends State<SetupScreen> {
 
   Future<void> _join() async {
     final code = _codeController.text.trim();
-    final error = validateInviteCode(code);
+    final vm = ValidatorMessages.fromL10n(context.l10n);
+    final error = validateInviteCode(code, messages: vm);
     if (error != null) {
       setState(() => _codeError = error);
       return;
@@ -90,7 +97,7 @@ class _SetupScreenState extends State<SetupScreen> {
     if (!ok) {
       showToast(
         context,
-        'Invite code not found. Check the code and try again.',
+        context.l10n.inviteNotFound,
         type: ToastType.danger,
       );
       return;
@@ -100,7 +107,12 @@ class _SetupScreenState extends State<SetupScreen> {
 
   void _addMember() {
     final name = _memberController.text.trim();
-    final error = validateMemberName(name, existing: _members.toSet());
+    final vm = ValidatorMessages.fromL10n(context.l10n);
+    final error = validateMemberName(
+      name,
+      existing: _members.toSet(),
+      messages: vm,
+    );
     if (error != null) {
       setState(() => _memberError = error);
       return;
@@ -114,6 +126,7 @@ class _SetupScreenState extends State<SetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark
         ? AppColors.textPrimaryDark
@@ -127,7 +140,7 @@ class _SetupScreenState extends State<SetupScreen> {
             children: [
               const SizedBox(height: 12),
               Text(
-                'Set up your household',
+                l10n.setUpHousehold,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -137,7 +150,7 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Create a new household or join one with an invite code.',
+                l10n.setUpSubtitle,
                 style: TextStyle(
                   fontSize: 15,
                   color: isDark
@@ -147,7 +160,7 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
               const SizedBox(height: 28),
               _Segmented(
-                options: const ['Create', 'Join'],
+                options: [l10n.create, l10n.join],
                 index: _createMode ? 0 : 1,
                 onChanged: (i) => setState(() => _createMode = i == 0),
               ),
@@ -161,6 +174,7 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   Widget _buildCreate(bool isDark) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -169,8 +183,8 @@ class _SetupScreenState extends State<SetupScreen> {
           focusNode: _nameFocus,
           textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
-            labelText: 'Household name',
-            hintText: 'e.g. Our Home',
+            labelText: l10n.householdName,
+            hintText: l10n.householdNameHint,
             suffixIcon: const Icon(Icons.home_outlined, size: 18),
             errorText: _nameError,
           ),
@@ -180,7 +194,7 @@ class _SetupScreenState extends State<SetupScreen> {
         ),
         const SizedBox(height: 14),
         Text(
-          'Who lives here?',
+          l10n.whoLivesHere,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -213,8 +227,8 @@ class _SetupScreenState extends State<SetupScreen> {
                 controller: _memberController,
                 textCapitalization: TextCapitalization.words,
                 decoration: InputDecoration(
-                  labelText: 'Add a member',
-                  hintText: 'Name',
+                  labelText: l10n.addMember,
+                  hintText: l10n.name,
                   suffixIcon:
                       const Icon(Icons.person_add_alt_1_outlined, size: 18),
                   errorText: _memberError,
@@ -237,7 +251,7 @@ class _SetupScreenState extends State<SetupScreen> {
         ),
         const SizedBox(height: 14),
         Text(
-          'Currency',
+          l10n.currency,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -262,7 +276,7 @@ class _SetupScreenState extends State<SetupScreen> {
         ),
         const SizedBox(height: 28),
         PrimaryButton(
-          label: 'Create household',
+          label: l10n.createHousehold,
           icon: Icons.check_circle_outline_rounded,
           loading: _loading,
           onPressed: _loading ? null : _create,
@@ -270,7 +284,7 @@ class _SetupScreenState extends State<SetupScreen> {
         const SizedBox(height: 12),
         Center(
           child: Text(
-            'You can invite more people later from Settings',
+            l10n.inviteLater,
             style: TextStyle(
               fontSize: 12,
               color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
@@ -282,6 +296,7 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   Widget _buildJoin(bool isDark) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -295,8 +310,8 @@ class _SetupScreenState extends State<SetupScreen> {
             letterSpacing: 6,
           ),
           decoration: InputDecoration(
-            labelText: 'Invite code',
-            hintText: 'ABCDE2',
+            labelText: l10n.inviteCode,
+            hintText: l10n.inviteCodeHint,
             suffixIcon: const Icon(Icons.vpn_key_outlined, size: 18),
             errorText: _codeError,
           ),
@@ -306,7 +321,7 @@ class _SetupScreenState extends State<SetupScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Ask the household owner for their invite code. Codes are shown in Settings → Household.',
+          l10n.inviteCodeHelp,
           style: TextStyle(
             fontSize: 13,
             height: 1.4,
@@ -317,7 +332,7 @@ class _SetupScreenState extends State<SetupScreen> {
         ),
         const SizedBox(height: 28),
         PrimaryButton(
-          label: 'Join household',
+          label: l10n.joinHousehold,
           icon: Icons.group_add_outlined,
           loading: _loading,
           onPressed: _loading ? null : _join,

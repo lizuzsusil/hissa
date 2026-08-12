@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
 import '../../core/money.dart';
+import '../../l10n/l10n.dart';
 import '../../logic/balances.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
@@ -33,6 +34,7 @@ class DashboardScreen extends StatelessWidget {
     final proposals = state.settlementProposals();
     final expenses = state.expensesInCycle;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return CustomScrollView(
       slivers: [
@@ -61,7 +63,7 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 _QuickActions(proposals: proposals),
                 const SizedBox(height: 24),
-                const SectionHeader(title: 'Household balances'),
+                SectionHeader(title: l10n.householdBalances),
                 ...members.map((m) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: _MemberBalanceCard(
@@ -74,18 +76,17 @@ class DashboardScreen extends StatelessWidget {
                     )),
                 const SizedBox(height: 16),
                 SectionHeader(
-                  title: 'Recent expenses',
-                  actionLabel: 'View all',
+                  title: l10n.recentExpenses,
+                  actionLabel: l10n.viewAll,
                   onAction: () => context
                       .read<ShellTabController>()
                       .switchTo(1),
                 ),
                 if (expenses.isEmpty)
-                  const EmptyState(
+                  EmptyState(
                     icon: Icons.receipt_long_outlined,
-                    title: 'No expenses yet',
-                    message:
-                        'Tap the + button to add your first shared expense.',
+                    title: l10n.noExpensesYet,
+                    message: l10n.noExpensesMessage,
                   )
                 else
                   ...expenses.take(5).map((e) => Padding(
@@ -117,6 +118,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.shimmerGradient,
@@ -155,9 +157,9 @@ class _Header extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              const Text(
-                'Total spending',
-                style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+              Text(
+                l10n.totalSpending,
+                style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 4),
               FittedBox(
@@ -252,6 +254,7 @@ class _YourBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final l10n = context.l10n;
     final user = state.currentUser;
     if (user == null) return const SizedBox.shrink();
     final mine = balances.where((b) => b.userId == user.id).firstOrNull;
@@ -273,8 +276,8 @@ class _YourBalanceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text('Your balance',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              Text(l10n.yourBalance,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
               const Spacer(),
               _BalanceChip(balance: mine.balance),
             ],
@@ -284,7 +287,7 @@ class _YourBalanceCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MiniStat(
-                  label: 'You paid',
+                  label: l10n.youPaid,
                   value: formatMoneyCompact(mine.paid),
                   icon: Icons.arrow_upward_rounded,
                   color: AppColors.positive,
@@ -293,7 +296,7 @@ class _YourBalanceCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _MiniStat(
-                  label: 'Your share',
+                  label: l10n.yourShare,
                   value: formatMoneyCompact(mine.share),
                   icon: Icons.people_alt_outlined,
                   color: AppColors.primary,
@@ -314,6 +317,7 @@ class _BalanceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     if (balance.isZero) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -321,8 +325,8 @@ class _BalanceChip extends StatelessWidget {
           color: AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Text('Even',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+        child: Text(l10n.even,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
       );
     }
     final positive = balance.isPositive;
@@ -344,7 +348,7 @@ class _BalanceChip extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            positive ? 'You receive' : 'You owe',
+            positive ? l10n.youReceive : l10n.youOwe,
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
           ),
           const SizedBox(width: 6),
@@ -426,6 +430,7 @@ class _QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       children: [
         Row(
@@ -433,7 +438,7 @@ class _QuickActions extends StatelessWidget {
             Expanded(
               child: _ActionButton(
                 icon: Icons.add_rounded,
-                label: 'Add expense',
+                label: l10n.addExpense,
                 gradient: true,
                 onTap: () {
                   Navigator.of(context).push(MaterialPageRoute(
@@ -446,7 +451,7 @@ class _QuickActions extends StatelessWidget {
             Expanded(
               child: _ActionButton(
                 icon: Icons.swap_horiz_rounded,
-                label: 'Settle up',
+                label: l10n.settleUp,
                 gradient: false,
                 onTap: () => context.read<ShellTabController>().switchTo(2),
               ),
@@ -470,13 +475,13 @@ class _QuickActions extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      '${proposals.length} settlement${proposals.length == 1 ? '' : 's'} waiting',
+                      l10n.settlementsWaiting(proposals.length),
                       style: const TextStyle(
                           color: Colors.white, fontWeight: FontWeight.w700),
                     ),
                   ),
                   Text(
-                    'Review',
+                    l10n.review,
                     style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontWeight: FontWeight.w600),
@@ -559,6 +564,7 @@ class _MemberBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
     final b = balance;
     final balanceValue = b?.balance ?? Money.zero();
     final statusColor = balanceValue.isZero
@@ -599,9 +605,9 @@ class _MemberBalanceCard extends StatelessWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
-                          'You',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.you,
+                          style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: AppColors.primary),
@@ -612,7 +618,10 @@ class _MemberBalanceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Paid ${formatMoneyCompact(b?.paid ?? Money.zero(), showSymbol: false)} · Share ${formatMoneyCompact(b?.share ?? Money.zero(), showSymbol: false)}',
+                  l10n.memberPaidShare(
+                    formatMoneyCompact(b?.paid ?? Money.zero(), showSymbol: false),
+                    formatMoneyCompact(b?.share ?? Money.zero(), showSymbol: false),
+                  ),
                   style: TextStyle(
                     fontSize: 12.5,
                     color: isDark
@@ -631,7 +640,7 @@ class _MemberBalanceCard extends StatelessWidget {
             ),
             child: Text(
               balanceValue.isZero
-                  ? 'Even'
+                  ? l10n.even
                   : '${balanceValue.isPositive ? '+' : ''}${formatMoneyCompact(balanceValue, showSymbol: false)}',
               style: TextStyle(
                 fontSize: 13,
@@ -654,6 +663,7 @@ class _ExpenseTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final l10n = context.l10n;
     final category = state.categoryFor(expense.categoryId);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
@@ -680,13 +690,13 @@ class _ExpenseTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    expense.description ?? 'Expense',
+                    expense.description ?? l10n.expense,
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${state.memberName(expense.paidByUserId)} · ${formatRelativeDay(expense.date)}',
+                    '${state.memberName(expense.paidByUserId)} · ${formatRelativeDay(expense.date, l10n: l10n)}',
                     style: TextStyle(
                       fontSize: 12.5,
                       color: isDark

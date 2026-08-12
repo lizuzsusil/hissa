@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../../core/constants.dart';
 import '../../core/formatters.dart';
 import '../../core/money.dart';
+import '../../l10n/generated/app_localizations.dart';
+import '../../l10n/l10n.dart';
 import '../../logic/splits.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
@@ -100,10 +102,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final members = state.members;
     final categories = state.categories;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit expense' : 'Add expense'),
+        title: Text(_isEdit ? l10n.editExpense : l10n.addExpense),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
@@ -114,10 +117,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             const SizedBox(height: 20),
             AmountField(
               value: _amount,
-              label: 'Amount',
+              label: l10n.amount,
               autofocus: !_isEdit,
               errorText: _attemptedSave && _amount.isZero
-                  ? 'Enter an amount greater than 0'
+                  ? l10n.expenseAmountError
                   : null,
               onChanged: (m) => setState(() => _amount = m),
             ),
@@ -126,8 +129,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               controller: _descriptionController,
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
-                labelText: 'Description',
-                hintText: 'What was this for?',
+                labelText: l10n.description,
+                hintText: l10n.descriptionHint,
                 suffixIcon: const Icon(Icons.edit_outlined, size: 18),
                 errorText: _descriptionError,
               ),
@@ -138,15 +141,15 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               },
             ),
             const SizedBox(height: 24),
-            _Label('Paid by'),
+            _Label(l10n.paidBy),
             const SizedBox(height: 10),
             _buildPayerSelector(members),
             const SizedBox(height: 24),
-            _Label('Date'),
+            _Label(l10n.date),
             const SizedBox(height: 10),
             _buildDatePicker(isDark),
             const SizedBox(height: 24),
-            _Label('Split between'),
+            _Label(l10n.splitBetween),
             const SizedBox(height: 10),
             _buildParticipantSelector(members),
             const SizedBox(height: 20),
@@ -154,21 +157,21 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             const SizedBox(height: 20),
             _buildSplitInput(state),
             const SizedBox(height: 24),
-            _Label('Note'),
+            _Label(l10n.note),
             const SizedBox(height: 10),
             TextField(
               controller: _noteController,
               maxLines: 2,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                hintText: 'Add a note (optional)',
-                suffixIcon: Icon(Icons.sticky_note_2_outlined, size: 18),
+              decoration: InputDecoration(
+                hintText: l10n.noteOptionalHint,
+                suffixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),
               ),
             ),
             const SizedBox(height: 28),
             _buildPreview(state),
             const SizedBox(height: 20),
-            if (_attemptedSave && !_canSave(state)) ...[
+            if (_attemptedSave && !_canSave(state, l10n)) ...[
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 10),
@@ -184,7 +187,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _validationMessage(state)!,
+                        _validationMessage(state, l10n)!,
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -198,7 +201,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               const SizedBox(height: 12),
             ],
             PrimaryButton(
-              label: _isEdit ? 'Save changes' : 'Add expense',
+              label: _isEdit ? l10n.saveChanges : l10n.addExpense,
               icon: _isEdit ? Icons.save_rounded : Icons.add_rounded,
               onPressed: _save,
             ),
@@ -212,7 +215,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Label('Category'),
+        _Label(context.l10n.category),
         const SizedBox(height: 10),
         Wrap(
           spacing: 10,
@@ -418,15 +421,16 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   String _splitLabel(SplitType type) {
+    final l10n = context.l10n;
     switch (type) {
       case SplitType.equal:
-        return 'Equal';
+        return l10n.splitLabelEqual;
       case SplitType.percentage:
-        return 'Percent';
+        return l10n.splitLabelPercent;
       case SplitType.custom:
-        return 'Amounts';
+        return l10n.splitLabelAmounts;
       case SplitType.shares:
-        return 'Shares';
+        return l10n.splitLabelShares;
     }
   }
 
@@ -434,8 +438,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final participants =
         state.members.where((m) => _participants.contains(m.userId)).toList();
     if (participants.isEmpty) {
-      return const Text('Select at least one participant.',
-          style: TextStyle(color: AppColors.negative));
+      return Text(context.l10n.selectParticipant,
+          style: const TextStyle(color: AppColors.negative));
     }
 
     switch (_splitType) {
@@ -487,9 +491,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Split preview',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          Text(
+            context.l10n.splitPreview,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           for (final share in shares)
@@ -518,8 +522,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           const Divider(height: 20),
           Row(
             children: [
-              const Text('Total',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              Text(context.l10n.total,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
               const Spacer(),
               Text(
                 formatMoney(_amount),
@@ -533,32 +537,33 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
   }
 
-  bool _canSave(AppState state) => _validationMessage(state) == null;
+  bool _canSave(AppState state, AppLocalizations l10n) =>
+    _validationMessage(state, l10n) == null;
 
-  String? _validationMessage(AppState state) {
-    if (_amount.isZero) return 'Enter an amount greater than 0.';
+  String? _validationMessage(AppState state, AppLocalizations l10n) {
+    if (_amount.isZero) return l10n.expenseAmountError;
     if (_descriptionController.text.trim().isEmpty) {
-      return 'Add a short description.';
+      return l10n.expenseDescriptionError;
     }
-    if (_paidByUserId == null) return 'Choose who paid.';
-    if (_participants.isEmpty) return 'Select at least one participant.';
+    if (_paidByUserId == null) return l10n.expensePayerError;
+    if (_participants.isEmpty) return l10n.expenseParticipantError;
     switch (_splitType) {
       case SplitType.percentage:
         final sum = _percentages.values.fold<double>(0, (a, b) => a + b);
         if ((sum - 100).abs() > 0.01) {
-          return 'Percentages must add up to 100%.';
+          return l10n.expensePercentError;
         }
         break;
       case SplitType.custom:
         final sum = _customAmounts.values
             .fold<int>(0, (a, m) => a + m.paisa);
         if (sum != _amount.paisa) {
-          return 'Custom amounts must add up to the total.';
+          return l10n.expenseCustomError;
         }
         break;
       case SplitType.shares:
         if (_shareUnits.values.fold<int>(0, (a, b) => a + b) <= 0) {
-          return 'Enter at least one share unit.';
+          return l10n.expenseSharesError;
         }
         break;
       case SplitType.equal:
@@ -568,14 +573,15 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Future<void> _save() async {
+    final l10n = context.l10n;
     setState(() {
       _attemptedSave = true;
       _descriptionError = _descriptionController.text.trim().isEmpty
-          ? 'Add a short description'
+          ? l10n.expenseDescriptionError
           : null;
     });
     final state = context.read<AppState>();
-    if (!_canSave(state)) return;
+    if (!_canSave(state, l10n)) return;
     final expense = widget.expense;
     final participants = _participants.toList();
     if (expense == null) {
@@ -656,8 +662,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           ),
         Row(
           children: [
-            const Text('Total',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            Text(context.l10n.total,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
             const Spacer(),
             Text(
               '${NumberFormat.decimalPattern('en_IN').format(sum)}%',
@@ -723,8 +729,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           ),
         Row(
           children: [
-            const Text('Assigned',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            Text(context.l10n.assigned,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
             const Spacer(),
             Text(
               '${formatMoneyCompact(Money(assigned), showSymbol: false)} / ${formatMoneyCompact(_amount, showSymbol: false)}',

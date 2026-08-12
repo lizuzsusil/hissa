@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants.dart';
 import '../../core/formatters.dart';
 import '../../core/money.dart';
+import '../../l10n/l10n.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
@@ -58,7 +59,7 @@ class _SettlementFormState extends State<SettlementForm> {
     if (mounted) {
       setState(() => _saving = false);
       Navigator.pop(context);
-      showToast(context, 'Settlement recorded', type: ToastType.success);
+      showToast(context, context.l10n.settlementRecorded, type: ToastType.success);
     }
   }
 
@@ -66,6 +67,7 @@ class _SettlementFormState extends State<SettlementForm> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
     final fromName = state.memberName(widget.fromUserId) ?? '?';
     final toName = state.memberName(widget.toUserId) ?? '?';
 
@@ -73,9 +75,9 @@ class _SettlementFormState extends State<SettlementForm> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Record settlement',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        Text(
+          l10n.recordSettlement,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 16),
         Container(
@@ -96,7 +98,7 @@ class _SettlementFormState extends State<SettlementForm> {
                     Text(fromName,
                         style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w700)),
-                    Text('pays',
+                    Text(l10n.pays,
                         style: TextStyle(
                             fontSize: 12,
                             color: isDark
@@ -116,7 +118,7 @@ class _SettlementFormState extends State<SettlementForm> {
                         textAlign: TextAlign.end,
                         style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w700)),
-                    Text('receives',
+                    Text(l10n.receives,
                         textAlign: TextAlign.end,
                         style: TextStyle(
                             fontSize: 12,
@@ -143,7 +145,7 @@ class _SettlementFormState extends State<SettlementForm> {
           ),
         ),
         const SizedBox(height: 20),
-        Text('Payment method',
+        Text(l10n.paymentMethod,
             style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -197,14 +199,14 @@ class _SettlementFormState extends State<SettlementForm> {
         const SizedBox(height: 16),
         TextField(
           controller: _noteController,
-          decoration: const InputDecoration(
-            hintText: 'Add a note (optional)',
-            suffixIcon: Icon(Icons.sticky_note_2_outlined, size: 18),
+          decoration: InputDecoration(
+            hintText: l10n.noteOptionalHint,
+            suffixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),
           ),
         ),
         const SizedBox(height: 20),
         PrimaryButton(
-          label: 'Confirm payment',
+          label: l10n.confirmPayment,
           icon: Icons.check_rounded,
           loading: _saving,
           onPressed: _saving ? null : _save,

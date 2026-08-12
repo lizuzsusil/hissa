@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/generated/app_localizations.dart';
+import '../../l10n/l10n.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
+import '../state/locale_controller.dart';
 import '../state/theme_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
@@ -23,9 +26,10 @@ class SettingsScreen extends StatelessWidget {
     final household = state.household;
     final cycle = state.selectedCycle;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.settings)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
         children: [
@@ -35,31 +39,31 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => _push(context, ProfileScreen()),
           ),
           const SizedBox(height: 24),
-          const SectionHeader(title: 'Household'),
+          SectionHeader(title: l10n.household),
           _SettingTile(
             icon: Icons.home_work_outlined,
-            title: 'Household & members',
+            title: l10n.householdAndMembers,
             subtitle: household?.name ?? 'No household',
             onTap: () => _push(context, HouseholdScreen()),
           ),
           _SettingTile(
             icon: Icons.category_outlined,
-            title: 'Categories',
+            title: l10n.categories,
             subtitle: '${state.categories.length} categories',
             onTap: () => _push(context, CategoriesScreen()),
           ),
           _SettingTile(
             icon: Icons.currency_rupee,
-            title: 'Currency',
+            title: l10n.currency,
             subtitle: household?.currency ?? 'NPR',
             onTap: () => _showCurrencyPicker(context, state),
           ),
           const SizedBox(height: 24),
-          const SectionHeader(title: 'Spending cycle'),
+          SectionHeader(title: l10n.spendingCycle),
           _SettingTile(
             icon: Icons.event_available_outlined,
-            title: 'Current cycle',
-            subtitle: cycle?.name ?? 'No active cycle',
+            title: l10n.currentCycle,
+            subtitle: cycle?.name ?? l10n.noActiveCycle,
             onTap: cycle == null
                 ? null
                 : () => _showCycleDialog(context, state),
@@ -68,32 +72,32 @@ class SettingsScreen extends StatelessWidget {
             _SettingTile(
               icon: Icons.lock_outline_rounded,
               title: cycle?.status == CycleStatus.closed
-                  ? 'Start a new cycle'
-                  : 'Close current cycle',
-              subtitle: 'Owners can manage cycles',
+                  ? l10n.startNewCycle
+                  : l10n.closeCurrentCycle,
+              subtitle: l10n.ownersCanManage,
               onTap: () => _handleCycleAction(context, state),
             ),
           ],
           const SizedBox(height: 24),
-          const SectionHeader(title: 'Data'),
+          SectionHeader(title: l10n.data),
           _SettingTile(
             icon: Icons.download_outlined,
-            title: 'Export',
-            subtitle: 'CSV of the current cycle',
+            title: l10n.export,
+            subtitle: l10n.csvOfCurrentCycle,
             onTap: () => _push(context, ExportScreen()),
           ),
           _SettingTile(
             icon: Icons.notifications_outlined,
-            title: 'Notifications',
-            subtitle: 'Expenses, balances & reminders',
+            title: l10n.notifications,
+            subtitle: l10n.notificationsSubtitle,
             onTap: () => _showNotifications(context),
           ),
           const SizedBox(height: 24),
-          const SectionHeader(title: 'Appearance'),
+          SectionHeader(title: l10n.appearance),
           _SettingTile(
             icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-            title: 'Dark mode',
-            subtitle: isDark ? 'On' : 'Off',
+            title: l10n.darkMode,
+            subtitle: isDark ? l10n.onValue : l10n.offValue,
             trailing: Switch(
               value: isDark,
               onChanged: (v) {
@@ -104,18 +108,24 @@ class SettingsScreen extends StatelessWidget {
             ),
             onTap: null,
           ),
+          _SettingTile(
+            icon: Icons.language_rounded,
+            title: l10n.language,
+            subtitle: l10n.languageSubtitle,
+            onTap: () => _showLanguagePicker(context, context.read<LocaleController>()),
+          ),
           const SizedBox(height: 24),
           _SettingTile(
             icon: Icons.logout_rounded,
-            title: 'Sign out',
-            subtitle: 'Switch account or household',
+            title: l10n.signOut,
+            subtitle: l10n.signOutSubtitle,
             destructive: true,
             onTap: () => _confirmSignOut(context, state),
           ),
           const SizedBox(height: 32),
           Center(
             child: Text(
-              'Hissa · Household Expense Tracker',
+              l10n.appName,
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
@@ -125,7 +135,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Center(
             child: Text(
-              'v1.0.0',
+              l10n.version,
               style: TextStyle(
                 fontSize: 11,
                 color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
@@ -142,19 +152,20 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _handleCycleAction(BuildContext context, AppState state) async {
+    final l10n = context.l10n;
     final cycle = state.selectedCycle;
     if (cycle == null) return;
     if (cycle.status == CycleStatus.closed) {
       await state.startNewCycle();
       if (!context.mounted) return;
-      showToast(context, 'New cycle started', type: ToastType.success);
+      showToast(context, l10n.newCycleStarted, type: ToastType.success);
       return;
     }
     final proposals = state.settlementProposals();
     if (proposals.isNotEmpty) {
       showToast(
         context,
-        'Settle all balances before closing the cycle',
+        l10n.settleBeforeClose,
         type: ToastType.warning,
       );
       return;
@@ -162,19 +173,17 @@ class SettingsScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Close ${cycle.name}?'),
-        content: const Text(
-          'The cycle becomes read-only and historical. A new cycle will start next month.',
-        ),
+        title: Text(l10n.closeCycleTitle(cycle.name)),
+        content: Text(l10n.closeCycleMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.negative),
-            child: const Text('Close cycle'),
+            child: Text(l10n.closeCycle),
           ),
         ],
       ),
@@ -182,7 +191,7 @@ class SettingsScreen extends StatelessWidget {
     if (confirmed == true) {
       await state.closeCycle();
       if (!context.mounted) return;
-      showToast(context, 'Cycle closed', type: ToastType.success);
+      showToast(context, l10n.cycleClosed, type: ToastType.success);
     }
   }
 
@@ -201,9 +210,9 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Spending cycles',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              Text(
+                context.l10n.spendingCycle,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 16),
               for (final c in state.cycles)
@@ -218,7 +227,7 @@ class SettingsScreen extends StatelessWidget {
                         : AppColors.positive,
                   ),
                   title: Text(c.name),
-                  subtitle: Text(c.status.label),
+                  subtitle: Text(_cycleStatusLabel(context.l10n, c.status)),
                   trailing: Text(
                     formatMonthRange(c),
                     style: TextStyle(color: AppColors.textMuted, fontSize: 12),
@@ -256,9 +265,9 @@ class SettingsScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Currency',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              Text(
+                context.l10n.currency,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 16),
               for (final code in const ['NPR', 'USD', 'INR', 'EUR'])
@@ -295,19 +304,19 @@ class SettingsScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) => const SafeArea(
+      builder: (context) => SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Notifications',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                context.l10n.notifications,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
-                'Push notifications arrive with Firebase Cloud Messaging in the connected build.',
+                context.l10n.notificationsSheet,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
@@ -319,20 +328,21 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _confirmSignOut(BuildContext context, AppState state) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text('You can sign back in at any time.'),
+        title: Text(l10n.signOutTitle),
+        content: Text(l10n.signOutMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.negative),
-            child: const Text('Sign out'),
+            child: Text(l10n.signOut),
           ),
         ],
       ),
@@ -340,6 +350,86 @@ class SettingsScreen extends StatelessWidget {
     if (confirmed == true) {
       await state.signOut();
     }
+  }
+
+  void _showLanguagePicker(BuildContext context, LocaleController controller) {
+    final l10n = context.l10n;
+    final current = controller.locale;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.surfaceDark
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.language,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.settings_suggest_outlined),
+                title: const Text('System'),
+                trailing: current == null
+                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                    : null,
+                onTap: () {
+                  controller.setLocale(null);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.language_rounded),
+                title: Text(l10n.english),
+                trailing: current == const Locale('en')
+                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                    : null,
+                onTap: () {
+                  controller.setLocale(const Locale('en'));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.language_rounded),
+                title: Text(l10n.nepali),
+                trailing: current == const Locale('ne')
+                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                    : null,
+                onTap: () {
+                  controller.setLocale(const Locale('ne'));
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _cycleStatusLabel(AppLocalizations l10n, CycleStatus status) {
+  switch (status) {
+    case CycleStatus.active:
+      return l10n.statusActive;
+    case CycleStatus.readyToSettle:
+      return l10n.statusReady;
+    case CycleStatus.settled:
+      return l10n.statusSettled;
+    case CycleStatus.closed:
+      return l10n.statusClosed;
   }
 }
 

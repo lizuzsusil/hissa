@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../state/shell_tab_controller.dart';
@@ -63,6 +64,7 @@ class _FloatingAddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final l10n = context.l10n;
     final cycle = state.selectedCycle;
     if (cycle == null || cycle.status == CycleStatus.closed) {
       return const SizedBox.shrink();
@@ -77,9 +79,9 @@ class _FloatingAddButton extends StatelessWidget {
       foregroundColor: Colors.white,
       elevation: 6,
       icon: const Icon(Icons.add_rounded),
-      label: const Text(
-        'Add',
-        style: TextStyle(fontWeight: FontWeight.w700),
+      label: Text(
+        l10n.add,
+        style: const TextStyle(fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -94,12 +96,13 @@ class _NavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
     final items = [
-      (Icons.home_rounded, Icons.home_outlined, 'Home'),
-      (Icons.receipt_long_rounded, Icons.receipt_long_outlined, 'Expenses'),
-      (Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Settle'),
-      (Icons.donut_small_rounded, Icons.donut_small_outlined, 'Insights'),
-      (Icons.settings_rounded, Icons.settings_outlined, 'Settings'),
+      (Icons.home_rounded, Icons.home_outlined, l10n.home),
+      (Icons.receipt_long_rounded, Icons.receipt_long_outlined, l10n.expenses),
+      (Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, l10n.settle),
+      (Icons.donut_small_rounded, Icons.donut_small_outlined, l10n.insights),
+      (Icons.settings_rounded, Icons.settings_outlined, l10n.settings),
     ];
 
     return Container(
