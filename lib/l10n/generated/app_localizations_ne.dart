@@ -12,7 +12,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get appTitle => 'हिस्सा';
 
   @override
-  String get tagline => 'कसले तिर्यो · कसले तिर्न बाँकी · कति';
+  String get tagline => 'तपाईंका सबै खर्च, एउटै ठाउँमा';
 
   @override
   String get home => 'गृह';

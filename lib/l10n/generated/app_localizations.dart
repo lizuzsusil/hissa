@@ -107,7 +107,7 @@ abstract class AppLocalizations {
   /// No description provided for @tagline.
   ///
   /// In en, this message translates to:
-  /// **'Who paid · Who owes · How much'**
+  /// **'All your expenses, in one place'**
   String get tagline;
 
   /// No description provided for @home.

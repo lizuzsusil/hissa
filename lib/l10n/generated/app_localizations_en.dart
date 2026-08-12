@@ -12,7 +12,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Hissa';
 
   @override
-  String get tagline => 'Who paid · Who owes · How much';
+  String get tagline => 'All your expenses, in one place';
 
   @override
   String get home => 'Home';

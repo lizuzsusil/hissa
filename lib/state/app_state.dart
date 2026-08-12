@@ -29,8 +29,8 @@ bool _googleInitialized = false;
 /// cycle selections. When signed in, the repository is a [FirestoreRepository]
 /// that keeps local caches in sync via realtime listeners.
 class AppState extends ChangeNotifier {
-  static const _sessionKey = 'Hissa_session_v1';
-  static const _introKey = 'Hissa_intro_seen_v1';
+  static const _sessionKey = 'hissa_session_v1';
+  static const _introKey = 'hissa_intro_seen_v1';
 
   ExpenseRepository _repo = InMemoryRepository();
   String? _currentUserId;
