@@ -132,9 +132,9 @@ class _RootGateState extends State<RootGate> {
       case _FlowStep.splash:
         return const SplashScreen();
       case _FlowStep.intro:
-        return IntroScreen(onDone: _finishIntro);
+        return OnboardingScreen(onDone: _finishIntro);
       case _FlowStep.onboarding:
-        return OnboardingScreen(
+        return IntroScreen(
           onContinue: (mode) {
             final state = context.read<AppState>();
             state.setOnboardingMode(mode);
