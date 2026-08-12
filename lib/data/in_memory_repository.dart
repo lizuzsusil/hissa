@@ -1,11 +1,11 @@
 import '../models/models.dart';
 import 'repository.dart';
 
-/// Simple in-memory repository used for the demo build and unit tests. All
-/// data is held in lists so the UI can be rebuilt eagerly after each
-/// mutation. The async methods complete immediately: bodies run synchronously
-/// so callers that do not await (seed builders, tests) still observe the
-/// mutation right away.
+/// Simple in-memory repository. It is used as the placeholder while signed
+/// out and in unit tests. All data is held in lists so the UI can be rebuilt
+/// eagerly after each mutation. The async methods complete immediately:
+/// bodies run synchronously so callers that do not await (seed builders,
+/// tests) still observe the mutation right away.
 class InMemoryRepository implements ExpenseRepository {
   final List<User> _users = [];
   final List<Household> _households = [];

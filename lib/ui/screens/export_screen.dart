@@ -6,6 +6,7 @@ import '../../core/formatters.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
+import '../widgets/toasts.dart';
 
 class ExportScreen extends StatelessWidget {
   const ExportScreen({super.key});
@@ -118,11 +119,8 @@ class ExportScreen extends StatelessWidget {
                 : () async {
                     await Clipboard.setData(ClipboardData(text: csv));
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('CSV copied to clipboard'),
-                        ),
-                      );
+                      showToast(context, 'CSV copied to clipboard',
+                          type: ToastType.success);
                     }
                   },
           ),
@@ -135,12 +133,10 @@ class ExportScreen extends StatelessWidget {
                 : () async {
                     await Clipboard.setData(ClipboardData(text: csv));
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'CSV copied - paste it anywhere to share',
-                          ),
-                        ),
+                      showToast(
+                        context,
+                        'CSV copied - paste it anywhere to share',
+                        type: ToastType.success,
                       );
                     }
                   },

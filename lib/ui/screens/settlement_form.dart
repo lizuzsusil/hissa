@@ -8,6 +8,7 @@ import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/buttons.dart';
+import '../widgets/toasts.dart';
 
 class SettlementForm extends StatefulWidget {
   final String fromUserId;
@@ -57,9 +58,7 @@ class _SettlementFormState extends State<SettlementForm> {
     if (mounted) {
       setState(() => _saving = false);
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Settlement recorded')),
-      );
+      showToast(context, 'Settlement recorded', type: ToastType.success);
     }
   }
 

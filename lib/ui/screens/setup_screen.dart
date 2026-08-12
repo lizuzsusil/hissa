@@ -6,6 +6,7 @@ import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 import '../widgets/avatars.dart';
+import '../widgets/toasts.dart';
 
 class SetupScreen extends StatefulWidget {
   final VoidCallback onDone;
@@ -55,16 +56,14 @@ class _SetupScreenState extends State<SetupScreen> {
     if (!mounted) return;
     setState(() => _loading = false);
     if (!ok) {
-      _toast('Invite code not found. Check the code and try again.');
+      showToast(
+        context,
+        'Invite code not found. Check the code and try again.',
+        type: ToastType.danger,
+      );
       return;
     }
     widget.onDone();
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _addMember() {
@@ -253,7 +252,7 @@ class _SetupScreenState extends State<SetupScreen> {
           ),
           decoration: const InputDecoration(
             labelText: 'Invite code',
-            hintText: 'SUNNY9',
+            hintText: 'ABCDE2',
             suffixIcon: Icon(Icons.vpn_key_outlined, size: 18),
           ),
         ),

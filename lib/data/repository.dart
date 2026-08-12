@@ -1,9 +1,9 @@
 import '../models/models.dart';
 
-/// Persistence boundary. [InMemoryRepository] backs the demo build and unit
-/// tests; [FirestoreRepository] persists to Firebase. Read access is
-/// synchronous over locally-cached lists so the UI can rebuild eagerly;
-/// mutations are async and await the underlying write.
+/// Persistence boundary. [InMemoryRepository] backs the signed-out placeholder
+/// state and unit tests; [FirestoreRepository] persists to Firebase. Read
+/// access is synchronous over locally-cached lists so the UI can rebuild
+/// eagerly; mutations are async and await the underlying write.
 abstract class ExpenseRepository {
   List<User> get users;
   List<Household> get households;

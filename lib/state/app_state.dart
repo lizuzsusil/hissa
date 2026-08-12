@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants.dart';
@@ -11,11 +12,13 @@ import '../core/money.dart';
 import '../data/firestore_repository.dart';
 import '../data/in_memory_repository.dart';
 import '../data/repository.dart';
-import '../data/seed.dart';
 import '../logic/balances.dart';
 import '../logic/settlements.dart';
 import '../logic/splits.dart';
 import '../models/models.dart';
+
+/// Ensures [GoogleSignIn.instance] is initialized exactly once.
+bool _googleInitialized = false;
 
 /// Central application state. Owns the repository and exposes a small,
 /// imperative API that the UI calls.
@@ -165,17 +168,60 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  /// Demo login: seeds the worked demo dataset into Firestore for this
-  /// anonymous account and signs in as Ram inside the "Our Home" household.
-  Future<void> signInDemo() async {
-    final cred = await FirebaseAuth.instance.signInAnonymously();
-    final uid = cred.user!.uid;
-    await seedDemoFirestore(FirebaseFirestore.instance, uid);
-    _currentUserId = uid;
-    _householdId = 'h_demo';
+  Future<bool> signInWithGoogle() async {
+    final google = GoogleSignIn.instance;
+    if (!_googleInitialized) {
+      await google.initialize();
+      _googleInitialized = true;
+    }
+
+    final GoogleSignInAccount googleAccount;
+    try {
+      googleAccount = await google.authenticate();
+    } on GoogleSignInException catch (e) {
+      switch (e.code) {
+        case GoogleSignInExceptionCode.canceled:
+        case GoogleSignInExceptionCode.interrupted:
+        case GoogleSignInExceptionCode.uiUnavailable:
+          return false;
+        default:
+          rethrow;
+      }
+    }
+
+    final idToken = googleAccount.authentication.idToken;
+    if (idToken == null) return false;
+    final credential = GoogleAuthProvider.credential(idToken: idToken);
+    try {
+      await FirebaseAuth.instance.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'account-exists-with-different-credential') {
+        throw const GoogleAccountConflictException();
+      }
+      rethrow;
+    }
+
+    final authUser = FirebaseAuth.instance.currentUser!;
+    _currentUserId = authUser.uid;
+    _householdId = null;
     _cycleId = null;
     await _attachRepository();
+    if (currentUser == null) {
+      final name = googleAccount.displayName?.trim().isNotEmpty == true
+          ? googleAccount.displayName!.trim()
+          : _capitalize((authUser.email ?? 'member').split('@').first);
+      await _repo.saveUser(
+        User(
+          id: authUser.uid,
+          name: name,
+          email: authUser.email ?? '',
+          avatarUrl: authUser.photoURL,
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
     await _commit();
+    return true;
   }
 
   Future<void> signUp({
@@ -725,4 +771,11 @@ String _monthLabel(DateTime d) {
 String _capitalize(String input) {
   if (input.isEmpty) return input;
   return input[0].toUpperCase() + input.substring(1);
+}
+
+/// Thrown by [AppState.signInWithGoogle] when the Google account's email is
+/// already used by an email/password account, so the user should sign in with
+/// email + password (or link the accounts later) instead.
+class GoogleAccountConflictException implements Exception {
+  const GoogleAccountConflictException();
 }

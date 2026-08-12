@@ -8,6 +8,7 @@ import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/buttons.dart';
+import '../widgets/toasts.dart';
 
 class HouseholdScreen extends StatefulWidget {
   const HouseholdScreen({super.key});
@@ -126,9 +127,8 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 InkResponse(
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: household.inviteCode));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Invite code copied')),
-                    );
+                    showToast(context, 'Invite code copied',
+                        type: ToastType.success);
                   },
                   child: Container(
                     padding: const EdgeInsets.all(12),
@@ -208,9 +208,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     await state.addMember(name);
     _memberController.clear();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$name added to the household')),
-    );
+    showToast(context, '$name added to the household', type: ToastType.success);
   }
 
   Future<void> _confirmRemove(AppState state, HouseholdMember member) async {

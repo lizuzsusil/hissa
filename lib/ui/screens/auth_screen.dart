@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
+import '../widgets/toasts.dart';
 
 class AuthScreen extends StatefulWidget {
   final VoidCallback onAuthenticated;
@@ -40,15 +41,17 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || !email.contains('@')) {
-      _toast('Please enter a valid email address');
+      showToast(context, 'Please enter a valid email address',
+          type: ToastType.danger);
       return;
     }
     if (_isSignUp && _nameController.text.trim().isEmpty) {
-      _toast('Please tell us your name');
+      showToast(context, 'Please tell us your name', type: ToastType.danger);
       return;
     }
     if (password.length < 6) {
-      _toast('Password must be at least 6 characters');
+      showToast(context, 'Password must be at least 6 characters',
+          type: ToastType.danger);
       return;
     }
     setState(() => _loading = true);
@@ -63,7 +66,7 @@ class _AuthScreenState extends State<AuthScreen> {
       } on Exception catch (e) {
         if (mounted) {
           setState(() => _loading = false);
-          _toast(_friendlyAuthMessage(e));
+          showToast(context, _friendlyAuthMessage(e), type: ToastType.danger);
           return;
         }
       }
@@ -71,7 +74,11 @@ class _AuthScreenState extends State<AuthScreen> {
       final ok = await state.signIn(email: email, password: password);
       if (mounted && !ok) {
         setState(() => _loading = false);
-        _toast('Incorrect email or password. Try again or create an account.');
+        showToast(
+          context,
+          'Incorrect email or password. Try again or create an account.',
+          type: ToastType.danger,
+        );
         return;
       }
     }
@@ -81,23 +88,32 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _demo() async {
+  Future<void> _google() async {
     setState(() => _loading = true);
     final state = context.read<AppState>();
-    await state.signInDemo();
-    if (mounted) {
+    try {
+      final ok = await state.signInWithGoogle();
+      if (!mounted) return;
+      if (!ok) {
+        // The Google account picker was dismissed.
+        setState(() => _loading = false);
+        return;
+      }
       setState(() => _loading = false);
       widget.onAuthenticated();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        showToast(context, _friendlyAuthMessage(e), type: ToastType.danger);
+      }
     }
   }
 
-  void _toast(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
   String _friendlyAuthMessage(Object error) {
+    if (error is GoogleAccountConflictException) {
+      return 'That email already has a password account. Log in with your '
+          'email and password instead.';
+    }
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'email-already-in-use':
@@ -233,9 +249,9 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 14),
               SecondaryButton(
-                label: 'Explore the demo household',
-                icon: Icons.auto_awesome,
-                onPressed: _loading ? null : _demo,
+                label: 'Continue with Google',
+                icon: Icons.g_mobiledata,
+                onPressed: _loading ? null : _google,
               ),
               const SizedBox(height: 24),
               Center(

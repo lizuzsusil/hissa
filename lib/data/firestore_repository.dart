@@ -507,68 +507,6 @@ class FirestoreRepository implements ExpenseRepository {
 
   // ---- helpers ----
 
-  /// Bulk write used by the demo seeder. Members are written before the
-  /// household so security rules (which gate household writes on membership)
-  /// accept the very first seed. Members use [membersHouseholdId] since the
-  /// model does not carry a household reference.
-  Future<void> writeAll({
-    required List<User> users,
-    required List<Household> households,
-    required List<HouseholdMember> members,
-    required String membersHouseholdId,
-    required List<Cycle> cycles,
-    required List<Expense> expenses,
-    required List<ExpenseShare> shares,
-    required List<Settlement> settlements,
-    required List<Category> categories,
-  }) async {
-    final db = _db;
-    for (final u in users) {
-      await db.collection('users').doc(u.id).set(u.toJson());
-    }
-    for (final m in members) {
-      await db
-          .collection('householdMembers')
-          .doc('${membersHouseholdId}_${m.userId}')
-          .set({...m.toJson(), 'householdId': membersHouseholdId});
-    }
-    for (final h in households) {
-      await db.collection('households').doc(h.id).set(h.toJson());
-    }
-    for (final c in categories) {
-      await db
-          .collection('categories')
-          .doc('${c.householdId}_${c.id}')
-          .set(c.toJson());
-    }
-    for (final c in cycles) {
-      await db
-          .collection('cycles')
-          .doc('${c.householdId}_${c.id}')
-          .set(c.toJson());
-    }
-    for (final e in expenses) {
-      await db
-          .collection('expenses')
-          .doc('${e.householdId}_${e.id}')
-          .set(e.toJson());
-    }
-    for (final s in shares) {
-      final expense = expenses.where((e) => e.id == s.expenseId).firstOrNull;
-      if (expense == null) continue;
-      await db
-          .collection('expenseShares')
-          .doc('${expense.householdId}_${s.id}')
-          .set({...s.toJson(), 'householdId': expense.householdId});
-    }
-    for (final st in settlements) {
-      await db
-          .collection('settlements')
-          .doc('${st.householdId}_${st.id}')
-          .set(st.toJson());
-    }
-  }
-
   static void _upsert<T>(List<T> list, T item, String Function(T) idOf) {
     final idx = list.indexWhere((x) => idOf(x) == idOf(item));
     if (idx >= 0) {

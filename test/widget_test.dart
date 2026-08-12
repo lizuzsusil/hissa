@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:hissa/core/money.dart';
-import 'package:hissa/data/seed.dart';
 import 'package:hissa/logic/balances.dart';
 import 'package:hissa/logic/settlements.dart';
 import 'package:hissa/logic/splits.dart';
@@ -132,31 +131,6 @@ void main() {
           .map((p) => '${p.fromUserId}->${p.toUserId}')
           .toSet();
       expect(paths, {'b->a', 'c->a'});
-    });
-  });
-
-  group('Seed data', () {
-    test('seeded repository balances match the spec example', () {
-      final repo = buildSeedRepository();
-      final household = repo.households.first;
-      final cycle = repo.cycles.firstWhere(
-        (c) => c.status == CycleStatus.active,
-      );
-      final balances = BalanceCalculator.compute(
-        household: household,
-        members: repo.members,
-        cycle: cycle,
-        expenses: repo.expenses,
-        shares: repo.shares,
-        settlements: repo.settlements,
-      );
-      final total = balances.fold<int>(0, (sum, b) => sum + b.balance.paisa);
-      expect(total, 0, reason: 'balances always sum to zero');
-
-      final proposals = SettlementCalculator.minimize({
-        for (final b in balances) b.userId: b.balance,
-      });
-      expect(proposals, isNotEmpty);
     });
   });
 }

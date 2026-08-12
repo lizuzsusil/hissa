@@ -2,31 +2,67 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hissa/core/money.dart';
 import 'package:hissa/data/firestore_repository.dart';
-import 'package:hissa/data/seed.dart';
 import 'package:hissa/logic/splits.dart';
 import 'package:hissa/models/models.dart';
 
 void main() {
   group('FirestoreRepository', () {
-    test('start loads a seeded household into the caches', () async {
+    test('start loads a household into the caches', () async {
       final db = FakeFirebaseFirestore();
-      await seedDemoFirestore(db, 'demo_uid');
+      final writer = FirestoreRepository(db);
+      await writer.saveUser(
+        User(id: 'u1', name: 'A', email: 'a@x.com', createdAt: DateTime(2026, 1, 1)),
+      );
+      await writer.saveHousehold(_household('h1', 'ABCDE'));
+      await writer.saveMember(
+        HouseholdMember(
+          userId: 'u1',
+          name: 'A',
+          role: MemberRole.owner,
+          joinedAt: DateTime(2026, 1, 1),
+        ),
+        'h1',
+      );
+      await writer.saveCycle(_cycle('c1', 'h1'));
+      await writer.saveExpense(
+        _expense('e1'),
+        SplitCalculator.build(
+          expenseId: 'e1',
+          amount: const Money(100000),
+          participantIds: ['u1', 'u2'],
+        ),
+      );
+      await writer.saveSettlement(
+        Settlement(
+          id: 's1',
+          householdId: 'h1',
+          cycleId: 'c1',
+          fromUserId: 'u2',
+          toUserId: 'u1',
+          amount: const Money(50000),
+          currency: 'NPR',
+          paymentMethod: 'Cash',
+          date: DateTime(2026, 1, 15),
+          status: SettlementStatus.paid,
+          createdAt: DateTime(2026, 1, 15),
+        ),
+      );
 
       var notified = 0;
       final repo = FirestoreRepository(db);
       await repo.start(
-        uid: 'demo_uid',
-        householdId: 'h_demo',
+        uid: 'u1',
+        householdId: 'h1',
         onChanged: () => notified++,
       );
 
-      expect(repo.users.map((u) => u.id), contains('demo_uid'));
-      expect(repo.households.map((h) => h.id), contains('h_demo'));
-      expect(repo.members.map((m) => m.userId), contains('u_sita'));
-      expect(repo.expenses.map((e) => e.id), contains('e_aug1'));
-      expect(repo.cycles.map((c) => c.id), contains('c_aug'));
-      expect(repo.settlements.map((s) => s.id), contains('s_jul1'));
-      expect(repo.sharesForExpense('e_aug1'), hasLength(3));
+      expect(repo.users.map((u) => u.id), contains('u1'));
+      expect(repo.households.map((h) => h.id), contains('h1'));
+      expect(repo.members.map((m) => m.userId), contains('u1'));
+      expect(repo.expenses.map((e) => e.id), contains('e1'));
+      expect(repo.cycles.map((c) => c.id), contains('c1'));
+      expect(repo.settlements.map((s) => s.id), contains('s1'));
+      expect(repo.sharesForExpense('e1'), hasLength(2));
       expect(notified, greaterThan(0));
 
       repo.stop();
@@ -167,6 +203,15 @@ Household _household(String id, String inviteCode) => Household(
       currency: 'NPR',
       inviteCode: inviteCode,
       createdAt: DateTime(2026, 1, 1),
+    );
+
+Cycle _cycle(String id, String householdId) => Cycle(
+      id: id,
+      householdId: householdId,
+      name: 'January 2026',
+      startDate: DateTime(2026, 1, 1),
+      endDate: DateTime(2026, 1, 31),
+      status: CycleStatus.active,
     );
 
 Expense _expense(String id) => Expense(

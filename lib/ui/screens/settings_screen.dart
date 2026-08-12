@@ -7,6 +7,7 @@ import '../state/theme_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/misc.dart';
+import '../widgets/toasts.dart';
 import 'categories_screen.dart';
 import 'export_screen.dart';
 import 'household_screen.dart';
@@ -146,12 +147,16 @@ class SettingsScreen extends StatelessWidget {
     if (cycle.status == CycleStatus.closed) {
       await state.startNewCycle();
       if (!context.mounted) return;
-      _toast(context, 'New cycle started');
+      showToast(context, 'New cycle started', type: ToastType.success);
       return;
     }
     final proposals = state.settlementProposals();
     if (proposals.isNotEmpty) {
-      _toast(context, 'Settle all balances before closing the cycle');
+      showToast(
+        context,
+        'Settle all balances before closing the cycle',
+        type: ToastType.warning,
+      );
       return;
     }
     final confirmed = await showDialog<bool>(
@@ -177,7 +182,7 @@ class SettingsScreen extends StatelessWidget {
     if (confirmed == true) {
       await state.closeCycle();
       if (!context.mounted) return;
-      _toast(context, 'Cycle closed');
+      showToast(context, 'Cycle closed', type: ToastType.success);
     }
   }
 
@@ -335,12 +340,6 @@ class SettingsScreen extends StatelessWidget {
     if (confirmed == true) {
       await state.signOut();
     }
-  }
-
-  void _toast(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
