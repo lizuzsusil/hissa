@@ -1154,6 +1154,48 @@ abstract class AppLocalizations {
   /// **'Something went wrong. Check the debug logs for the exact error.'**
   String get authSomethingWentWrong;
 
+  /// No description provided for @rememberMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember me'**
+  String get rememberMe;
+
+  /// No description provided for @biometricLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in with biometrics'**
+  String get biometricLogin;
+
+  /// No description provided for @biometricUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric authentication is not available on this device.'**
+  String get biometricUnavailable;
+
+  /// No description provided for @biometricFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric authentication failed. Please try again.'**
+  String get biometricFailed;
+
+  /// No description provided for @biometricNotEnrolled.
+  ///
+  /// In en, this message translates to:
+  /// **'No biometrics enrolled. Set up Face ID / Touch ID in Settings.'**
+  String get biometricNotEnrolled;
+
+  /// No description provided for @security.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get security;
+
+  /// No description provided for @usePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Use password'**
+  String get usePassword;
+
   /// No description provided for @validationFieldRequired.
   ///
   /// In en, this message translates to:

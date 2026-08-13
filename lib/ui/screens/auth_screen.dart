@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../state/app_state.dart';
 import '../../core/validators.dart';
@@ -14,22 +15,22 @@ import '../widgets/toasts.dart';
 class AuthScreen extends StatefulWidget {
   final VoidCallback onAuthenticated;
 
-  const AuthScreen({
-    super.key,
-    required this.onAuthenticated,
-  });
+  const AuthScreen({super.key, required this.onAuthenticated});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  static const _rememberKey = 'hissa_remember_email_v1';
+
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isSignUp = false;
   bool _loading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = false;
   String? _nameError;
   String? _emailError;
   String? _passwordError;
@@ -39,6 +40,28 @@ class _AuthScreenState extends State<AuthScreen> {
     super.initState();
     // Default to sign-in (login); user can toggle to sign-up
     _isSignUp = false;
+    _restoreRememberedEmail();
+  }
+
+  /// Pre-fills the email field with the account the user last asked us to
+  /// remember, and re-checks the "Remember me" box to match.
+  Future<void> _restoreRememberedEmail() async {
+    final prefs = SharedPreferencesAsync();
+    final email = await prefs.getString(_rememberKey);
+    if (!mounted || email == null) return;
+    setState(() {
+      _rememberMe = true;
+      _emailController.text = email;
+    });
+  }
+
+  Future<void> _persistRememberedEmail() async {
+    final prefs = SharedPreferencesAsync();
+    if (_rememberMe) {
+      await prefs.setString(_rememberKey, _emailController.text.trim());
+    } else {
+      await prefs.remove(_rememberKey);
+    }
   }
 
   @override
@@ -59,7 +82,10 @@ class _AuthScreenState extends State<AuthScreen> {
           )
         : null;
     final emailError = validateEmail(_emailController.text, messages: vm);
-    final passwordError = validatePassword(_passwordController.text, messages: vm);
+    final passwordError = validatePassword(
+      _passwordController.text,
+      messages: vm,
+    );
     setState(() {
       _nameError = nameError;
       _emailError = emailError;
@@ -97,6 +123,7 @@ class _AuthScreenState extends State<AuthScreen> {
         );
         return;
       }
+      await _persistRememberedEmail();
     }
     if (mounted) {
       setState(() => _loading = false);
@@ -258,7 +285,10 @@ class _AuthScreenState extends State<AuthScreen> {
                 autocorrect: false,
                 decoration: InputDecoration(
                   labelText: l10n.emailAddress,
-                  prefixIcon: const Icon(Icons.alternate_email_rounded, size: 18),
+                  prefixIcon: const Icon(
+                    Icons.alternate_email_rounded,
+                    size: 18,
+                  ),
                   errorText: _emailError,
                 ),
                 onChanged: (_) {
@@ -290,6 +320,25 @@ class _AuthScreenState extends State<AuthScreen> {
                   }
                 },
               ),
+              if (!_isSignUp)
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _rememberMe,
+                      onChanged: (value) =>
+                          setState(() => _rememberMe = value ?? false),
+                    ),
+                    Text(
+                      l10n.rememberMe,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 24),
               PrimaryButton(
                 label: _isSignUp ? l10n.createAccount : l10n.logIn,

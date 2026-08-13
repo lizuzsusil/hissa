@@ -617,6 +617,30 @@ class AppLocalizationsNe extends AppLocalizations {
       'केही गडबड भयो। सटीक त्रुटिका लागि डिबग लग जाँच्नुहोस्।';
 
   @override
+  String get rememberMe => 'याद राख्नुहोस्';
+
+  @override
+  String get biometricLogin => 'बायोमेट्रिकबाट लग इन गर्नुहोस्';
+
+  @override
+  String get biometricUnavailable =>
+      'यो यन्त्रमा बायोमेट्रिक प्रमाणीकरण उपलब्ध छैन।';
+
+  @override
+  String get biometricFailed =>
+      'बायोमेट्रिक प्रमाणीकरण असफल भयो। फेरि प्रयास गर्नुहोस्।';
+
+  @override
+  String get biometricNotEnrolled =>
+      'कुनै बायोमेट्रिक दर्ता छैन। सेटिङमा Face ID / Touch ID सेटअप गर्नुहोस्।';
+
+  @override
+  String get security => 'सुरक्षा';
+
+  @override
+  String get usePassword => 'पासवर्ड प्रयोग गर्नुहोस्';
+
+  @override
   String validationFieldRequired(String label) {
     return '$label चाहिन्छ';
   }

@@ -616,6 +616,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Something went wrong. Check the debug logs for the exact error.';
 
   @override
+  String get rememberMe => 'Remember me';
+
+  @override
+  String get biometricLogin => 'Log in with biometrics';
+
+  @override
+  String get biometricUnavailable =>
+      'Biometric authentication is not available on this device.';
+
+  @override
+  String get biometricFailed =>
+      'Biometric authentication failed. Please try again.';
+
+  @override
+  String get biometricNotEnrolled =>
+      'No biometrics enrolled. Set up Face ID / Touch ID in Settings.';
+
+  @override
+  String get security => 'Security';
+
+  @override
+  String get usePassword => 'Use password';
+
+  @override
   String validationFieldRequired(String label) {
     return '$label is required';
   }

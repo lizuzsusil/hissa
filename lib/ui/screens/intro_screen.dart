@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../core/constants.dart';
 import '../../l10n/l10n.dart';
-import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 
 class IntroScreen extends StatelessWidget {
-  const IntroScreen({super.key});
+  /// Called with the selected mode when the user confirms their choice.
+  final void Function(String mode) onContinue;
+
+  const IntroScreen({super.key, required this.onContinue});
 
   @override
   Widget build(BuildContext context) {
-    return const _IntroScreenContent();
+    return _IntroScreenContent(onContinue: onContinue);
   }
 }
 
 class _IntroScreenContent extends StatefulWidget {
-  const _IntroScreenContent();
+  final void Function(String mode) onContinue;
+
+  const _IntroScreenContent({required this.onContinue});
 
   @override
   State<_IntroScreenContent> createState() => _IntroScreenContentState();
@@ -26,12 +29,10 @@ class _IntroScreenContent extends StatefulWidget {
 class _IntroScreenContentState extends State<_IntroScreenContent> {
   String? _selectedMode;
 
-  Future<void> _continue() async {
-    if (_selectedMode == null) return;
-    final state = context.read<AppState>();
-    await state.setOnboardingMode(_selectedMode!);
-    if (!mounted) return;
-    Navigator.of(context).pushNamed('/auth');
+  void _continue() {
+    final mode = _selectedMode;
+    if (mode == null) return;
+    widget.onContinue(mode);
   }
 
   @override

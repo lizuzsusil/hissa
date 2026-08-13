@@ -278,6 +278,13 @@
   "authGooglePlayServices": "Google Play services is unavailable or misconfigured on this device.",
   "authGoogleUi": "The Google sign-in window could not be shown right now. Please try again.",
   "authSomethingWentWrong": "Something went wrong. Check the debug logs for the exact error.",
+  "rememberMe": "Remember me",
+  "biometricLogin": "Log in with biometrics",
+  "biometricUnavailable": "Biometric authentication is not available on this device.",
+  "biometricFailed": "Biometric authentication failed. Please try again.",
+  "biometricNotEnrolled": "No biometrics enrolled. Set up Face ID / Touch ID in Settings.",
+  "security": "Security",
+  "usePassword": "Use password",
 
   "validationFieldRequired": "{label} is required",
   "@validationFieldRequired": {

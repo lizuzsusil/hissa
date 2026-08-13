@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -5,6 +7,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../l10n/l10n.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
+import '../state/biometric_controller.dart';
 import '../state/locale_controller.dart';
 import '../state/theme_controller.dart';
 import '../theme/app_theme.dart';
@@ -22,6 +25,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final biometrics = context.watch<BiometricAuthController>();
     final user = state.currentUser;
     final household = state.household;
     final cycle = state.selectedCycle;
@@ -112,7 +116,20 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.language_rounded,
             title: l10n.language,
             subtitle: l10n.languageSubtitle,
-            onTap: () => _showLanguagePicker(context, context.read<LocaleController>()),
+            onTap: () =>
+                _showLanguagePicker(context, context.read<LocaleController>()),
+          ),
+          const SizedBox(height: 24),
+          SectionHeader(title: l10n.security),
+          _SettingTile(
+            icon: Icons.fingerprint_rounded,
+            title: l10n.biometricLogin,
+            subtitle: biometrics.enabled ? l10n.onValue : l10n.offValue,
+            trailing: Switch(
+              value: biometrics.enabled,
+              onChanged: (v) => _toggleBiometric(context, biometrics, v),
+            ),
+            onTap: null,
           ),
           const SizedBox(height: 24),
           _SettingTile(
@@ -151,6 +168,36 @@ class SettingsScreen extends StatelessWidget {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
 
+  Future<void> _toggleBiometric(
+    BuildContext context,
+    BiometricAuthController biometrics,
+    bool value,
+  ) async {
+    final l10n = context.l10n;
+    if (value) {
+      final issue = await biometrics.availabilityIssue();
+      log(issue.toString());
+      if (!context.mounted) return;
+      if (issue != null) {
+        showToast(
+          context,
+          issue == 'notEnrolled'
+              ? l10n.biometricNotEnrolled
+              : l10n.biometricUnavailable,
+          type: ToastType.warning,
+        );
+        return;
+      }
+      final ok = await biometrics.enable(l10n.biometricLogin);
+      if (!context.mounted) return;
+      if (!ok) {
+        showToast(context, l10n.biometricFailed, type: ToastType.warning);
+      }
+    } else {
+      await biometrics.disable();
+    }
+  }
+
   Future<void> _handleCycleAction(BuildContext context, AppState state) async {
     final l10n = context.l10n;
     final cycle = state.selectedCycle;
@@ -163,11 +210,7 @@ class SettingsScreen extends StatelessWidget {
     }
     final proposals = state.settlementProposals();
     if (proposals.isNotEmpty) {
-      showToast(
-        context,
-        l10n.settleBeforeClose,
-        type: ToastType.warning,
-      );
+      showToast(context, l10n.settleBeforeClose, type: ToastType.warning);
       return;
     }
     final confirmed = await showDialog<bool>(
@@ -212,7 +255,10 @@ class SettingsScreen extends StatelessWidget {
             children: [
               Text(
                 context.l10n.spendingCycle,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 16),
               for (final c in state.cycles)
@@ -267,7 +313,10 @@ class SettingsScreen extends StatelessWidget {
             children: [
               Text(
                 context.l10n.currency,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 16),
               for (final code in const ['NPR', 'USD', 'INR', 'EUR'])
@@ -312,7 +361,10 @@ class SettingsScreen extends StatelessWidget {
             children: [
               Text(
                 context.l10n.notifications,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -372,8 +424,10 @@ class SettingsScreen extends StatelessWidget {
             children: [
               Text(
                 l10n.language,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 16),
               ListTile(

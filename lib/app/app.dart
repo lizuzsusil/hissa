@@ -6,10 +6,12 @@ import '../l10n/generated/app_localizations.dart';
 import '../state/app_state.dart';
 import '../ui/screens/auth_screen.dart';
 import '../ui/screens/intro_screen.dart';
+import '../ui/screens/lock_screen.dart';
 import '../ui/screens/onboarding_screen.dart';
 import '../ui/screens/setup_screen.dart';
 import '../ui/screens/shell_screen.dart';
 import '../ui/screens/splash_screen.dart';
+import '../ui/state/biometric_controller.dart';
 import '../ui/state/locale_controller.dart';
 import '../ui/state/theme_controller.dart';
 import '../ui/theme/app_theme.dart';
@@ -24,6 +26,7 @@ class ExpenseApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AppState()),
         ChangeNotifierProvider(create: (_) => ThemeModeController()),
         ChangeNotifierProvider(create: (_) => LocaleController()),
+        ChangeNotifierProvider(create: (_) => BiometricAuthController()),
       ],
       child: const _AppView(),
     );
@@ -52,19 +55,11 @@ class _AppView extends StatelessWidget {
       ],
       supportedLocales: const [Locale('en'), Locale('ne')],
       home: const RootGate(),
-      routes: {
-        '/auth': (context) => AuthScreen(
-          onAuthenticated: () {
-            final rootGate = context.findAncestorStateOfType<_RootGateState>();
-            rootGate?._go(_FlowStep.setup);
-          },
-        ),
-      },
     );
   }
 }
 
-enum _FlowStep { splash, intro, onboarding, auth, setup, app }
+enum _FlowStep { splash, intro, onboarding, auth, setup, lock, app }
 
 class RootGate extends StatefulWidget {
   const RootGate({super.key});
@@ -92,13 +87,17 @@ class _RootGateState extends State<RootGate> {
     super.dispose();
   }
 
-  /// Sends the user back to onboarding when they sign out from inside the
-  /// app shell.
+  /// Sends the user to the login screen when they sign out from inside the
+  /// app shell (or back to mode selection if it was never completed).
   void _onStateChanged() {
     if (!mounted) return;
     final state = context.read<AppState>();
     if (_step == _FlowStep.app && !state.isLoggedIn) {
-      setState(() => _step = _FlowStep.onboarding);
+      setState(() {
+        _step = state.onboardingMode != null
+            ? _FlowStep.auth
+            : _FlowStep.onboarding;
+      });
     }
   }
 
@@ -107,6 +106,7 @@ class _RootGateState extends State<RootGate> {
     await Future.wait([
       state.load(),
       context.read<LocaleController>().load(),
+      context.read<BiometricAuthController>().load(),
     ]);
     if (!mounted) return;
     // Give the branded splash a moment to breathe.
@@ -114,16 +114,13 @@ class _RootGateState extends State<RootGate> {
     if (!mounted) return;
     setState(() {
       if (!state.introSeen) {
+        // First launch: show the feature intro, then mode selection.
         _step = _FlowStep.intro;
       } else if (state.onboardingMode != null) {
-        // Mode already selected previously, skip intro
-        if (state.isLoggedIn) {
-          _step = state.hasHousehold ? _FlowStep.app : _FlowStep.setup;
-        } else {
-          _step = _FlowStep.onboarding;
-        }
+        // Returning user: skip the intro/mode screens entirely.
+        _step = state.isLoggedIn ? _signedInStep(state) : _FlowStep.auth;
       } else {
-        // Intro seen but no mode selected yet
+        // Intro seen but no mode picked yet.
         _step = _FlowStep.onboarding;
       }
     });
@@ -134,12 +131,23 @@ class _RootGateState extends State<RootGate> {
     await state.markIntroSeen();
     if (!mounted) return;
     setState(() {
-      if (state.onboardingMode != null) {
-        _step = state.isLoggedIn ? _FlowStep.setup : _FlowStep.onboarding;
-      } else {
-        _step = _FlowStep.onboarding;
-      }
+      _step = state.onboardingMode != null
+          ? (state.isLoggedIn ? _signedInStep(state) : _FlowStep.auth)
+          : _FlowStep.onboarding;
     });
+  }
+
+  /// Where a signed-in user lands: a biometric gate when the user opted into
+  /// it, otherwise straight into the shell (or household setup).
+  _FlowStep _signedInStep(AppState state) {
+    final biometrics = context.read<BiometricAuthController>();
+    if (biometrics.enabled) return _FlowStep.lock;
+    return state.hasHousehold ? _FlowStep.app : _FlowStep.setup;
+  }
+
+  void _enterApp() {
+    final state = context.read<AppState>();
+    _go(state.hasHousehold ? _FlowStep.app : _FlowStep.setup);
   }
 
   void _go(_FlowStep step) => setState(() => _step = step);
@@ -152,13 +160,21 @@ class _RootGateState extends State<RootGate> {
       case _FlowStep.intro:
         return OnboardingScreen(onDone: _finishIntro);
       case _FlowStep.onboarding:
-        return const IntroScreen();
+        return IntroScreen(
+          onContinue: (mode) {
+            final state = context.read<AppState>();
+            state.setOnboardingMode(mode);
+            _go(_FlowStep.auth);
+          },
+        );
       case _FlowStep.auth:
         return AuthScreen(
-          onAuthenticated: () {
-            final state = context.read<AppState>();
-            _go(state.hasHousehold ? _FlowStep.app : _FlowStep.setup);
-          },
+          onAuthenticated: _enterApp,
+        );
+      case _FlowStep.lock:
+        return LockScreen(
+          onUnlocked: _enterApp,
+          onUsePassword: () => _go(_FlowStep.auth),
         );
       case _FlowStep.setup:
         return SetupScreen(onDone: () => _go(_FlowStep.app));

@@ -296,5 +296,12 @@
   "expenseParticipantError": "कम्तीमा एक जना सहभागी छान्नुहोस्।",
   "expensePercentError": "प्रतिशतहरूको जोड १००% हुनुपर्छ।",
   "expenseCustomError": "अनुकूल रकमहरूको जोड जम्मा बराबर हुनुपर्छ।",
-  "expenseSharesError": "कम्तीमा एक सेयर लेख्नुहोस्।"
+  "expenseSharesError": "कम्तीमा एक सेयर लेख्नुहोस्।",
+  "rememberMe": "याद राख्नुहोस्",
+  "biometricLogin": "बायोमेट्रिकबाट लग इन गर्नुहोस्",
+  "biometricUnavailable": "यो यन्त्रमा बायोमेट्रिक प्रमाणीकरण उपलब्ध छैन।",
+  "biometricFailed": "बायोमेट्रिक प्रमाणीकरण असफल भयो। फेरि प्रयास गर्नुहोस्।",
+  "biometricNotEnrolled": "कुनै बायोमेट्रिक दर्ता छैन। सेटिङमा Face ID / Touch ID सेटअप गर्नुहोस्।",
+  "security": "सुरक्षा",
+  "usePassword": "पासवर्ड प्रयोग गर्नुहोस्"
 }
