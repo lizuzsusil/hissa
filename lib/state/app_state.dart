@@ -431,7 +431,7 @@ class AppState extends ChangeNotifier {
     required String name,
     required String currency,
     required List<String> memberNames,
-    SpaceMode mode = SpaceMode.split,
+    required SpaceMode mode,
   }) async {
     final user = currentUser;
     if (user == null) return false;

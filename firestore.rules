@@ -14,6 +14,12 @@ service cloud.firestore {
       );
     }
 
+    // The Space mode must be one of the supported values; a create/update that
+    // omits `mode` is rejected so a Space can never be saved without one.
+    function validSpaceMode() {
+      return request.resource.data.mode in ['SPLIT', 'SOLO'];
+    }
+
     // Public profile + pseudo member profiles. Reads are open to any signed-in
     // user; each user may update only their own profile.
     match /users/{userId} {
@@ -24,10 +30,10 @@ service cloud.firestore {
 
     // Household documents are readable by any signed-in user so invite-code
     // joins work. Writes (create via onboarding, later edits by the owner)
-    // require membership in the household.
+    // require membership in the household and a valid mode.
     match /households/{householdId} {
       allow read: if signedIn();
-      allow write: if signedIn() && memberOf(householdId);
+      allow write: if signedIn() && memberOf(householdId) && validSpaceMode();
     }
 
     match /householdMembers/{memberId} {
