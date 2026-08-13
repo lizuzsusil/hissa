@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:hissa/core/money.dart';
 import 'package:hissa/logic/balances.dart';
+import 'package:hissa/logic/expense_auth.dart';
 import 'package:hissa/logic/settlements.dart';
 import 'package:hissa/logic/splits.dart';
 import 'package:hissa/models/models.dart';
@@ -163,6 +164,62 @@ void main() {
       final decoded = Expense.fromJson(source.toJson());
       expect(decoded.createdBy, 'u_ram');
       expect(decoded.cycleId, isNull);
+    });
+  });
+
+  group('Expense ownership', () {
+    final expense = Expense(
+      id: 'e1',
+      householdId: 'h',
+      cycleId: 'c',
+      paidByUserId: 'u_ram',
+      createdBy: 'u_ram',
+      amount: const Money(100000),
+      date: DateTime(2026, 1, 10),
+      createdAt: DateTime(2026, 1, 10),
+      updatedAt: DateTime(2026, 1, 10),
+    );
+
+    test('creator can edit and delete', () {
+      expect(
+        canEditExpenseBy(currentUserId: 'u_ram', expense: expense),
+        isTrue,
+      );
+    });
+
+    test('other members cannot edit or delete', () {
+      expect(
+        canEditExpenseBy(currentUserId: 'u_sita', expense: expense),
+        isFalse,
+      );
+    });
+
+    test('legacy expenses without a creator are locked', () {
+      final legacy = Expense(
+        id: 'e2',
+        householdId: 'h',
+        cycleId: 'c',
+        paidByUserId: 'u_ram',
+        amount: const Money(50000),
+        date: DateTime(2026, 1, 1),
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      );
+      expect(
+        canEditExpenseBy(currentUserId: 'u_ram', expense: legacy),
+        isFalse,
+      );
+      expect(
+        canEditExpenseBy(currentUserId: 'u_sita', expense: legacy),
+        isFalse,
+      );
+    });
+
+    test('anonymous users cannot edit', () {
+      expect(
+        canEditExpenseBy(currentUserId: null, expense: expense),
+        isFalse,
+      );
     });
   });
 

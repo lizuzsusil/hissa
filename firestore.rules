@@ -60,7 +60,17 @@ service cloud.firestore {
 
     match /expenses/{expenseId} {
       allow read: if signedIn() && memberOf(resource.data.householdId);
-      allow write: if signedIn() && memberOf(request.resource.data.householdId);
+      // Only the authenticated creator may create an expense on their own
+      // behalf; `createdBy` is never accepted blindly from the client.
+      allow create: if signedIn() && memberOf(request.resource.data.householdId)
+        && request.resource.data.createdBy == request.auth.uid;
+      // Only the creator may update/delete an expense. Legacy expenses without
+      // a `createdBy` are locked until migrated (Phase 7).
+      allow update: if signedIn() && memberOf(request.resource.data.householdId)
+        && resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if signedIn() && memberOf(resource.data.householdId)
+        && resource.data.createdBy == request.auth.uid;
     }
 
     match /expenseShares/{shareId} {

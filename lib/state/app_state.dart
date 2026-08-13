@@ -14,6 +14,7 @@ import '../data/firestore_repository.dart';
 import '../data/in_memory_repository.dart';
 import '../data/repository.dart';
 import '../logic/balances.dart';
+import '../logic/expense_auth.dart';
 import '../logic/settlements.dart';
 import '../logic/splits.dart';
 import '../models/models.dart';
@@ -717,6 +718,7 @@ class AppState extends ChangeNotifier {
     Map<String, Money> customAmounts = const {},
     Map<String, int> shareUnits = const {},
   }) async {
+    if (!canEditExpense(expense)) return;
     final updated = expense.copyWith(
       description: description.trim().isEmpty ? 'Expense' : description.trim(),
       amount: amount,
@@ -739,6 +741,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> deleteExpense(String expenseId) async {
+    final expense =
+        _repo.expenses.where((e) => e.id == expenseId).firstOrNull;
+    if (expense == null || !canEditExpense(expense)) return;
     await _repo.deleteExpense(expenseId);
     await _commit();
   }
@@ -864,6 +869,15 @@ class AppState extends ChangeNotifier {
   List<ExpenseShare> sharesForExpense(String expenseId) {
     return _repo.sharesForExpense(expenseId);
   }
+
+  /// Whether the current user may edit or delete [expense].
+  ///
+  /// Mirrors the Firestore security rules: only the expense creator may
+  /// update/delete it. Legacy expenses without a creator are locked.
+  bool canEditExpense(Expense expense) => canEditExpenseBy(
+        currentUserId: _currentUserId,
+        expense: expense,
+      );
 
   List<Settlement> get settlementsInCycle {
     final cycle = selectedCycle;

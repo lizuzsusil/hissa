@@ -8,7 +8,6 @@ import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
-import '../widgets/category_icon.dart';
 import '../widgets/buttons.dart';
 import 'expense_form_screen.dart';
 
@@ -24,7 +23,8 @@ class ExpenseDetailScreen extends StatelessWidget {
     final l10n = context.l10n;
     final isPersonal = expense.cycleId == null;
     final cycle = state.selectedCycle;
-    final canEdit = isPersonal || cycle == null || cycle.status == CycleStatus.active;
+    final cycleOpen = cycle == null || cycle.status == CycleStatus.active;
+    final canEdit = cycleOpen && state.canEditExpense(expense);
     final category = state.categoryFor(expense.categoryId);
     final shares = state.sharesForExpense(expense.id);
     final payer = state.memberName(expense.paidByUserId) ?? l10n.unknown;
@@ -37,9 +37,11 @@ class ExpenseDetailScreen extends StatelessWidget {
             IconAction(
               icon: Icons.edit_outlined,
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => ExpenseFormScreen(expense: expense),
-                ));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ExpenseFormScreen(expense: expense),
+                  ),
+                );
               },
             ),
           if (canEdit) ...[
@@ -63,35 +65,72 @@ class ExpenseDetailScreen extends StatelessWidget {
               gradient: AppColors.heroGradient,
               borderRadius: BorderRadius.circular(28),
             ),
-            child: Column(
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                CategoryIcon(category: category, size: 64),
-                const SizedBox(height: 16),
-                Text(
-                  expense.description ?? l10n.expense,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                // Main content is completely independent of
+                // the category pill and stays centered.
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        expense.description ?? l10n.expense,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        formatMoney(expense.amount),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        formatFullDate(expense.date),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  formatMoney(expense.amount),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.8,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${category?.name ?? l10n.general} · ${formatFullDate(expense.date)}',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: 13,
+
+                // Absolutely positioned category pill.
+                Positioned(
+                  top: -12,
+                  right: -12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.22),
+                      ),
+                    ),
+                    child: Text(
+                      category?.name ?? l10n.general,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -148,14 +187,17 @@ class ExpenseDetailScreen extends StatelessWidget {
                       child: Row(
                         children: [
                           MemberAvatar(
-                              name: state.memberName(share.userId) ?? '?',
-                              size: 36),
+                            name: state.memberName(share.userId) ?? '?',
+                            size: 36,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               state.memberName(share.userId) ?? '?',
                               style: const TextStyle(
-                                  fontSize: 14.5, fontWeight: FontWeight.w600),
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           if (share.userId == expense.paidByUserId)
@@ -173,7 +215,9 @@ class ExpenseDetailScreen extends StatelessWidget {
                           Text(
                             formatMoney(share.amount),
                             style: const TextStyle(
-                                fontSize: 14.5, fontWeight: FontWeight.w800),
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ],
                       ),
@@ -220,6 +264,7 @@ class ExpenseDetailScreen extends StatelessWidget {
         ],
       ),
     );
+
     if (confirmed == true) {
       await state.deleteExpense(expense.id);
       if (context.mounted) Navigator.of(context).pop();
@@ -241,22 +286,28 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       children: [
         Icon(icon, size: 20, color: AppColors.primary),
         const SizedBox(width: 12),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+        SizedBox(
+          width: 70,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
+            ),
           ),
         ),
-        const Spacer(),
-        Flexible(
+        const SizedBox(width: 50),
+        Expanded(
           child: Text(
             value,
-            textAlign: TextAlign.end,
+            textAlign: TextAlign.start,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
           ),
         ),
@@ -267,6 +318,7 @@ class _InfoRow extends StatelessWidget {
 
 class SectionHeaderLocal extends StatelessWidget {
   final String title;
+
   const SectionHeaderLocal(this.title, {super.key});
 
   @override
