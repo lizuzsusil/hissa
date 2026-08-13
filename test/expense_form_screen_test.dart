@@ -7,6 +7,7 @@ import 'package:hissa/l10n/generated/app_localizations.dart';
 import 'package:hissa/models/models.dart';
 import 'package:hissa/state/app_state.dart';
 import 'package:hissa/ui/screens/expense_form_screen.dart';
+import 'package:hissa/ui/widgets/buttons.dart';
 
 void main() {
   Future<AppState> makeSplitState() async {
@@ -104,5 +105,51 @@ void main() {
         .where((w) => w.scrollDirection == Axis.horizontal)
         .toList();
     expect(horizontalLists, isEmpty);
+  });
+
+  testWidgets('create group combines selected members into one party',
+      (tester) async {
+    final state = await makeSplitState();
+    await tester.pumpWidget(harness(state));
+
+    // All members are pre-selected by default; open the group picker and
+    // create a group from the second member.
+    final groupButton = find.widgetWithText(TextButton, 'Create group');
+    await tester.ensureVisible(groupButton);
+    await tester.pumpAndSettle();
+    await tester.tap(groupButton);
+    await tester.pumpAndSettle();
+
+    // The picker lists the two members; pick both and confirm.
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Ram'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Sita'));
+    await tester.pump();
+    await tester.tap(
+      find.widgetWithText(PrimaryButton, 'Create group'),
+    );
+    await tester.pumpAndSettle();
+
+    // A group chip with the combined member name is rendered in the form.
+    expect(find.text('Ram + Sita'), findsWidgets);
+    expect(find.byIcon(Icons.group_outlined), findsWidgets);
+  });
+
+  testWidgets('creating a group from a single member is not possible',
+      (tester) async {
+    final state = await makeSplitState();
+    await tester.pumpWidget(harness(state));
+
+    // Deselect one member so only one ungrouped member remains.
+    final sitaChip = find.widgetWithText(FilterChip, 'Sita');
+    await tester.ensureVisible(sitaChip);
+    await tester.pumpAndSettle();
+    await tester.tap(sitaChip);
+    await tester.pump();
+
+    final button = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Create group'),
+    );
+    expect(button.onPressed, isNull);
   });
 }

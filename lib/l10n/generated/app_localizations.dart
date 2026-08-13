@@ -470,6 +470,30 @@ abstract class AppLocalizations {
   /// **'Assigned'**
   String get assigned;
 
+  /// No description provided for @totalShares.
+  ///
+  /// In en, this message translates to:
+  /// **'Total shares'**
+  String get totalShares;
+
+  /// No description provided for @createGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create group'**
+  String get createGroup;
+
+  /// No description provided for @ungroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove group'**
+  String get ungroup;
+
+  /// No description provided for @selectGroupMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose members to group together'**
+  String get selectGroupMembers;
+
   /// No description provided for @editExpense.
   ///
   /// In en, this message translates to:

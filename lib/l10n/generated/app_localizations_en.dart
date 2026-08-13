@@ -247,6 +247,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assigned => 'Assigned';
 
   @override
+  String get totalShares => 'Total shares';
+
+  @override
+  String get createGroup => 'Create group';
+
+  @override
+  String get ungroup => 'Remove group';
+
+  @override
+  String get selectGroupMembers => 'Choose members to group together';
+
+  @override
   String get editExpense => 'Edit expense';
 
   @override

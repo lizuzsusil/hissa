@@ -68,6 +68,39 @@ void main() {
       repo.stop();
     });
 
+    test('saveExpense persists participant groups and their member shares',
+        () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreRepository(db);
+
+      final grouped = _groupedExpense('e1');
+      final shares = SplitCalculator.buildGrouped(
+        expenseId: 'e1',
+        amount: grouped.amount,
+        parties: [
+          SplitParty.individual('u1'),
+          SplitParty(id: 'g1', name: 'B + C', userIds: ['u2', 'u3']),
+        ],
+      );
+      await repo.saveExpense(grouped, shares);
+
+      final reader = FirestoreRepository(db);
+      await reader.start(uid: 'u1', spaceId: 'h1', onChanged: () {});
+      final saved = reader.expenses.firstWhere((e) => e.id == 'e1');
+      expect(saved.participantGroups, hasLength(1));
+      expect(saved.participantGroups.first.name, 'B + C');
+      expect(saved.participantGroups.first.userIds, ['u2', 'u3']);
+
+      final savedShares = reader.sharesForExpense('e1');
+      expect(savedShares, hasLength(3));
+      final b = savedShares.firstWhere((s) => s.userId == 'u2');
+      final c = savedShares.firstWhere((s) => s.userId == 'u3');
+      expect(b.groupId, 'g1');
+      expect(c.groupId, 'g1');
+
+      repo.stop();
+    });
+
     test('saveExpense writes shares and replaces them on update', () async {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);
@@ -353,4 +386,24 @@ Expense _expense(String id) => Expense(
       date: DateTime(2026, 1, 1),
       createdAt: DateTime(2026, 1, 1),
       updatedAt: DateTime(2026, 1, 1),
+    );
+
+Expense _groupedExpense(String id) => Expense(
+      id: id,
+      householdId: 'h1',
+      cycleId: 'c1',
+      paidByUserId: 'u1',
+      amount: const Money(100000),
+      description: 'Test',
+      date: DateTime(2026, 1, 1),
+      createdAt: DateTime(2026, 1, 1),
+      updatedAt: DateTime(2026, 1, 1),
+      participantGroups: const [
+        ParticipantGroup(
+          id: 'g1',
+          expenseId: 'e1',
+          name: 'B + C',
+          userIds: ['u2', 'u3'],
+        ),
+      ],
     );

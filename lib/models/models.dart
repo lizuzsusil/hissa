@@ -348,6 +348,11 @@ class Expense {
   final DateTime createdAt;
   DateTime updatedAt;
 
+  /// Participant groups scoped to this expense (Phase 6). A group makes
+  /// several Space members act as a single split party; the underlying user
+  /// identities are always preserved in [ExpenseShare] rows.
+  final List<ParticipantGroup> participantGroups;
+
   Expense({
     required this.id,
     required this.householdId,
@@ -362,6 +367,7 @@ class Expense {
     this.receiptUrl,
     required this.createdAt,
     required this.updatedAt,
+    this.participantGroups = const [],
   });
 
   Expense copyWith({
@@ -373,6 +379,7 @@ class Expense {
     DateTime? date,
     String? note,
     String? receiptUrl,
+    List<ParticipantGroup>? participantGroups,
   }) {
     return Expense(
       id: id,
@@ -388,6 +395,7 @@ class Expense {
       receiptUrl: receiptUrl ?? this.receiptUrl,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+      participantGroups: participantGroups ?? this.participantGroups,
     );
   }
 
@@ -405,6 +413,7 @@ class Expense {
         'receiptUrl': receiptUrl,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
+        'participantGroups': participantGroups.map((g) => g.toJson()).toList(),
       };
 
   factory Expense.fromJson(Map<String, dynamic> json) => Expense(
@@ -421,6 +430,58 @@ class Expense {
         receiptUrl: json['receiptUrl'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
+        participantGroups: (json['participantGroups'] as List? ?? const [])
+            .map((g) => ParticipantGroup.fromJson(g as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
+/// A group of Space members that acts as a single split party for one
+/// expense (Phase 6). Groups are scoped to an expense and never alter Space
+/// membership. The underlying user identities live in [ExpenseShare] rows, so
+/// the group stays auditable historically.
+class ParticipantGroup {
+  final String id;
+  final String expenseId;
+  final String name;
+  final List<String> userIds;
+
+  /// Party-level split configuration for this group, used to restore the form
+  /// when editing. The group's share is always distributed equally between its
+  /// members (MVP rule), so only the party-level value needs to be stored.
+  final double? percentage;
+  final int? shares;
+  final int? customAmountPaisa;
+
+  const ParticipantGroup({
+    required this.id,
+    required this.expenseId,
+    required this.name,
+    required this.userIds,
+    this.percentage,
+    this.shares,
+    this.customAmountPaisa,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'expenseId': expenseId,
+        'name': name,
+        'userIds': userIds,
+        'percentage': percentage,
+        'shares': shares,
+        'customAmountPaisa': customAmountPaisa,
+      };
+
+  factory ParticipantGroup.fromJson(Map<String, dynamic> json) =>
+      ParticipantGroup(
+        id: json['id'] as String,
+        expenseId: json['expenseId'] as String,
+        name: json['name'] as String,
+        userIds: (json['userIds'] as List).cast<String>(),
+        percentage: (json['percentage'] as num?)?.toDouble(),
+        shares: json['shares'] as int?,
+        customAmountPaisa: json['customAmountPaisa'] as int?,
       );
 }
 
@@ -432,6 +493,11 @@ class ExpenseShare {
   final double? percentage;
   final int? shares;
 
+  /// The participant group this share belongs to (Phase 6), or null when the
+  /// user participates on their own. Group member shares always preserve the
+  /// underlying user identity via [userId].
+  final String? groupId;
+
   ExpenseShare({
     required this.id,
     required this.expenseId,
@@ -439,6 +505,7 @@ class ExpenseShare {
     required this.amount,
     this.percentage,
     this.shares,
+    this.groupId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -448,6 +515,7 @@ class ExpenseShare {
         'amountPaisa': amount.paisa,
         'percentage': percentage,
         'shares': shares,
+        'groupId': groupId,
       };
 
   factory ExpenseShare.fromJson(Map<String, dynamic> json) => ExpenseShare(
@@ -457,6 +525,7 @@ class ExpenseShare {
         amount: Money(json['amountPaisa'] as int),
         percentage: (json['percentage'] as num?)?.toDouble(),
         shares: json['shares'] as int?,
+        groupId: json['groupId'] as String?,
       );
 }
 

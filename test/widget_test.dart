@@ -60,6 +60,95 @@ void main() {
       expect(shares[0].amount, const Money(600000));
       expect(shares[1].amount, const Money(300000));
     });
+
+    test('grouped equal split treats each group as one party', () {
+      final shares = SplitCalculator.buildGrouped(
+        expenseId: 'e',
+        amount: const Money(90000),
+        parties: [
+          SplitParty.individual('a'),
+          SplitParty(id: 'g1', name: 'B + C', userIds: ['b', 'c']),
+        ],
+      );
+      expect(SplitCalculator.totalShares(shares), const Money(90000));
+      // A = 450, group B+C = 450, distributed equally: B = 225, C = 225.
+      final a = shares.firstWhere((s) => s.userId == 'a');
+      final b = shares.firstWhere((s) => s.userId == 'b');
+      final c = shares.firstWhere((s) => s.userId == 'c');
+      expect(a.amount, const Money(45000));
+      expect(b.amount, const Money(22500));
+      expect(c.amount, const Money(22500));
+      expect(b.groupId, 'g1');
+      expect(c.groupId, 'g1');
+      expect(a.groupId, isNull);
+    });
+
+    test('grouped percentage split distributes the group share equally', () {
+      final shares = SplitCalculator.buildGrouped(
+        expenseId: 'e',
+        amount: const Money(100000),
+        parties: [
+          SplitParty.individual('a'),
+          SplitParty(id: 'g1', name: 'B + C', userIds: ['b', 'c']),
+        ],
+        type: SplitType.percentage,
+        percentages: {'a': 50, 'g1': 50},
+      );
+      expect(SplitCalculator.totalShares(shares), const Money(100000));
+      final a = shares.firstWhere((s) => s.userId == 'a');
+      final b = shares.firstWhere((s) => s.userId == 'b');
+      final c = shares.firstWhere((s) => s.userId == 'c');
+      expect(a.amount, const Money(50000));
+      expect(b.amount, const Money(25000));
+      expect(c.amount, const Money(25000));
+      expect(b.percentage, 50);
+      expect(c.percentage, 50);
+    });
+
+    test('grouped custom split sums exactly and distributes equally', () {
+      final shares = SplitCalculator.buildGrouped(
+        expenseId: 'e',
+        amount: const Money(100000),
+        parties: [
+          SplitParty.individual('a'),
+          SplitParty(id: 'g1', name: 'B + C', userIds: ['b', 'c']),
+        ],
+        type: SplitType.custom,
+        customAmounts: {
+          'a': const Money(70000),
+          'g1': const Money(30000),
+        },
+      );
+      expect(SplitCalculator.totalShares(shares), const Money(100000));
+      final a = shares.firstWhere((s) => s.userId == 'a');
+      final b = shares.firstWhere((s) => s.userId == 'b');
+      final c = shares.firstWhere((s) => s.userId == 'c');
+      expect(a.amount, const Money(70000));
+      expect(b.amount, const Money(15000));
+      expect(c.amount, const Money(15000));
+    });
+
+    test('grouped shares split is proportional across parties', () {
+      final shares = SplitCalculator.buildGrouped(
+        expenseId: 'e',
+        amount: const Money(900000),
+        parties: [
+          SplitParty.individual('a'),
+          SplitParty(id: 'g1', name: 'B + C', userIds: ['b', 'c']),
+        ],
+        type: SplitType.shares,
+        shareUnits: {'a': 2, 'g1': 1},
+      );
+      expect(SplitCalculator.totalShares(shares), const Money(900000));
+      final a = shares.firstWhere((s) => s.userId == 'a');
+      final b = shares.firstWhere((s) => s.userId == 'b');
+      final c = shares.firstWhere((s) => s.userId == 'c');
+      expect(a.amount, const Money(600000));
+      expect(b.amount, const Money(150000));
+      expect(c.amount, const Money(150000));
+      expect(b.shares, 1);
+      expect(c.shares, 1);
+    });
   });
 
   group('BalanceCalculator', () {
@@ -164,6 +253,43 @@ void main() {
       final decoded = Expense.fromJson(source.toJson());
       expect(decoded.createdBy, 'u_ram');
       expect(decoded.cycleId, isNull);
+    });
+
+    test('participantGroups round-trip through toJson/fromJson', () {
+      final expense = _groupedExpense();
+      final decoded = Expense.fromJson(expense.toJson());
+      expect(decoded.participantGroups, hasLength(1));
+      final g = decoded.participantGroups.first;
+      expect(g.id, 'g1');
+      expect(g.expenseId, expense.id);
+      expect(g.name, 'B + C');
+      expect(g.userIds, ['b', 'c']);
+      expect(g.customAmountPaisa, 30000);
+    });
+
+    test('expense shares round-trip their group membership', () {
+      final shares = SplitCalculator.buildGrouped(
+        expenseId: 'e1',
+        amount: const Money(100000),
+        parties: [
+          SplitParty.individual('a'),
+          SplitParty(id: 'g1', name: 'B + C', userIds: ['b', 'c']),
+        ],
+        type: SplitType.custom,
+        customAmounts: {
+          'a': const Money(70000),
+          'g1': const Money(30000),
+        },
+      );
+      for (final share in shares) {
+        final decoded = ExpenseShare.fromJson(share.toJson());
+        expect(decoded.amount, share.amount);
+        expect(decoded.groupId, share.groupId);
+        expect(decoded.percentage, share.percentage);
+        expect(decoded.shares, share.shares);
+      }
+      final b = shares.firstWhere((s) => s.userId == 'b');
+      expect(b.groupId, 'g1');
     });
   });
 
@@ -326,6 +452,29 @@ Expense _personalExpense(String id, String payer, int paisa) {
     date: DateTime(2026, 1, 20),
     createdAt: DateTime(2026, 1, 20),
     updatedAt: DateTime(2026, 1, 20),
+  );
+}
+
+Expense _groupedExpense() {
+  return Expense(
+    id: 'e1',
+    householdId: 'h',
+    cycleId: 'c',
+    paidByUserId: 'a',
+    createdBy: 'a',
+    amount: const Money(100000),
+    date: DateTime(2026, 1, 10),
+    createdAt: DateTime(2026, 1, 10),
+    updatedAt: DateTime(2026, 1, 10),
+    participantGroups: const [
+      ParticipantGroup(
+        id: 'g1',
+        expenseId: 'e1',
+        name: 'B + C',
+        userIds: ['b', 'c'],
+        customAmountPaisa: 30000,
+      ),
+    ],
   );
 }
 

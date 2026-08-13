@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants.dart';
 import '../../core/formatters.dart';
+import '../../core/ids.dart';
 import '../../core/money.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../l10n/l10n.dart';
@@ -33,6 +34,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   Money _amount = Money.zero();
   DateTime _date = DateTime.now();
   Set<String> _participants = {};
+  List<ParticipantGroup> _groups = [];
   SplitType _splitType = SplitType.equal;
   Map<String, double> _percentages = {};
   Map<String, Money> _customAmounts = {};
@@ -55,29 +57,72 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       _date = expense.date;
       final shares = state.sharesForExpense(expense.id);
       _participants = shares.map((s) => s.userId).toSet();
-      _splitType = _detectSplitType(shares);
-      _percentages = {
-        for (final s in shares)
-          if (s.percentage != null) s.userId: s.percentage!,
-      };
-      _customAmounts = {for (final s in shares) s.userId: s.amount};
-      _shareUnits = {
-        for (final s in shares)
-          if (s.shares != null) s.userId: s.shares!,
-      };
+      _groups = expense.participantGroups.toList();
+      _splitType = _detectSplitType(shares, _groups);
+      _percentages = {};
+      _customAmounts = {};
+      _shareUnits = {};
+      for (final s in shares) {
+        final key = s.groupId ?? s.userId;
+        if (s.percentage != null) _percentages[key] = s.percentage!;
+        if (s.shares != null) _shareUnits[key] = s.shares!;
+      }
+      // For custom splits, a group's party-level amount is the sum of its
+      // members' shares; individuals carry their own amount.
+      for (final g in _groups) {
+        final total = shares
+            .where((s) => s.groupId == g.id)
+            .fold<int>(0, (sum, s) => sum + s.amount.paisa);
+        if (total > 0) _customAmounts[g.id] = Money(total);
+      }
+      for (final s in shares) {
+        if (s.groupId == null) _customAmounts[s.userId] = s.amount;
+      }
     }
   }
 
-  SplitType _detectSplitType(List<ExpenseShare> shares) {
+  SplitType _detectSplitType(
+    List<ExpenseShare> shares,
+    List<ParticipantGroup> groups,
+  ) {
     if (shares.isNotEmpty && shares.every((s) => s.percentage != null)) {
       return SplitType.percentage;
     }
     if (shares.isNotEmpty && shares.every((s) => s.shares != null)) {
       return SplitType.shares;
     }
-    final amounts = shares.map((s) => s.amount.paisa).toSet();
-    if (amounts.length > 1) return SplitType.custom;
+    // Grouped custom splits record the party-level amount on the group.
+    if (groups.any((g) => g.customAmountPaisa != null)) {
+      return SplitType.custom;
+    }
+    // Party-level amount for each individual is its own share.
+    final partyAmounts = <int>{};
+    for (final g in groups) {
+      partyAmounts.add(g.customAmountPaisa ?? 0);
+    }
+    for (final s in shares) {
+      if (s.groupId == null) partyAmounts.add(s.amount.paisa);
+    }
+    partyAmounts.removeWhere((p) => p == 0);
+    if (partyAmounts.length > 1) return SplitType.custom;
     return SplitType.equal;
+  }
+
+  /// The split parties currently in effect: users not in a group are
+  /// individual parties; each group is one party containing its members.
+  List<SplitParty> get _parties {
+    final grouped = <String>{for (final g in _groups) ...g.userIds};
+    return [
+      for (final id in _participants)
+        if (!grouped.contains(id)) SplitParty.individual(id),
+      for (final g in _groups)
+        SplitParty(id: g.id, name: g.name, userIds: g.userIds),
+    ];
+  }
+
+  String _partyLabel(SplitParty party, AppState state) {
+    if (party.isGroup) return party.name ?? '?';
+    return state.memberName(party.id) ?? '?';
   }
 
   @override
@@ -152,6 +197,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               _Label(l10n.splitBetween),
               const SizedBox(height: 10),
               _buildParticipantSelector(members),
+              const SizedBox(height: 12),
+              _buildGroupSection(state),
               const SizedBox(height: 20),
               _buildSplitTypeSelector(),
               const SizedBox(height: 20),
@@ -403,11 +450,156 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 _percentages.remove(m.userId);
                 _customAmounts.remove(m.userId);
                 _shareUnits.remove(m.userId);
+                _removeUserFromGroups(m.userId);
               }
             }),
           ),
       ],
     );
+  }
+
+  /// Removes [userId] from any group that contains them, dissolving groups
+  /// that drop below two members.
+  void _removeUserFromGroups(String userId) {
+    final remaining = <ParticipantGroup>[];
+    for (final g in _groups) {
+      final ids = g.userIds.where((id) => id != userId).toList();
+      if (ids.length >= 2) {
+        remaining.add(ParticipantGroup(
+          id: g.id,
+          expenseId: g.expenseId,
+          name: g.name,
+          userIds: ids,
+        ));
+      } else {
+        _percentages.remove(g.id);
+        _customAmounts.remove(g.id);
+        _shareUnits.remove(g.id);
+      }
+    }
+    _groups = remaining;
+  }
+
+  Widget _buildGroupSection(AppState state) {
+    final l10n = context.l10n;
+    final grouped = <String>{for (final g in _groups) ...g.userIds};
+    final selectable = state.members
+        .where(
+          (m) =>
+              _participants.contains(m.userId) &&
+              !grouped.contains(m.userId),
+        )
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_groups.isNotEmpty) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < _groups.length; i++)
+                InputChip(
+                  avatar: const Icon(
+                    Icons.group_outlined,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                  label: Text(_groups[i].name),
+                  onDeleted: () => setState(() {
+                    _groups.removeAt(i);
+                  }),
+                  deleteButtonTooltipMessage: l10n.ungroup,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.08),
+                  side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+        TextButton.icon(
+          onPressed: selectable.length >= 2
+              ? () => _openGroupPicker(state, selectable)
+              : null,
+          icon: const Icon(Icons.group_add_outlined, size: 18),
+          label: Text(l10n.createGroup),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openGroupPicker(
+    AppState state,
+    List<SpaceMember> selectable,
+  ) async {
+    final l10n = context.l10n;
+    final picked = <String>{};
+    final result = await showModalBottomSheet<String?>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.selectGroupMembers,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                for (final m in selectable)
+                  CheckboxListTile(
+                    value: picked.contains(m.userId),
+                    title: Text(m.name),
+                    onChanged: (v) => setSheetState(() {
+                      if (v == true) {
+                        picked.add(m.userId);
+                      } else {
+                        picked.remove(m.userId);
+                      }
+                    }),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    dense: true,
+                  ),
+                const SizedBox(height: 12),
+                PrimaryButton(
+                  label: l10n.createGroup,
+                  onPressed: picked.length >= 2
+                      ? () => Navigator.of(sheetContext).pop(
+                            picked.toList().join('|'),
+                          )
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+    final ids = result.split('|');
+    final members = state.members
+        .where((m) => ids.contains(m.userId))
+        .toList();
+    setState(() {
+      _groups.add(ParticipantGroup(
+        id: 'g_${genId(8)}',
+        expenseId: widget.expense?.id ?? '',
+        name: members.map((m) => m.name).join(' + '),
+        userIds: members.map((m) => m.userId).toList(),
+      ));
+    });
   }
 
   Widget _buildSplitTypeSelector() {
@@ -470,10 +662,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Widget _buildSplitInput(AppState state) {
-    final participants = state.members
-        .where((m) => _participants.contains(m.userId))
-        .toList();
-    if (participants.isEmpty) {
+    final parties = _parties;
+    if (parties.isEmpty) {
       return Text(
         context.l10n.selectParticipant,
         style: const TextStyle(color: AppColors.negative),
@@ -482,38 +672,37 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 
     switch (_splitType) {
       case SplitType.equal:
-        final shares = SplitCalculator.build(
+        final shares = SplitCalculator.buildGrouped(
           expenseId: 'preview',
           amount: _amount,
-          participantIds: participants.map((m) => m.userId).toList(),
+          parties: parties,
         );
         return Column(
           children: [
-            for (var i = 0; i < participants.length; i++)
-              _SharePreviewRow(
-                member: participants[i],
+            for (var i = 0; i < parties.length; i++)
+              _PartyPreviewRow(
+                party: parties[i],
+                label: _partyLabel(parties[i], state),
                 share: shares[i].amount,
               ),
           ],
         );
       case SplitType.percentage:
-        return _percentageInput(participants: participants);
+        return _percentageInput(state: state, parties: parties);
       case SplitType.custom:
-        return _customAmountInput(participants: participants);
+        return _customAmountInput(state: state, parties: parties);
       case SplitType.shares:
-        return _sharesInput(participants: participants);
+        return _sharesInput(state: state, parties: parties);
     }
   }
 
   Widget _buildPreview(AppState state) {
-    final participants = state.members
-        .where((m) => _participants.contains(m.userId))
-        .toList();
-    if (participants.isEmpty || _amount.isZero) return const SizedBox.shrink();
-    final shares = SplitCalculator.build(
+    final parties = _parties;
+    if (parties.isEmpty || _amount.isZero) return const SizedBox.shrink();
+    final shares = SplitCalculator.buildGrouped(
       expenseId: 'preview',
       amount: _amount,
-      participantIds: participants.map((m) => m.userId).toList(),
+      parties: parties,
       type: _splitType,
       percentages: _percentages,
       customAmounts: _customAmounts,
@@ -657,6 +846,26 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       return;
     }
     final participants = _participants.toList();
+    final groups = _groups.map((g) {
+      // The party-level config is restored on edit from the expense; for a new
+      // expense the id is assigned by the repository.
+      final percentage = _splitType == SplitType.percentage
+          ? _percentages[g.id]
+          : null;
+      final shares = _splitType == SplitType.shares ? _shareUnits[g.id] : null;
+      final custom = _splitType == SplitType.custom
+          ? _customAmounts[g.id]?.paisa
+          : null;
+      return ParticipantGroup(
+        id: g.id,
+        expenseId: g.expenseId,
+        name: g.name,
+        userIds: g.userIds,
+        percentage: percentage,
+        shares: shares,
+        customAmountPaisa: custom,
+      );
+    }).toList();
     if (expense == null) {
       await state.addExpense(
         description: _descriptionController.text,
@@ -665,6 +874,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         categoryId: _categoryId,
         note: _noteController.text,
         participantIds: participants,
+        groups: groups,
         splitType: _splitType,
         percentages: _percentages,
         customAmounts: _customAmounts,
@@ -679,6 +889,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         categoryId: _categoryId,
         note: _noteController.text,
         participantIds: participants,
+        groups: groups,
         splitType: _splitType,
         percentages: _percentages,
         customAmounts: _customAmounts,
@@ -690,38 +901,41 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 
   // ---- split type inputs ----
 
-  Widget _percentageInput({required List<SpaceMember> participants}) {
+  Widget _percentageInput({
+    required AppState state,
+    required List<SplitParty> parties,
+  }) {
     final sum = _percentages.values.fold<double>(0, (a, b) => a + b);
     return Column(
       children: [
-        for (final m in participants)
+        for (final p in parties)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Row(
               children: [
-                MemberAvatar(name: m.name, size: 30),
+                _PartyAvatar(party: p, state: state, size: 30),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    m.name,
+                    _partyLabel(p, state),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 SizedBox(
                   width: 78,
                   child: TextField(
-                    key: ValueKey('pct_${m.userId}'),
+                    key: ValueKey('pct_${p.id}'),
                     keyboardType: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
                     controller: TextEditingController(
-                      text: (_percentages[m.userId] ?? 0).toStringAsFixed(0),
+                      text: (_percentages[p.id] ?? 0).toStringAsFixed(0),
                     ),
                     textAlign: TextAlign.right,
                     onChanged: (v) {
                       final val = double.tryParse(v) ?? 0;
-                      setState(() => _percentages[m.userId] = val);
+                      setState(() => _percentages[p.id] = val);
                     },
                     decoration: const InputDecoration(
                       suffixText: '%',
@@ -758,31 +972,34 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
   }
 
-  Widget _customAmountInput({required List<SpaceMember> participants}) {
+  Widget _customAmountInput({
+    required AppState state,
+    required List<SplitParty> parties,
+  }) {
     var assigned = 0;
-    for (final m in participants) {
-      assigned += (_customAmounts[m.userId] ?? Money.zero()).paisa;
+    for (final p in parties) {
+      assigned += (_customAmounts[p.id] ?? Money.zero()).paisa;
     }
     final ok = assigned == _amount.paisa;
     return Column(
       children: [
-        for (final m in participants)
+        for (final p in parties)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Row(
               children: [
-                MemberAvatar(name: m.name, size: 30),
+                _PartyAvatar(party: p, state: state, size: 30),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    m.name,
+                    _partyLabel(p, state),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 SizedBox(
                   width: 120,
                   child: TextField(
-                    key: ValueKey('amt_${m.userId}'),
+                    key: ValueKey('amt_${p.id}'),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -790,13 +1007,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
                     controller: TextEditingController(
-                      text: _customAmountText(_customAmounts[m.userId]),
+                      text: _customAmountText(_customAmounts[p.id]),
                     ),
                     textAlign: TextAlign.right,
                     onChanged: (v) {
                       final val = double.tryParse(v.replaceAll(',', '')) ?? 0;
                       setState(
-                        () => _customAmounts[m.userId] = Money(
+                        () => _customAmounts[p.id] = Money(
                           (val * 100).round(),
                         ),
                       );
@@ -841,25 +1058,28 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     return isWhole ? major.round().toString() : major.toStringAsFixed(2);
   }
 
-  Widget _sharesInput({required List<SpaceMember> participants}) {
+  Widget _sharesInput({
+    required AppState state,
+    required List<SplitParty> parties,
+  }) {
     final total = _shareUnits.values.fold<int>(0, (a, b) => a + b);
     return Column(
       children: [
-        for (final m in participants)
+        for (final p in parties)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Row(
               children: [
-                MemberAvatar(name: m.name, size: 30),
+                _PartyAvatar(party: p, state: state, size: 30),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    m.name,
+                    _partyLabel(p, state),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 Text(
-                  _shareAmountFor(m.userId, total),
+                  _shareAmountFor(p.id, total),
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
@@ -870,14 +1090,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 IconButton(
                   onPressed: () {
                     setState(() {
-                      final current = _shareUnits[m.userId] ?? 1;
-                      _shareUnits[m.userId] = current > 1 ? current - 1 : 1;
+                      final current = _shareUnits[p.id] ?? 1;
+                      _shareUnits[p.id] = current > 1 ? current - 1 : 1;
                     });
                   },
                   icon: const Icon(Icons.remove_circle_outline_rounded),
                 ),
                 Text(
-                  '${_shareUnits[m.userId] ?? 1}',
+                  '${_shareUnits[p.id] ?? 1}',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
@@ -886,7 +1106,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 IconButton(
                   onPressed: () {
                     setState(() {
-                      _shareUnits[m.userId] = (_shareUnits[m.userId] ?? 1) + 1;
+                      _shareUnits[p.id] = (_shareUnits[p.id] ?? 1) + 1;
                     });
                   },
                   icon: const Icon(Icons.add_circle_outline_rounded),
@@ -896,9 +1116,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           ),
         Row(
           children: [
-            const Text(
-              'Total shares',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            Text(
+              context.l10n.totalShares,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
             const Spacer(),
             Text(
@@ -911,9 +1131,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
   }
 
-  String _shareAmountFor(String userId, int totalUnits) {
+  String _shareAmountFor(String partyId, int totalUnits) {
     if (_amount.isZero || totalUnits == 0) return '';
-    final units = _shareUnits[userId] ?? 1;
+    final units = _shareUnits[partyId] ?? 1;
     final share = (_amount.paisa * units) ~/ totalUnits;
     return formatMoney(Money(share), showSymbol: false);
   }
@@ -937,11 +1157,16 @@ class _Label extends StatelessWidget {
   }
 }
 
-class _SharePreviewRow extends StatelessWidget {
-  final SpaceMember member;
+class _PartyPreviewRow extends StatelessWidget {
+  final SplitParty party;
+  final String label;
   final Money share;
 
-  const _SharePreviewRow({required this.member, required this.share});
+  const _PartyPreviewRow({
+    required this.party,
+    required this.label,
+    required this.share,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -949,11 +1174,26 @@ class _SharePreviewRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          MemberAvatar(name: member.name, size: 28),
+          if (party.isGroup)
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.group_outlined,
+                size: 16,
+                color: AppColors.primary,
+              ),
+            )
+          else
+            MemberAvatar(name: label, size: 28),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              member.name,
+              label,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -962,6 +1202,41 @@ class _SharePreviewRow extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PartyAvatar extends StatelessWidget {
+  final SplitParty party;
+  final AppState state;
+  final double size;
+
+  const _PartyAvatar({
+    required this.party,
+    required this.state,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!party.isGroup) {
+      return MemberAvatar(
+        name: state.memberName(party.id) ?? '?',
+        size: size,
+      );
+    }
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        Icons.group_outlined,
+        size: size * 0.55,
+        color: AppColors.primary,
       ),
     );
   }

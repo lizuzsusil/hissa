@@ -247,6 +247,18 @@ class AppLocalizationsNe extends AppLocalizations {
   String get assigned => 'जम्मा गरिएको';
 
   @override
+  String get totalShares => 'कुल सेयर';
+
+  @override
+  String get createGroup => 'समूह बनाउनुहोस्';
+
+  @override
+  String get ungroup => 'समूह हटाउनुहोस्';
+
+  @override
+  String get selectGroupMembers => 'समूहमा राख्न सदस्यहरू छान्नुहोस्';
+
+  @override
   String get editExpense => 'खर्च सम्पादन गर्नुहोस्';
 
   @override

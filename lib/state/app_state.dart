@@ -669,6 +669,43 @@ class AppState extends ChangeNotifier {
 
   // ---- expenses ----
 
+  /// Builds disjoint split parties from the selected participant ids plus any
+  /// participant groups. Users inside a group form one party; every other
+  /// selected user is an individual party.
+  List<SplitParty> _partiesFrom({
+    required List<String> participantIds,
+    required List<ParticipantGroup> groups,
+  }) {
+    final grouped = <String>{for (final g in groups) ...g.userIds};
+    return [
+      for (final id in participantIds)
+        if (!grouped.contains(id)) SplitParty.individual(id),
+      for (final g in groups)
+        SplitParty(id: g.id, name: g.name, userIds: g.userIds),
+    ];
+  }
+
+  /// Rebinds each group's [ParticipantGroup.expenseId] to [expenseId]. The
+  /// form creates groups before the expense document exists, so the reference
+  /// is fixed here at save time.
+  List<ParticipantGroup> _bindGroups(
+    List<ParticipantGroup> groups,
+    String expenseId,
+  ) {
+    return [
+      for (final g in groups)
+        ParticipantGroup(
+          id: g.id,
+          expenseId: expenseId,
+          name: g.name,
+          userIds: g.userIds,
+          percentage: g.percentage,
+          shares: g.shares,
+          customAmountPaisa: g.customAmountPaisa,
+        ),
+    ];
+  }
+
   Future<void> addExpense({
     required String description,
     required Money amount,
@@ -676,6 +713,7 @@ class AppState extends ChangeNotifier {
     String? categoryId,
     String? note,
     required List<String> participantIds,
+    List<ParticipantGroup> groups = const [],
     SplitType splitType = SplitType.equal,
     Map<String, double> percentages = const {},
     Map<String, Money> customAmounts = const {},
@@ -685,8 +723,9 @@ class AppState extends ChangeNotifier {
     final cycle = selectedCycle;
     if (s == null || cycle == null) return;
 
+    final expenseId = 'e_${genId(8)}';
     final expense = Expense(
-      id: 'e_${genId(8)}',
+      id: expenseId,
       householdId: s.id,
       cycleId: cycle.id,
       // Phase 5: an expense is always paid for by the authenticated user.
@@ -699,11 +738,15 @@ class AppState extends ChangeNotifier {
       note: note?.trim().isEmpty ?? true ? null : note!.trim(),
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      participantGroups: _bindGroups(groups, expenseId),
     );
-    final shares = SplitCalculator.build(
+    final shares = SplitCalculator.buildGrouped(
       expenseId: expense.id,
       amount: expense.amount,
-      participantIds: participantIds,
+      parties: _partiesFrom(
+        participantIds: participantIds,
+        groups: groups,
+      ),
       type: splitType,
       percentages: percentages,
       customAmounts: customAmounts,
@@ -721,6 +764,7 @@ class AppState extends ChangeNotifier {
     String? categoryId,
     String? note,
     required List<String> participantIds,
+    List<ParticipantGroup> groups = const [],
     SplitType splitType = SplitType.equal,
     Map<String, double> percentages = const {},
     Map<String, Money> customAmounts = const {},
@@ -733,11 +777,15 @@ class AppState extends ChangeNotifier {
       date: date,
       categoryId: categoryId,
       note: note?.trim().isEmpty ?? true ? null : note!.trim(),
+      participantGroups: _bindGroups(groups, expense.id),
     );
-    final shares = SplitCalculator.build(
+    final shares = SplitCalculator.buildGrouped(
       expenseId: expense.id,
       amount: updated.amount,
-      participantIds: participantIds,
+      parties: _partiesFrom(
+        participantIds: participantIds,
+        groups: groups,
+      ),
       type: splitType,
       percentages: percentages,
       customAmounts: customAmounts,
