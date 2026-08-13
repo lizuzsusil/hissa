@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -176,7 +174,7 @@ class SettingsScreen extends StatelessWidget {
     final l10n = context.l10n;
     if (value) {
       final issue = await biometrics.availabilityIssue();
-      log(issue.toString());
+      
       if (!context.mounted) return;
       if (issue != null) {
         showToast(
