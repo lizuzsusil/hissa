@@ -153,25 +153,29 @@ class _SetupScreenState extends State<SetupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (widget.onBack != null)
-                Row(
-                  children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (widget.onBack != null) ...[
                     IconAction(
                       icon: Icons.arrow_back_rounded,
                       size: 46,
                       onPressed: widget.onBack,
                     ),
+                    const SizedBox(width: 12),
                   ],
-                ),
-              const SizedBox(height: 12),
-              Text(
-                _createMode ? l10n.createSpaceTitle : l10n.joinSpace,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.6,
-                  color: textColor,
-                ),
+                  Expanded(
+                    child: Text(
+                      _createMode ? l10n.createSpaceTitle : l10n.joinSpace,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.6,
+                        color: textColor,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Text(
