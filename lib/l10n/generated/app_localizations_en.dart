@@ -171,7 +171,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String addedMember(String name) {
-    return '$name added to the household';
+    return '$name added to the space';
   }
 
   @override
@@ -283,7 +283,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalSpending => 'Total spending';
 
   @override
-  String get householdBalances => 'Household balances';
+  String get householdBalances => 'Space balances';
 
   @override
   String get recentExpenses => 'Recent expenses';
@@ -345,11 +345,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'This cycle is closed, so expenses can no longer be edited.';
 
   @override
+  String get legacyExpenseHint =>
+      'This is a read-only historical record. It was created before ownership was tracked, so it can no longer be edited or deleted.';
+
+  @override
   String get deleteExpenseTitle => 'Delete this expense?';
 
   @override
   String get deleteExpenseMessage =>
-      'Deleting an expense changes the current household balances for everyone.';
+      'Deleting an expense changes the current space balances for everyone.';
 
   @override
   String get monthlySpending => 'Monthly spending';
@@ -381,7 +385,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get introSubtitle1 =>
-      'The simplest way for households, roommates and families to track shared expenses together.';
+      'The simplest way for groups, roommates and families to track shared expenses together.';
 
   @override
   String get introTitle2 => 'Track every expense';
@@ -409,7 +413,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingSubtitle =>
-      'Pick the setup that matches your household. You can change it anytime.';
+      'Pick the setup that matches your group. You can change it anytime.';
 
   @override
   String get modeTwoPeople => 'Two People';
@@ -421,7 +425,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modeFamily => 'Family';
 
   @override
-  String get modeFamilySubtitle => 'Parents, kids and the whole household';
+  String get modeFamilySubtitle => 'Parents, kids and the whole family';
 
   @override
   String get modeRoommates => 'Roommates';
@@ -436,11 +440,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modeOtherSubtitle => 'Any small group sharing expenses';
 
   @override
-  String get setUpHousehold => 'Set up your household';
+  String get setUpHousehold => 'Set up your space';
 
   @override
   String get setUpSubtitle =>
-      'Create a new household or join one with an invite code.';
+      'Create a new space or join one with an invite code.';
 
   @override
   String get create => 'Create';
@@ -449,7 +453,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get join => 'Join';
 
   @override
-  String get householdName => 'Household name';
+  String get householdName => 'Space name';
 
   @override
   String get householdNameHint => 'e.g. Our Home';
@@ -467,7 +471,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currency => 'Currency';
 
   @override
-  String get createHousehold => 'Create household';
+  String get createHousehold => 'Create space';
 
   @override
   String get inviteLater => 'You can invite more people later from Settings';
@@ -480,17 +484,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteCodeHelp =>
-      'Ask the household owner for their invite code. Codes are shown in Settings → Household.';
+      'Ask the space owner for their invite code. Codes are shown in Settings → Space.';
 
   @override
-  String get joinHousehold => 'Join household';
+  String get joinHousehold => 'Join space';
 
   @override
   String get inviteNotFound =>
       'Invite code not found. Check the code and try again.';
 
   @override
-  String get householdNameRequired => 'Household name is required';
+  String get householdNameRequired => 'Space name is required';
 
   @override
   String get enterMemberNameError => 'Enter a member name';
@@ -512,6 +516,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noSpacesYet => 'No spaces yet';
+
+  @override
+  String get noSpace => 'No space';
 
   @override
   String get noSpacesMessage =>
@@ -584,7 +591,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignupSubtitle => 'Start tracking shared expenses in seconds.';
 
   @override
-  String get authLoginSubtitle => 'Log in to keep your household in sync.';
+  String get authLoginSubtitle => 'Log in to keep your spaces in sync.';
 
   @override
   String get yourName => 'Your name';
@@ -804,17 +811,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get displayName => 'Display name';
 
   @override
-  String get displayNameHint =>
-      'This name is shared with your household members.';
+  String get displayNameHint => 'This name is shared with your space members.';
 
   @override
   String get enterNameError => 'Enter your name';
 
   @override
-  String get household => 'Household';
+  String get household => 'Space';
 
   @override
-  String get householdAndMembers => 'Household & members';
+  String get householdAndMembers => 'Space & members';
 
   @override
   String get categories => 'Categories';
@@ -857,7 +863,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareInviteHint =>
-      'Share this code so friends and roommates can join your household.';
+      'Share this code so friends and roommates can join your space.';
 
   @override
   String get members => 'Members';
@@ -871,7 +877,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removeMemberMessage =>
-      'Their past expenses stay in the history, but they will no longer see this household.';
+      'Their past expenses stay in the history, but they will no longer see this space.';
 
   @override
   String get roleOwner => 'Owner';
@@ -963,7 +969,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOut => 'Sign out';
 
   @override
-  String get signOutSubtitle => 'Switch account or household';
+  String get signOutSubtitle => 'Switch account or space';
 
   @override
   String get signOutTitle => 'Sign out?';
@@ -972,7 +978,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOutMessage => 'You can sign back in at any time.';
 
   @override
-  String get appName => 'Hissa · Household Expense Tracker';
+  String get appName => 'Hissa · Space Expense Tracker';
 
   @override
   String get version => 'v1.0.0';

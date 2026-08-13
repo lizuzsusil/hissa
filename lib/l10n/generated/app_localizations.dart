@@ -347,7 +347,7 @@ abstract class AppLocalizations {
   /// No description provided for @addedMember.
   ///
   /// In en, this message translates to:
-  /// **'{name} added to the household'**
+  /// **'{name} added to the space'**
   String addedMember(String name);
 
   /// No description provided for @removeMemberTitle.
@@ -545,7 +545,7 @@ abstract class AppLocalizations {
   /// No description provided for @householdBalances.
   ///
   /// In en, this message translates to:
-  /// **'Household balances'**
+  /// **'Space balances'**
   String get householdBalances;
 
   /// No description provided for @recentExpenses.
@@ -656,6 +656,12 @@ abstract class AppLocalizations {
   /// **'This cycle is closed, so expenses can no longer be edited.'**
   String get cycleClosedHint;
 
+  /// No description provided for @legacyExpenseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a read-only historical record. It was created before ownership was tracked, so it can no longer be edited or deleted.'**
+  String get legacyExpenseHint;
+
   /// No description provided for @deleteExpenseTitle.
   ///
   /// In en, this message translates to:
@@ -665,7 +671,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteExpenseMessage.
   ///
   /// In en, this message translates to:
-  /// **'Deleting an expense changes the current household balances for everyone.'**
+  /// **'Deleting an expense changes the current space balances for everyone.'**
   String get deleteExpenseMessage;
 
   /// No description provided for @monthlySpending.
@@ -725,7 +731,7 @@ abstract class AppLocalizations {
   /// No description provided for @introSubtitle1.
   ///
   /// In en, this message translates to:
-  /// **'The simplest way for households, roommates and families to track shared expenses together.'**
+  /// **'The simplest way for groups, roommates and families to track shared expenses together.'**
   String get introSubtitle1;
 
   /// No description provided for @introTitle2.
@@ -773,7 +779,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Pick the setup that matches your household. You can change it anytime.'**
+  /// **'Pick the setup that matches your group. You can change it anytime.'**
   String get onboardingSubtitle;
 
   /// No description provided for @modeTwoPeople.
@@ -797,7 +803,7 @@ abstract class AppLocalizations {
   /// No description provided for @modeFamilySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Parents, kids and the whole household'**
+  /// **'Parents, kids and the whole family'**
   String get modeFamilySubtitle;
 
   /// No description provided for @modeRoommates.
@@ -827,13 +833,13 @@ abstract class AppLocalizations {
   /// No description provided for @setUpHousehold.
   ///
   /// In en, this message translates to:
-  /// **'Set up your household'**
+  /// **'Set up your space'**
   String get setUpHousehold;
 
   /// No description provided for @setUpSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Create a new household or join one with an invite code.'**
+  /// **'Create a new space or join one with an invite code.'**
   String get setUpSubtitle;
 
   /// No description provided for @create.
@@ -851,7 +857,7 @@ abstract class AppLocalizations {
   /// No description provided for @householdName.
   ///
   /// In en, this message translates to:
-  /// **'Household name'**
+  /// **'Space name'**
   String get householdName;
 
   /// No description provided for @householdNameHint.
@@ -887,7 +893,7 @@ abstract class AppLocalizations {
   /// No description provided for @createHousehold.
   ///
   /// In en, this message translates to:
-  /// **'Create household'**
+  /// **'Create space'**
   String get createHousehold;
 
   /// No description provided for @inviteLater.
@@ -911,13 +917,13 @@ abstract class AppLocalizations {
   /// No description provided for @inviteCodeHelp.
   ///
   /// In en, this message translates to:
-  /// **'Ask the household owner for their invite code. Codes are shown in Settings → Household.'**
+  /// **'Ask the space owner for their invite code. Codes are shown in Settings → Space.'**
   String get inviteCodeHelp;
 
   /// No description provided for @joinHousehold.
   ///
   /// In en, this message translates to:
-  /// **'Join household'**
+  /// **'Join space'**
   String get joinHousehold;
 
   /// No description provided for @inviteNotFound.
@@ -929,7 +935,7 @@ abstract class AppLocalizations {
   /// No description provided for @householdNameRequired.
   ///
   /// In en, this message translates to:
-  /// **'Household name is required'**
+  /// **'Space name is required'**
   String get householdNameRequired;
 
   /// No description provided for @enterMemberNameError.
@@ -973,6 +979,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No spaces yet'**
   String get noSpacesYet;
+
+  /// No description provided for @noSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'No space'**
+  String get noSpace;
 
   /// No description provided for @noSpacesMessage.
   ///
@@ -1109,7 +1121,7 @@ abstract class AppLocalizations {
   /// No description provided for @authLoginSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Log in to keep your household in sync.'**
+  /// **'Log in to keep your spaces in sync.'**
   String get authLoginSubtitle;
 
   /// No description provided for @yourName.
@@ -1499,7 +1511,7 @@ abstract class AppLocalizations {
   /// No description provided for @displayNameHint.
   ///
   /// In en, this message translates to:
-  /// **'This name is shared with your household members.'**
+  /// **'This name is shared with your space members.'**
   String get displayNameHint;
 
   /// No description provided for @enterNameError.
@@ -1511,13 +1523,13 @@ abstract class AppLocalizations {
   /// No description provided for @household.
   ///
   /// In en, this message translates to:
-  /// **'Household'**
+  /// **'Space'**
   String get household;
 
   /// No description provided for @householdAndMembers.
   ///
   /// In en, this message translates to:
-  /// **'Household & members'**
+  /// **'Space & members'**
   String get householdAndMembers;
 
   /// No description provided for @categories.
@@ -1601,7 +1613,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareInviteHint.
   ///
   /// In en, this message translates to:
-  /// **'Share this code so friends and roommates can join your household.'**
+  /// **'Share this code so friends and roommates can join your space.'**
   String get shareInviteHint;
 
   /// No description provided for @members.
@@ -1625,7 +1637,7 @@ abstract class AppLocalizations {
   /// No description provided for @removeMemberMessage.
   ///
   /// In en, this message translates to:
-  /// **'Their past expenses stay in the history, but they will no longer see this household.'**
+  /// **'Their past expenses stay in the history, but they will no longer see this space.'**
   String get removeMemberMessage;
 
   /// No description provided for @roleOwner.
@@ -1805,7 +1817,7 @@ abstract class AppLocalizations {
   /// No description provided for @signOutSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Switch account or household'**
+  /// **'Switch account or space'**
   String get signOutSubtitle;
 
   /// No description provided for @signOutTitle.
@@ -1823,7 +1835,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'Hissa · Household Expense Tracker'**
+  /// **'Hissa · Space Expense Tracker'**
   String get appName;
 
   /// No description provided for @version.

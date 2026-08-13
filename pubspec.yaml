@@ -64,6 +64,7 @@ dev_dependencies:
   # and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  shared_preferences_platform_interface: ^2.4.2
   fake_cloud_firestore: ^4.2.0
 
 # For information on the generic Dart part of this file, see the

@@ -167,6 +167,10 @@ class IconAction extends StatelessWidget {
   final Color? foreground;
   final double size;
 
+  /// Accessible label announced by screen readers. Falls back to a text
+  /// description of [icon] when not provided.
+  final String? tooltip;
+
   const IconAction({
     super.key,
     required this.icon,
@@ -174,27 +178,35 @@ class IconAction extends StatelessWidget {
     this.background,
     this.foreground,
     this.size = 40,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkResponse(
-      onTap: onPressed,
-      radius: 26,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: background ??
-              (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          size: size * 0.5,
-          color: foreground ??
-              (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary),
+    return Tooltip(
+      message: tooltip ?? '',
+      child: InkResponse(
+        onTap: onPressed,
+        radius: 26,
+        child: Semantics(
+          button: true,
+          label: tooltip,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: background ??
+                  (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: size * 0.5,
+              color: foreground ??
+                  (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary),
+            ),
+          ),
         ),
       ),
     );

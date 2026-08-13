@@ -243,7 +243,9 @@ class ExpenseDetailScreen extends StatelessWidget {
             const SizedBox(height: 20),
             Center(
               child: Text(
-                l10n.cycleClosedHint,
+                expense.createdBy == null
+                    ? l10n.legacyExpenseHint
+                    : l10n.cycleClosedHint,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,

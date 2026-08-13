@@ -58,7 +58,7 @@ class SettingsScreen extends StatelessWidget {
           _SettingTile(
             icon: Icons.home_work_outlined,
             title: l10n.householdAndMembers,
-            subtitle: space?.name ?? 'No household',
+            subtitle: space?.name ?? l10n.noSpace,
             onTap: () => _push(context, HouseholdScreen()),
           ),
           _SettingTile(

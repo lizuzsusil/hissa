@@ -25,7 +25,12 @@ class DashboardScreen extends StatelessWidget {
     final cycle = state.selectedCycle;
 
     if (space == null || cycle == null) {
-      return const SizedBox.shrink();
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.only(top: 60),
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
     final members = state.members;
@@ -140,16 +145,18 @@ class _Header extends StatelessWidget {
                             color: Colors.white, size: 20),
                         const SizedBox(width: 8),
                         Flexible(
-                      child: Text(
-                        space.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                          child: Text(
+                            space.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
-                      ),
-                        ),
+                        const SizedBox(width: 8),
+                        _ModeChip(label: l10n.split),
                       ],
                     ),
                   ),
@@ -715,6 +722,33 @@ class _ExpenseTile extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small white pill identifying the Space mode, shown in the dashboard header
+/// so the active mode is always visible while inside a Space.
+class _ModeChip extends StatelessWidget {
+  final String label;
+
+  const _ModeChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

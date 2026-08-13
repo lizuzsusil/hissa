@@ -15,6 +15,7 @@ import '../data/in_memory_repository.dart';
 import '../data/repository.dart';
 import '../logic/balances.dart';
 import '../logic/expense_auth.dart';
+import '../logic/migration.dart';
 import '../logic/settlements.dart';
 import '../logic/splits.dart';
 import '../models/models.dart';
@@ -168,6 +169,26 @@ class AppState extends ChangeNotifier {
     }
     _repo = repo;
     await repo.start(uid: uid, spaceId: _spaceId, onChanged: notifyListeners);
+    await _runLegacyMigration();
+  }
+
+  /// Phase 7: one-time legacy data migration. Idempotent — it only rewrites
+  /// Spaces that still lack an explicit mode and never touches legacy
+  /// expenses (ambiguous ones stay read-only historical records).
+  Future<void> _runLegacyMigration() async {
+    final uid = _currentUserId;
+    if (uid == null) return;
+    try {
+      final report =
+          await SpaceMigrator().run(_repo, userId: uid);
+      if (report.spacesAssignedMode > 0) {
+        // Refresh the dashboard list so migrated Spaces show their mode.
+        _spaces = await _repo.findSpacesForUser(uid);
+        notifyListeners();
+      }
+    } on Exception {
+      // Migration is best-effort; existing reads already default to split.
+    }
   }
 
   // ---- auth ----
@@ -685,6 +706,26 @@ class AppState extends ChangeNotifier {
     ];
   }
 
+  /// Whether every participant and every participant-group member belongs to
+  /// the selected Space. A client must never be able to include a user who is
+  /// not a member (security rule mirrored in the Firestore rules).
+  bool _participantsAreMembers(
+    List<String> participantIds,
+    List<ParticipantGroup> groups,
+  ) {
+    if (_spaceId == null) return false;
+    final memberIds = {for (final m in _repo.members) m.userId};
+    for (final id in participantIds) {
+      if (!memberIds.contains(id)) return false;
+    }
+    for (final g in groups) {
+      for (final id in g.userIds) {
+        if (!memberIds.contains(id)) return false;
+      }
+    }
+    return true;
+  }
+
   /// Rebinds each group's [ParticipantGroup.expenseId] to [expenseId]. The
   /// form creates groups before the expense document exists, so the reference
   /// is fixed here at save time.
@@ -722,7 +763,7 @@ class AppState extends ChangeNotifier {
     final s = space;
     final cycle = selectedCycle;
     if (s == null || cycle == null) return;
-
+    if (!_participantsAreMembers(participantIds, groups)) return;
     final expenseId = 'e_${genId(8)}';
     final expense = Expense(
       id: expenseId,
@@ -771,6 +812,7 @@ class AppState extends ChangeNotifier {
     Map<String, int> shareUnits = const {},
   }) async {
     if (!canEditExpense(expense)) return;
+    if (!_participantsAreMembers(participantIds, groups)) return;
     final updated = expense.copyWith(
       description: description.trim().isEmpty ? 'Expense' : description.trim(),
       amount: amount,

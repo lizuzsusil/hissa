@@ -20,6 +20,24 @@ service cloud.firestore {
       return request.resource.data.mode in ['SPLIT', 'SOLO'];
     }
 
+    // Whether the user identified by `userId` is a member of `householdId`.
+    function memberById(householdId, userId) {
+      return userId != null && exists(
+        /databases/$(database)/documents/householdMembers/$(householdId)_$(userId)
+      );
+    }
+
+    // Whether every participant-group member listed on an expense belongs to
+    // the Space. Prevents a client from creating a participant group that
+    // contains users outside the Space (Phase 8 security).
+    function validParticipantGroups(householdId) {
+      return request.resource.data.participantGroups is list
+        && request.resource.data.participantGroups.all(
+             group => group.userIds is list
+               && group.userIds.all(uid => memberById(householdId, uid))
+           );
+    }
+
     // Public profile + pseudo member profiles. Reads are open to any signed-in
     // user; each user may update only their own profile.
     match /users/{userId} {
@@ -65,21 +83,29 @@ service cloud.firestore {
       // the client. The payer must always be the authenticated user (Phase 5).
       allow create: if signedIn() && memberOf(request.resource.data.householdId)
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.paidByUserId == request.auth.uid;
+        && request.resource.data.paidByUserId == request.auth.uid
+        && validParticipantGroups(request.resource.data.householdId);
       // Only the creator may update/delete an expense. Legacy expenses without
       // a `createdBy` are locked until migrated (Phase 7). The payer is
       // immutable: it can never be reassigned once the expense exists.
       allow update: if signedIn() && memberOf(request.resource.data.householdId)
         && resource.data.createdBy == request.auth.uid
         && request.resource.data.createdBy == resource.data.createdBy
-        && request.resource.data.paidByUserId == resource.data.paidByUserId;
+        && request.resource.data.paidByUserId == resource.data.paidByUserId
+        && validParticipantGroups(request.resource.data.householdId);
       allow delete: if signedIn() && memberOf(resource.data.householdId)
         && resource.data.createdBy == request.auth.uid;
     }
 
     match /expenseShares/{shareId} {
       allow read: if signedIn() && memberOf(resource.data.householdId);
-      allow write: if signedIn() && memberOf(request.resource.data.householdId);
+      // The share's user must be a member of the Space; a client can never
+      // mint a share for a user outside the Space (Phase 8 security).
+      allow write: if signedIn() && memberOf(request.resource.data.householdId)
+        && memberById(
+             request.resource.data.householdId,
+             request.resource.data.userId
+           );
     }
 
     match /settlements/{settlementId} {

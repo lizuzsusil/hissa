@@ -36,7 +36,12 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
     final state = context.watch<AppState>();
     final space = state.space;
     if (space == null) {
-      return const SizedBox.shrink();
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.only(top: 60),
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
     final expenses = state.personalExpenses
@@ -162,14 +167,22 @@ class _Header extends StatelessWidget {
                       color: Colors.white, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      space.name,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            space.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _ModeChip(label: l10n.personalMode),
+                      ],
                     ),
                   ),
                   _MonthSwitcher(
@@ -469,6 +482,33 @@ class _PersonalExpenseTile extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small white pill identifying the Space mode, shown in the dashboard header
+/// so the active mode is always visible while inside a Space.
+class _ModeChip extends StatelessWidget {
+  final String label;
+
+  const _ModeChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

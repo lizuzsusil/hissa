@@ -388,6 +388,70 @@ void main() {
       expect(paths, {'b->a', 'c->a'});
     });
   });
+
+  group('Split mode regression', () {
+    test('carry-forward keeps a settled balance at zero across cycles', () {
+      // Cycle 1: a and b split 100, b pays 50, a pays 50 -> both owe 0.
+      final info = BalanceCalculator.compute(
+        space: _household,
+        members: _members,
+        cycle: _cycle,
+        expenses: [
+          _expense('e1', 'u_ram', 5000, ['u_ram', 'u_sita'], _cycle.id),
+          _expense('e2', 'u_sita', 5000, ['u_ram', 'u_sita'], _cycle.id),
+        ],
+        shares: [
+          _share('s1', 'u_ram', 5000),
+          _share('s2', 'u_sita', 5000),
+        ],
+        settlements: const [],
+      );
+      final byUser = {for (final i in info) i.userId: i};
+      expect(byUser['u_ram']!.balance, const Money(0));
+      expect(byUser['u_sita']!.balance, const Money(0));
+
+      // Carry-forward balances from a settled cycle are zero.
+      final carry =
+          byUser['u_ram']!.remaining + byUser['u_sita']!.remaining;
+      expect(carry, const Money(0));
+    });
+
+    test('historical settlements and cycle history stay intact', () {
+      // A paid settlement in a cycle reduces that cycle's owed amount to zero.
+      final info = BalanceCalculator.compute(
+        space: _household,
+        members: _members,
+        cycle: _cycle,
+        expenses: [
+          _expense('e1', 'u_ram', 10000, ['u_ram', 'u_sita'], _cycle.id),
+        ],
+        shares: [
+          _share('s1', 'u_ram', 5000),
+          _share('s2', 'u_sita', 5000),
+        ],
+        settlements: [
+          _settlement('s1', 'u_sita', 'u_ram', 5000, _cycle.id),
+        ],
+      );
+      final byUser = {for (final i in info) i.userId: i};
+      expect(byUser['u_sita']!.remaining, const Money(0));
+      expect(byUser['u_ram']!.remaining, const Money(0));
+    });
+
+    test('grouped expenses preserve underlying user shares for history', () {
+      final shares = SplitCalculator.buildGrouped(
+        expenseId: 'e1',
+        amount: const Money(90000),
+        parties: [
+          SplitParty.individual('a'),
+          SplitParty(id: 'g1', name: 'B + C', userIds: ['b', 'c']),
+        ],
+      );
+      final userIds = shares.map((s) => s.userId).toSet();
+      expect(userIds, {'a', 'b', 'c'},
+          reason: 'history keeps individual user identities');
+    });
+  });
 }
 
 final Household _household = Household(
@@ -438,6 +502,15 @@ Expense _expense(
     date: DateTime(2026, 1, 10),
     createdAt: DateTime(2026, 1, 10),
     updatedAt: DateTime(2026, 1, 10),
+  );
+}
+
+ExpenseShare _share(String id, String userId, int paisa) {
+  return ExpenseShare(
+    id: id,
+    expenseId: 'e1',
+    userId: userId,
+    amount: Money(paisa),
   );
 }
 

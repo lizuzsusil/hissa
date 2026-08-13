@@ -171,7 +171,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String addedMember(String name) {
-    return '$name घरपरिवारमा थपियो';
+    return '$name ठाउँमा थपियो';
   }
 
   @override
@@ -283,7 +283,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get totalSpending => 'कुल खर्च';
 
   @override
-  String get householdBalances => 'घरपरिवारका ब्यालेन्सहरू';
+  String get householdBalances => 'ठाउँका ब्यालेन्सहरू';
 
   @override
   String get recentExpenses => 'भर्खरका खर्चहरू';
@@ -344,11 +344,15 @@ class AppLocalizationsNe extends AppLocalizations {
       'यो चक्र बन्द भइसकेको छ, त्यसैले खर्चहरू अब सम्पादन गर्न सकिँदैन।';
 
   @override
+  String get legacyExpenseHint =>
+      'यो केवल-पढ्न सकिने ऐतिहासिक रेकर्ड हो। यो स्वामित्व ट्र्याक गर्न सुरु गर्नुभन्दा अघि बनाइएको थियो, त्यसैले यसलाई अब सम्पादन वा मेटाउन सकिँदैन।';
+
+  @override
   String get deleteExpenseTitle => 'यो खर्च मेट्ने हो?';
 
   @override
   String get deleteExpenseMessage =>
-      'खर्च मेट्दा सबैको हालको घरपरिवार ब्यालेन्समा परिवर्तन आउँछ।';
+      'खर्च मेट्दा सबैको हालको ठाउँ ब्यालेन्समा परिवर्तन आउँछ।';
 
   @override
   String get monthlySpending => 'मासिक खर्च';
@@ -380,7 +384,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get introSubtitle1 =>
-      'घरपरिवार, रूममेट र परिवारहरूले साझा खर्च सँगै ट्र्याक गर्ने सबैभन्दा सजिलो तरिका।';
+      'समूह, रूममेट र परिवारहरूले साझा खर्च सँगै ट्र्याक गर्ने सबैभन्दा सजिलो तरिका।';
 
   @override
   String get introTitle2 => 'हरेक खर्च ट्र्याक गर्नुहोस्';
@@ -408,7 +412,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get onboardingSubtitle =>
-      'तपाईंको घरपरिवारसँग मिल्ने सेटअप छान्नुहोस्। तपाईं कुनै पनि समयमा परिवर्तन गर्न सक्नुहुन्छ।';
+      'तपाईंको समूहसँग मिल्ने सेटअप छान्नुहोस्। तपाईं कुनै पनि समयमा परिवर्तन गर्न सक्नुहुन्छ।';
 
   @override
   String get modeTwoPeople => 'दुई जना';
@@ -420,7 +424,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get modeFamily => 'परिवार';
 
   @override
-  String get modeFamilySubtitle => 'अभिभावक, छोराछोरी र सम्पूर्ण घरपरिवार';
+  String get modeFamilySubtitle => 'अभिभावक, छोराछोरी र सम्पूर्ण परिवार';
 
   @override
   String get modeRoommates => 'रूममेटहरू';
@@ -435,11 +439,11 @@ class AppLocalizationsNe extends AppLocalizations {
   String get modeOtherSubtitle => 'खर्च बाँड्ने कुनै पनि सानो समूह';
 
   @override
-  String get setUpHousehold => 'आफ्नो घरपरिवार सेटअप गर्नुहोस्';
+  String get setUpHousehold => 'आफ्नो ठाउँ सेटअप गर्नुहोस्';
 
   @override
   String get setUpSubtitle =>
-      'नयाँ घरपरिवार बनाउनुहोस् वा इन्भाइट कोडबाट सामेल हुनुहोस्।';
+      'नयाँ ठाउँ बनाउनुहोस् वा इन्भाइट कोडबाट सामेल हुनुहोस्।';
 
   @override
   String get create => 'सिर्जना गर्नुहोस्';
@@ -448,7 +452,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get join => 'सामेल हुनुहोस्';
 
   @override
-  String get householdName => 'घरपरिवारको नाम';
+  String get householdName => 'ठाउँको नाम';
 
   @override
   String get householdNameHint => 'जस्तै: हाम्रो घर';
@@ -466,7 +470,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get currency => 'मुद्रा';
 
   @override
-  String get createHousehold => 'घरपरिवार सिर्जना गर्नुहोस्';
+  String get createHousehold => 'ठाउँ सिर्जना गर्नुहोस्';
 
   @override
   String get inviteLater => 'पछि सेटिङबाट थप मानिसहरूलाई बोलाउन सक्नुहुन्छ';
@@ -479,17 +483,17 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get inviteCodeHelp =>
-      'घरपरिवारको मालिकलाई उनीहरूको इन्भाइट कोड सोध्नुहोस्। कोडहरू सेटिङ → घरपरिवारमा देखिन्छन्।';
+      'ठाउँको मालिकलाई उनीहरूको इन्भाइट कोड सोध्नुहोस्। कोडहरू सेटिङ → ठाउँमा देखिन्छन्।';
 
   @override
-  String get joinHousehold => 'घरपरिवारमा सामेल हुनुहोस्';
+  String get joinHousehold => 'ठाउँमा सामेल हुनुहोस्';
 
   @override
   String get inviteNotFound =>
       'इन्भाइट कोड भेटिएन। कोड जाँचेर फेरि प्रयास गर्नुहोस्।';
 
   @override
-  String get householdNameRequired => 'घरपरिवारको नाम चाहिन्छ';
+  String get householdNameRequired => 'ठाउँको नाम चाहिन्छ';
 
   @override
   String get enterMemberNameError => 'सदस्यको नाम लेख्नुहोस्';
@@ -511,6 +515,9 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get noSpacesYet => 'अहिलेसम्म कुनै स्पेस छैन';
+
+  @override
+  String get noSpace => 'कुनै ठाउँ छैन';
 
   @override
   String get noSpacesMessage =>
@@ -585,7 +592,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get authLoginSubtitle =>
-      'आफ्नो घरपरिवार सेन्क्रोन राख्न लग इन गर्नुहोस्।';
+      'आफ्नो स्पेसहरू सेन्क्रोन राख्न लग इन गर्नुहोस्।';
 
   @override
   String get yourName => 'तपाईंको नाम';
@@ -802,17 +809,16 @@ class AppLocalizationsNe extends AppLocalizations {
   String get displayName => 'देखाउने नाम';
 
   @override
-  String get displayNameHint =>
-      'यो नाम तपाईंको घरपरिवारका सदस्यहरूसँग साझा हुन्छ।';
+  String get displayNameHint => 'यो नाम तपाईंको ठाउँका सदस्यहरूसँग साझा हुन्छ।';
 
   @override
   String get enterNameError => 'आफ्नो नाम लेख्नुहोस्';
 
   @override
-  String get household => 'घरपरिवार';
+  String get household => 'ठाउँ';
 
   @override
-  String get householdAndMembers => 'घरपरिवार र सदस्यहरू';
+  String get householdAndMembers => 'ठाउँ र सदस्यहरू';
 
   @override
   String get categories => 'श्रेणीहरू';
@@ -855,7 +861,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get shareInviteHint =>
-      'यो कोड साझा गर्नुहोस् ताकि साथी र रूममेटहरू तपाईंको घरपरिवारमा सामेल हुन सकून्।';
+      'यो कोड साझा गर्नुहोस् ताकि साथी र रूममेटहरू तपाईंको ठाउँमा सामेल हुन सकून्।';
 
   @override
   String get members => 'सदस्यहरू';
@@ -869,7 +875,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get removeMemberMessage =>
-      'उनीहरूको पुराना खर्चहरू इतिहासमा रहन्छन्, तर उनीहरूले अब यो घरपरिवार देख्नेछैनन्।';
+      'उनीहरूको पुराना खर्चहरू इतिहासमा रहन्छन्, तर उनीहरूले अब यो ठाउँ देख्नेछैनन्।';
 
   @override
   String get roleOwner => 'मालिक';
@@ -961,7 +967,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get signOut => 'लग आउट गर्नुहोस्';
 
   @override
-  String get signOutSubtitle => 'खाता वा घरपरिवार परिवर्तन गर्नुहोस्';
+  String get signOutSubtitle => 'खाता वा ठाउँ परिवर्तन गर्नुहोस्';
 
   @override
   String get signOutTitle => 'लग आउट गर्ने हो?';
@@ -970,7 +976,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get signOutMessage => 'कुनै पनि समयमा फेरि लग इन गर्न सक्नुहुन्छ।';
 
   @override
-  String get appName => 'हिस्सा · घरपरिवार खर्च ट्र्याकर';
+  String get appName => 'हिस्सा · ठाउँ खर्च ट्र्याकर';
 
   @override
   String get version => 'v1.0.0';
