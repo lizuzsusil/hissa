@@ -118,6 +118,35 @@ void main() {
       expect(snap.docs, isEmpty);
     });
 
+    test('personal expense persists without shares', () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreRepository(db);
+      final personal = Expense(
+        id: 'p1',
+        householdId: 'h1',
+        cycleId: null,
+        paidByUserId: 'u1',
+        createdBy: 'u1',
+        amount: const Money(500000),
+        description: 'Groceries',
+        date: DateTime(2026, 1, 20),
+        createdAt: DateTime(2026, 1, 20),
+        updatedAt: DateTime(2026, 1, 20),
+      );
+      await repo.saveExpense(personal, const []);
+
+      expect(repo.expenses.single.cycleId, isNull);
+      expect(repo.expenses.single.createdBy, 'u1');
+      expect(repo.sharesForExpense('p1'), isEmpty);
+
+      final reader = FirestoreRepository(db);
+      await reader.start(uid: 'u1', spaceId: 'h1', onChanged: () {});
+      expect(reader.expenses.single.cycleId, isNull);
+      expect(reader.expenses.single.createdBy, 'u1');
+      final snap = await db.collection('expenseShares').get();
+      expect(snap.docs, isEmpty);
+    });
+
     test('findSpaceByInviteCode matches case-insensitively', () async {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);

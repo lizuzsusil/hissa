@@ -89,7 +89,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    if (_participants.isEmpty && state.members.isNotEmpty) {
+    final isPersonal = state.isPersonalMode;
+    if (!isPersonal && _participants.isEmpty && state.members.isNotEmpty) {
       _participants = state.members.map((m) => m.userId).toSet();
       _paidByUserId ??= state.currentUser?.id;
       if (_splitType == SplitType.equal) {
@@ -141,21 +142,23 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               },
             ),
             const SizedBox(height: 24),
-            _Label(l10n.paidBy),
-            const SizedBox(height: 10),
-            _buildPayerSelector(members),
-            const SizedBox(height: 24),
             _Label(l10n.date),
             const SizedBox(height: 10),
             _buildDatePicker(isDark),
-            const SizedBox(height: 24),
-            _Label(l10n.splitBetween),
-            const SizedBox(height: 10),
-            _buildParticipantSelector(members),
-            const SizedBox(height: 20),
-            _buildSplitTypeSelector(),
-            const SizedBox(height: 20),
-            _buildSplitInput(state),
+            if (!isPersonal) ...[
+              const SizedBox(height: 24),
+              _Label(l10n.paidBy),
+              const SizedBox(height: 10),
+              _buildPayerSelector(members),
+              const SizedBox(height: 24),
+              _Label(l10n.splitBetween),
+              const SizedBox(height: 10),
+              _buildParticipantSelector(members),
+              const SizedBox(height: 20),
+              _buildSplitTypeSelector(),
+              const SizedBox(height: 20),
+              _buildSplitInput(state),
+            ],
             const SizedBox(height: 24),
             _Label(l10n.note),
             const SizedBox(height: 10),
@@ -168,8 +171,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 suffixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),
               ),
             ),
-            const SizedBox(height: 28),
-            _buildPreview(state),
+            if (!isPersonal) ...[
+              const SizedBox(height: 28),
+              _buildPreview(state),
+            ],
             const SizedBox(height: 20),
             if (_attemptedSave && !_canSave(state, l10n)) ...[
               Container(
@@ -545,6 +550,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     if (_descriptionController.text.trim().isEmpty) {
       return l10n.expenseDescriptionError;
     }
+    if (state.isPersonalMode) return null;
     if (_paidByUserId == null) return l10n.expensePayerError;
     if (_participants.isEmpty) return l10n.expenseParticipantError;
     switch (_splitType) {
@@ -583,6 +589,28 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final state = context.read<AppState>();
     if (!_canSave(state, l10n)) return;
     final expense = widget.expense;
+    if (state.isPersonalMode) {
+      if (expense == null) {
+        await state.addPersonalExpense(
+          description: _descriptionController.text,
+          amount: _amount,
+          date: _date,
+          categoryId: _categoryId,
+          note: _noteController.text,
+        );
+      } else {
+        await state.updatePersonalExpense(
+          expense,
+          description: _descriptionController.text,
+          amount: _amount,
+          date: _date,
+          categoryId: _categoryId,
+          note: _noteController.text,
+        );
+      }
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
     final participants = _participants.toList();
     if (expense == null) {
       await state.addExpense(

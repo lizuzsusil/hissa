@@ -277,6 +277,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentExpenses => 'Recent expenses';
 
   @override
+  String get thisMonth => 'This month';
+
+  @override
+  String get lastMonth => 'Last month';
+
+  @override
+  String vsMonth(Object month) {
+    return 'vs $month';
+  }
+
+  @override
   String get noExpensesYet => 'No expenses yet';
 
   @override

@@ -484,7 +484,9 @@ class AppState extends ChangeNotifier {
     }
 
     await _seedCategories(spaceId);
-    await _startCycleFor(spaceId, DateTime.now());
+    if (mode != SpaceMode.solo) {
+      await _startCycleFor(spaceId, DateTime.now());
+    }
 
     _spaceId = spaceId;
     _cycleId = null;
@@ -679,6 +681,7 @@ class AppState extends ChangeNotifier {
       householdId: s.id,
       cycleId: cycle.id,
       paidByUserId: paidByUserId,
+      createdBy: _currentUserId,
       amount: amount,
       categoryId: categoryId,
       description: description.trim().isEmpty ? 'Expense' : description.trim(),
@@ -737,6 +740,82 @@ class AppState extends ChangeNotifier {
 
   Future<void> deleteExpense(String expenseId) async {
     await _repo.deleteExpense(expenseId);
+    await _commit();
+  }
+
+  // ---- personal expenses (solo / personal mode) ----
+
+  /// Whether the selected Space is a Personal (solo) space.
+  bool get isPersonalMode {
+    final s = space;
+    return s != null && s.mode == SpaceMode.solo;
+  }
+
+  /// Personal expenses: those created without a cycle (cycleId == null) in
+  /// the selected Space, most recent first.
+  List<Expense> get personalExpenses {
+    if (_spaceId == null) return const [];
+    final list = _repo.expenses
+        .where((e) => e.householdId == _spaceId && e.cycleId == null)
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    return list;
+  }
+
+  /// Sum of personal expenses whose [date] falls within [month].
+  Money personalTotalSpent(DateTime month) {
+    var paisa = 0;
+    for (final e in personalExpenses) {
+      if (e.date.year == month.year && e.date.month == month.month) {
+        paisa += e.amount.paisa;
+      }
+    }
+    return Money(paisa);
+  }
+
+  Future<void> addPersonalExpense({
+    required String description,
+    required Money amount,
+    required DateTime date,
+    String? categoryId,
+    String? note,
+  }) async {
+    final s = space;
+    if (s == null) return;
+    final expense = Expense(
+      id: 'e_${genId(8)}',
+      householdId: s.id,
+      cycleId: null,
+      paidByUserId: _currentUserId ?? '',
+      createdBy: _currentUserId,
+      amount: amount,
+      categoryId: categoryId,
+      description: description.trim().isEmpty ? 'Expense' : description.trim(),
+      date: date,
+      note: note?.trim().isEmpty ?? true ? null : note!.trim(),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+    await _repo.saveExpense(expense, const []);
+    await _commit();
+  }
+
+  Future<void> updatePersonalExpense(
+    Expense expense, {
+    required String description,
+    required Money amount,
+    required DateTime date,
+    String? categoryId,
+    String? note,
+  }) async {
+    final updated = expense.copyWith(
+      description: description.trim().isEmpty ? 'Expense' : description.trim(),
+      amount: amount,
+      date: date,
+      categoryId: categoryId,
+      note: note?.trim().isEmpty ?? true ? null : note!.trim(),
+    );
+    await _repo.saveExpense(updated, const []);
     await _commit();
   }
 

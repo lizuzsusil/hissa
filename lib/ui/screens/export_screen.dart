@@ -16,7 +16,9 @@ class ExportScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final expenses = state.expensesInCycle;
+    final isPersonal = state.isPersonalMode;
+    final expenses =
+        isPersonal ? state.personalExpenses : state.expensesInCycle;
     final cycle = state.selectedCycle;
     final l10n = context.l10n;
 

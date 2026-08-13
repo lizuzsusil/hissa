@@ -37,8 +37,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final state = context.watch<AppState>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
+    final isPersonal = state.isPersonalMode;
 
-    final allExpenses = state.expensesInCycle;
+    final allExpenses = isPersonal
+        ? state.personalExpenses
+        : state.expensesInCycle;
     var filtered = allExpenses;
 
     if (_categoryFilter != null) {
@@ -220,59 +223,89 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 20),
-                Text(context.l10n.paidBy,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: Text(context.l10n.everyone),
-                      selected: _memberFilter == null,
-                      onSelected: (_) =>
-                          setSheetState(() => _memberFilter = null),
-                    ),
-                    for (final m in members)
+                if (state.isPersonalMode) ...[
+                  Text(context.l10n.category,
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
                       ChoiceChip(
-                        label: Text(m.name),
-                        selected: _memberFilter == m.userId,
-                        onSelected: (_) => setSheetState(
-                            () => _memberFilter = m.userId),
+                        label: Text(context.l10n.all),
+                        selected: _categoryFilter == null,
+                        onSelected: (_) =>
+                            setSheetState(() => _categoryFilter = null),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(context.l10n.category,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: Text(context.l10n.all),
-                      selected: _categoryFilter == null,
-                      onSelected: (_) =>
-                          setSheetState(() => _categoryFilter = null),
-                    ),
-                    for (final c in categories)
+                      for (final c in categories)
+                        ChoiceChip(
+                          avatar:
+                              Icon(iconForCodePoint(c.iconCodePoint), size: 16),
+                          label: Text(c.name),
+                          selected: _categoryFilter == c.id,
+                          onSelected: (_) => setSheetState(
+                              () => _categoryFilter = c.id),
+                        ),
+                    ],
+                  ),
+                ] else ...[
+                  Text(context.l10n.paidBy,
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
                       ChoiceChip(
-                        avatar:
-                            Icon(iconForCodePoint(c.iconCodePoint), size: 16),
-                        label: Text(c.name),
-                        selected: _categoryFilter == c.id,
-                        onSelected: (_) => setSheetState(
-                            () => _categoryFilter = c.id),
+                        label: Text(context.l10n.everyone),
+                        selected: _memberFilter == null,
+                        onSelected: (_) =>
+                            setSheetState(() => _memberFilter = null),
                       ),
-                  ],
-                ),
+                      for (final m in members)
+                        ChoiceChip(
+                          label: Text(m.name),
+                          selected: _memberFilter == m.userId,
+                          onSelected: (_) => setSheetState(
+                              () => _memberFilter = m.userId),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(context.l10n.category,
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: Text(context.l10n.all),
+                        selected: _categoryFilter == null,
+                        onSelected: (_) =>
+                            setSheetState(() => _categoryFilter = null),
+                      ),
+                      for (final c in categories)
+                        ChoiceChip(
+                          avatar:
+                              Icon(iconForCodePoint(c.iconCodePoint), size: 16),
+                          label: Text(c.name),
+                          selected: _categoryFilter == c.id,
+                          onSelected: (_) => setSheetState(
+                              () => _categoryFilter = c.id),
+                        ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 24),
                 PrimaryButtonLocal(
                   label: context.l10n.apply,

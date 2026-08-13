@@ -73,25 +73,27 @@ class SettingsScreen extends StatelessWidget {
             subtitle: space?.currency ?? 'NPR',
             onTap: () => _showCurrencyPicker(context, state),
           ),
-          const SizedBox(height: 24),
-          SectionHeader(title: l10n.spendingCycle),
-          _SettingTile(
-            icon: Icons.event_available_outlined,
-            title: l10n.currentCycle,
-            subtitle: cycle?.name ?? l10n.noActiveCycle,
-            onTap: cycle == null
-                ? null
-                : () => _showCycleDialog(context, state),
-          ),
-          if (state.isOwner) ...[
+          if (!state.isPersonalMode) ...[
+            const SizedBox(height: 24),
+            SectionHeader(title: l10n.spendingCycle),
             _SettingTile(
-              icon: Icons.lock_outline_rounded,
-              title: cycle?.status == CycleStatus.closed
-                  ? l10n.startNewCycle
-                  : l10n.closeCurrentCycle,
-              subtitle: l10n.ownersCanManage,
-              onTap: () => _handleCycleAction(context, state),
+              icon: Icons.event_available_outlined,
+              title: l10n.currentCycle,
+              subtitle: cycle?.name ?? l10n.noActiveCycle,
+              onTap: cycle == null
+                  ? null
+                  : () => _showCycleDialog(context, state),
             ),
+            if (state.isOwner) ...[
+              _SettingTile(
+                icon: Icons.lock_outline_rounded,
+                title: cycle?.status == CycleStatus.closed
+                    ? l10n.startNewCycle
+                    : l10n.closeCurrentCycle,
+                subtitle: l10n.ownersCanManage,
+                onTap: () => _handleCycleAction(context, state),
+              ),
+            ],
           ],
           const SizedBox(height: 24),
           SectionHeader(title: l10n.data),

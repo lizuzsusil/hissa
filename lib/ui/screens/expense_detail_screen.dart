@@ -22,8 +22,9 @@ class ExpenseDetailScreen extends StatelessWidget {
     final state = context.watch<AppState>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
+    final isPersonal = expense.cycleId == null;
     final cycle = state.selectedCycle;
-    final canEdit = cycle == null || cycle.status == CycleStatus.active;
+    final canEdit = isPersonal || cycle == null || cycle.status == CycleStatus.active;
     final category = state.categoryFor(expense.categoryId);
     final shares = state.sharesForExpense(expense.id);
     final payer = state.memberName(expense.paidByUserId) ?? l10n.unknown;
@@ -106,12 +107,14 @@ class ExpenseDetailScreen extends StatelessWidget {
                   label: l10n.paidBy,
                   value: payer,
                 ),
-                const SizedBox(height: 14),
-                _InfoRow(
-                  icon: Icons.receipt_long_outlined,
-                  label: l10n.split,
-                  value: l10n.splitPersons(shares.length),
-                ),
+                if (!isPersonal) ...[
+                  const SizedBox(height: 14),
+                  _InfoRow(
+                    icon: Icons.receipt_long_outlined,
+                    label: l10n.split,
+                    value: l10n.splitPersons(shares.length),
+                  ),
+                ],
                 if (expense.note != null) ...[
                   const SizedBox(height: 14),
                   _InfoRow(
@@ -131,52 +134,54 @@ class ExpenseDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          SectionHeaderLocal(l10n.whoPaysWhat),
-          const SizedBox(height: 8),
-          SurfaceCard(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                for (final share in shares)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        MemberAvatar(
-                            name: state.memberName(share.userId) ?? '?',
-                            size: 36),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            state.memberName(share.userId) ?? '?',
-                            style: const TextStyle(
-                                fontSize: 14.5, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        if (share.userId == expense.paidByUserId)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 10),
+          if (!isPersonal) ...[
+            const SizedBox(height: 20),
+            SectionHeaderLocal(l10n.whoPaysWhat),
+            const SizedBox(height: 8),
+            SurfaceCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  for (final share in shares)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
+                          MemberAvatar(
+                              name: state.memberName(share.userId) ?? '?',
+                              size: 36),
+                          const SizedBox(width: 12),
+                          Expanded(
                             child: Text(
-                              l10n.paid,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.positive,
-                              ),
+                              state.memberName(share.userId) ?? '?',
+                              style: const TextStyle(
+                                  fontSize: 14.5, fontWeight: FontWeight.w600),
                             ),
                           ),
-                        Text(
-                          formatMoney(share.amount),
-                          style: const TextStyle(
-                              fontSize: 14.5, fontWeight: FontWeight.w800),
-                        ),
-                      ],
+                          if (share.userId == expense.paidByUserId)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 10),
+                              child: Text(
+                                l10n.paid,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.positive,
+                                ),
+                              ),
+                            ),
+                          Text(
+                            formatMoney(share.amount),
+                            style: const TextStyle(
+                                fontSize: 14.5, fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
           if (!canEdit) ...[
             const SizedBox(height: 20),
             Center(

@@ -530,6 +530,24 @@ abstract class AppLocalizations {
   /// **'Recent expenses'**
   String get recentExpenses;
 
+  /// No description provided for @thisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get thisMonth;
+
+  /// No description provided for @lastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Last month'**
+  String get lastMonth;
+
+  /// No description provided for @vsMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'vs {month}'**
+  String vsMonth(Object month);
+
   /// No description provided for @noExpensesYet.
   ///
   /// In en, this message translates to:

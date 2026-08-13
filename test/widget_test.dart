@@ -103,6 +103,67 @@ void main() {
       expect(ram.remaining, Money.zero());
       expect(sita.remaining, Money.zero());
     });
+
+    test('personal expenses (no cycle) never affect split balances', () {
+      final balances = BalanceCalculator.compute(
+        space: _household,
+        members: _members,
+        cycle: _cycle,
+        expenses: [
+          _expense('e1', 'u_ram', 1000000, ['u_ram', 'u_sita'], 'c'),
+          _personalExpense('p1', 'u_ram', 500000),
+        ],
+        shares: SplitCalculator.build(
+          expenseId: 'e1',
+          amount: const Money(1000000),
+          participantIds: ['u_ram', 'u_sita'],
+        ),
+        settlements: const [],
+      );
+      final ram = balances.firstWhere((b) => b.userId == 'u_ram');
+      final sita = balances.firstWhere((b) => b.userId == 'u_sita');
+      expect(ram.balance, const Money(500000));
+      expect(sita.balance, const Money(-500000));
+      expect(BalanceCalculator.totalSpent(
+        [Expense(
+          id: 'p1',
+          householdId: 'h',
+          cycleId: null,
+          paidByUserId: 'u_ram',
+          createdBy: 'u_ram',
+          amount: const Money(500000),
+          date: DateTime(2026, 1, 20),
+          createdAt: DateTime(2026, 1, 20),
+          updatedAt: DateTime(2026, 1, 20),
+        )],
+        'c',
+      ), Money.zero());
+    });
+  });
+
+  group('Expense', () {
+    test('fromJson tolerates a null cycleId and a missing createdBy', () {
+      final e = Expense.fromJson({
+        'id': 'p1',
+        'householdId': 'h1',
+        'cycleId': null,
+        'paidByUserId': 'u1',
+        'amountPaisa': 25000,
+        'date': '2026-01-20T00:00:00.000',
+        'createdAt': '2026-01-20T00:00:00.000',
+        'updatedAt': '2026-01-20T00:00:00.000',
+      });
+      expect(e.cycleId, isNull);
+      expect(e.createdBy, isNull);
+      expect(e.amount, const Money(25000));
+    });
+
+    test('fromJson round-trips createdBy for split expenses', () {
+      final source = _personalExpense('e1', 'u_ram', 100000);
+      final decoded = Expense.fromJson(source.toJson());
+      expect(decoded.createdBy, 'u_ram');
+      expect(decoded.cycleId, isNull);
+    });
   });
 
   group('SettlementCalculator', () {
@@ -183,6 +244,20 @@ Expense _expense(
     date: DateTime(2026, 1, 10),
     createdAt: DateTime(2026, 1, 10),
     updatedAt: DateTime(2026, 1, 10),
+  );
+}
+
+Expense _personalExpense(String id, String payer, int paisa) {
+  return Expense(
+    id: id,
+    householdId: 'h',
+    cycleId: null,
+    paidByUserId: payer,
+    createdBy: payer,
+    amount: Money(paisa),
+    date: DateTime(2026, 1, 20),
+    createdAt: DateTime(2026, 1, 20),
+    updatedAt: DateTime(2026, 1, 20),
   );
 }
 

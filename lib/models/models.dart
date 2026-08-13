@@ -336,8 +336,9 @@ class Cycle {
 class Expense {
   final String id;
   final String householdId;
-  final String cycleId;
+  final String? cycleId;
   final String paidByUserId;
+  final String? createdBy;
   final Money amount;
   final String? categoryId;
   final String? description;
@@ -352,6 +353,7 @@ class Expense {
     required this.householdId,
     required this.cycleId,
     required this.paidByUserId,
+    this.createdBy,
     required this.amount,
     this.categoryId,
     this.description,
@@ -364,6 +366,7 @@ class Expense {
 
   Expense copyWith({
     String? paidByUserId,
+    String? createdBy,
     Money? amount,
     String? categoryId,
     String? description,
@@ -376,6 +379,7 @@ class Expense {
       householdId: householdId,
       cycleId: cycleId,
       paidByUserId: paidByUserId ?? this.paidByUserId,
+      createdBy: createdBy ?? this.createdBy,
       amount: amount ?? this.amount,
       categoryId: categoryId ?? this.categoryId,
       description: description ?? this.description,
@@ -392,6 +396,7 @@ class Expense {
         'householdId': householdId,
         'cycleId': cycleId,
         'paidByUserId': paidByUserId,
+        'createdBy': createdBy,
         'amountPaisa': amount.paisa,
         'categoryId': categoryId,
         'description': description,
@@ -405,8 +410,9 @@ class Expense {
   factory Expense.fromJson(Map<String, dynamic> json) => Expense(
         id: json['id'] as String,
         householdId: json['householdId'] as String,
-        cycleId: json['cycleId'] as String,
+        cycleId: json['cycleId'] as String?,
         paidByUserId: json['paidByUserId'] as String,
+        createdBy: json['createdBy'] as String?,
         amount: Money(json['amountPaisa'] as int),
         categoryId: json['categoryId'] as String?,
         description: json['description'] as String?,

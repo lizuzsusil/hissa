@@ -10,6 +10,7 @@ import 'dashboard_screen.dart';
 import 'expense_form_screen.dart';
 import 'expenses_screen.dart';
 import 'insights_screen.dart';
+import 'personal_dashboard_screen.dart';
 import 'settle_screen.dart';
 import 'settings_screen.dart';
 
@@ -27,14 +28,6 @@ class ShellScreen extends StatefulWidget {
 class _ShellScreenState extends State<ShellScreen> {
   final ShellTabController _tabController = ShellTabController();
 
-  late final List<Widget> _screens = [
-    const DashboardScreen(),
-    const ExpensesScreen(),
-    const SettleScreen(),
-    const InsightsScreen(),
-    SettingsScreen(onOpenSpaces: widget.onBackToSpaces),
-  ];
-
   @override
   void dispose() {
     _tabController.dispose();
@@ -43,19 +36,35 @@ class _ShellScreenState extends State<ShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isPersonal = context.watch<AppState>().isPersonalMode;
+    final settings = SettingsScreen(onOpenSpaces: widget.onBackToSpaces);
+    final screens = isPersonal
+        ? <Widget>[
+            const PersonalDashboardScreen(),
+            const ExpensesScreen(),
+            settings,
+          ]
+        : <Widget>[
+            const DashboardScreen(),
+            const ExpensesScreen(),
+            const SettleScreen(),
+            const InsightsScreen(),
+            settings,
+          ];
     return ChangeNotifierProvider<ShellTabController>.value(
       value: _tabController,
       child: Scaffold(
         body: ListenableBuilder(
           listenable: _tabController,
           builder: (context, _) =>
-              IndexedStack(index: _tabController.index, children: _screens),
+              IndexedStack(index: _tabController.index, children: screens),
         ),
         floatingActionButton: _FloatingAddButton(),
         bottomNavigationBar: ListenableBuilder(
           listenable: _tabController,
           builder: (context, _) => _NavBar(
             index: _tabController.index,
+            isPersonal: isPersonal,
             onChanged: _tabController.switchTo,
           ),
         ),
@@ -70,7 +79,8 @@ class _FloatingAddButton extends StatelessWidget {
     final state = context.watch<AppState>();
     final l10n = context.l10n;
     final cycle = state.selectedCycle;
-    if (cycle == null || cycle.status == CycleStatus.closed) {
+    if (!state.isPersonalMode &&
+        (cycle == null || cycle.status == CycleStatus.closed)) {
       return const SizedBox.shrink();
     }
     return FloatingActionButton.extended(
@@ -93,21 +103,32 @@ class _FloatingAddButton extends StatelessWidget {
 
 class _NavBar extends StatelessWidget {
   final int index;
+  final bool isPersonal;
   final ValueChanged<int> onChanged;
 
-  const _NavBar({required this.index, required this.onChanged});
+  const _NavBar({
+    required this.index,
+    required this.isPersonal,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
-    final items = [
-      (Icons.home_rounded, Icons.home_outlined, l10n.home),
-      (Icons.receipt_long_rounded, Icons.receipt_long_outlined, l10n.expenses),
-      (Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, l10n.settle),
-      (Icons.donut_small_rounded, Icons.donut_small_outlined, l10n.insights),
-      (Icons.settings_rounded, Icons.settings_outlined, l10n.settings),
-    ];
+    final items = isPersonal
+        ? [
+            (Icons.home_rounded, Icons.home_outlined, l10n.home),
+            (Icons.receipt_long_rounded, Icons.receipt_long_outlined, l10n.expenses),
+            (Icons.settings_rounded, Icons.settings_outlined, l10n.settings),
+          ]
+        : [
+            (Icons.home_rounded, Icons.home_outlined, l10n.home),
+            (Icons.receipt_long_rounded, Icons.receipt_long_outlined, l10n.expenses),
+            (Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, l10n.settle),
+            (Icons.donut_small_rounded, Icons.donut_small_outlined, l10n.insights),
+            (Icons.settings_rounded, Icons.settings_outlined, l10n.settings),
+          ];
 
     return Container(
       decoration: BoxDecoration(

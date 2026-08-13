@@ -277,6 +277,17 @@ class AppLocalizationsNe extends AppLocalizations {
   String get recentExpenses => 'भर्खरका खर्चहरू';
 
   @override
+  String get thisMonth => 'यो महिना';
+
+  @override
+  String get lastMonth => 'गत महिना';
+
+  @override
+  String vsMonth(Object month) {
+    return '$month सँग';
+  }
+
+  @override
   String get noExpensesYet => 'अहिलेसम्म कुनै खर्च छैन';
 
   @override
