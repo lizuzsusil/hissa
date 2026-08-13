@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../state/app_state.dart';
 import '../../core/validators.dart';
 import '../../l10n/l10n.dart';
+import '../state/biometric_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 import '../widgets/google_logo.dart';
@@ -91,11 +92,7 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!await _ensureOnline()) return;
     final vm = ValidatorMessages.fromL10n(l10n);
     final nameError = _isSignUp
-        ? validateName(
-            _nameController.text,
-            label: l10n.yourName,
-            messages: vm,
-          )
+        ? validateName(_nameController.text, label: l10n.yourName, messages: vm)
         : null;
     final emailError = validateEmail(_emailController.text, messages: vm);
     final passwordError = validatePassword(
@@ -176,6 +173,26 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  Future<void> _biometric() async {
+    if (_loading) return;
+    final biometrics = context.read<BiometricAuthController>();
+    final l10n = context.l10n;
+    if (await biometrics.availabilityIssue() != null) {
+      if (!mounted) return;
+      showToast(context, l10n.biometricUnavailable, type: ToastType.danger);
+      return;
+    }
+    setState(() => _loading = true);
+    final ok = await biometrics.authenticate(l10n.biometricLogin);
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (ok) {
+      widget.onAuthenticated();
+    } else {
+      showToast(context, l10n.biometricFailed, type: ToastType.danger);
+    }
+  }
+
   String _friendlyAuthMessage(Object error) {
     debugPrint('Auth error: $error');
     final l10n = context.l10n;
@@ -235,6 +252,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final biometricsEnabled = context.watch<BiometricAuthController>().enabled;
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -363,6 +381,24 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ],
                 ),
+              if (!_isSignUp && biometricsEnabled) ...[
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.fingerprint_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    TextButton(
+                      onPressed: _loading ? null : _biometric,
+                      child: Text(l10n.biometricLogin),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 24),
               PrimaryButton(
                 label: _isSignUp ? l10n.createAccount : l10n.logIn,

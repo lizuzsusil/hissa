@@ -13,13 +13,27 @@ class BiometricAuthController extends ChangeNotifier {
 
   final LocalAuthentication _auth = LocalAuthentication();
   bool _enabled = false;
+  bool _supported = false;
 
   bool get enabled => _enabled;
+
+  /// Whether this device has biometric hardware and can check it. Used to
+  /// hide biometric options entirely on unsupported devices.
+  bool get supported => _supported;
 
   Future<void> load() async {
     final prefs = SharedPreferencesAsync();
     _enabled = await prefs.getBool(_prefKey) ?? false;
+    _supported = await _checkDeviceSupport();
     notifyListeners();
+  }
+
+  Future<bool> _checkDeviceSupport() async {
+    try {
+      return await _auth.isDeviceSupported() && await _auth.canCheckBiometrics;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Returns `null` when biometrics can be used right now, otherwise a short

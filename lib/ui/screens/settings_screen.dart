@@ -119,16 +119,17 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           SectionHeader(title: l10n.security),
-          _SettingTile(
-            icon: Icons.fingerprint_rounded,
-            title: l10n.biometricLogin,
-            subtitle: biometrics.enabled ? l10n.onValue : l10n.offValue,
-            trailing: Switch(
-              value: biometrics.enabled,
-              onChanged: (v) => _toggleBiometric(context, biometrics, v),
+          if (biometrics.supported)
+            _SettingTile(
+              icon: Icons.fingerprint_rounded,
+              title: l10n.biometricLogin,
+              subtitle: biometrics.enabled ? l10n.onValue : l10n.offValue,
+              trailing: Switch(
+                value: biometrics.enabled,
+                onChanged: (v) => _toggleBiometric(context, biometrics, v),
+              ),
+              onTap: null,
             ),
-            onTap: null,
-          ),
           const SizedBox(height: 24),
           _SettingTile(
             icon: Icons.logout_rounded,
