@@ -100,6 +100,22 @@ void main() {
       expect(snap.docs, hasLength(1));
     });
 
+    test('saveExpense persists the payer as the authenticated user', () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreRepository(db);
+
+      final expense = _expense('e1').copyWith(
+        paidByUserId: 'u1',
+        createdBy: 'u1',
+      );
+      await repo.saveExpense(expense, const []);
+
+      final doc =
+          await db.collection('expenses').doc('h1_e1').get();
+      expect(doc.data()!['paidByUserId'], 'u1');
+      expect(doc.data()!['createdBy'], 'u1');
+    });
+
     test('deleteExpense removes the expense and its shares', () async {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);

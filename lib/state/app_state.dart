@@ -54,6 +54,15 @@ class AppState extends ChangeNotifier {
   /// currently selected), used by the post-login Spaces dashboard.
   List<Space> get spaces => List.unmodifiable(_spaces);
 
+  /// Test seam: sets the signed-in user and selected Space without going
+  /// through Firebase Auth so widget tests can exercise the UI directly.
+  @visibleForTesting
+  void debugSetSession({String? userId, String? spaceId}) {
+    _currentUserId = userId;
+    _spaceId = spaceId;
+    _cycleId = null;
+  }
+
   /// Marks the feature-intro carousel as seen so it only shows on first run.
   Future<void> markIntroSeen() async {
     _introSeen = true;
@@ -663,7 +672,6 @@ class AppState extends ChangeNotifier {
   Future<void> addExpense({
     required String description,
     required Money amount,
-    required String paidByUserId,
     required DateTime date,
     String? categoryId,
     String? note,
@@ -681,7 +689,8 @@ class AppState extends ChangeNotifier {
       id: 'e_${genId(8)}',
       householdId: s.id,
       cycleId: cycle.id,
-      paidByUserId: paidByUserId,
+      // Phase 5: an expense is always paid for by the authenticated user.
+      paidByUserId: payerForCurrentUser(_currentUserId),
       createdBy: _currentUserId,
       amount: amount,
       categoryId: categoryId,
@@ -708,7 +717,6 @@ class AppState extends ChangeNotifier {
     Expense expense, {
     required String description,
     required Money amount,
-    required String paidByUserId,
     required DateTime date,
     String? categoryId,
     String? note,
@@ -722,7 +730,6 @@ class AppState extends ChangeNotifier {
     final updated = expense.copyWith(
       description: description.trim().isEmpty ? 'Expense' : description.trim(),
       amount: amount,
-      paidByUserId: paidByUserId,
       date: date,
       categoryId: categoryId,
       note: note?.trim().isEmpty ?? true ? null : note!.trim(),

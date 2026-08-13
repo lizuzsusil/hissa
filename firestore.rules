@@ -61,14 +61,18 @@ service cloud.firestore {
     match /expenses/{expenseId} {
       allow read: if signedIn() && memberOf(resource.data.householdId);
       // Only the authenticated creator may create an expense on their own
-      // behalf; `createdBy` is never accepted blindly from the client.
+      // behalf; `createdBy` and `paidByUserId` are never accepted blindly from
+      // the client. The payer must always be the authenticated user (Phase 5).
       allow create: if signedIn() && memberOf(request.resource.data.householdId)
-        && request.resource.data.createdBy == request.auth.uid;
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.paidByUserId == request.auth.uid;
       // Only the creator may update/delete an expense. Legacy expenses without
-      // a `createdBy` are locked until migrated (Phase 7).
+      // a `createdBy` are locked until migrated (Phase 7). The payer is
+      // immutable: it can never be reassigned once the expense exists.
       allow update: if signedIn() && memberOf(request.resource.data.householdId)
         && resource.data.createdBy == request.auth.uid
-        && request.resource.data.createdBy == resource.data.createdBy;
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.paidByUserId == resource.data.paidByUserId;
       allow delete: if signedIn() && memberOf(resource.data.householdId)
         && resource.data.createdBy == request.auth.uid;
     }

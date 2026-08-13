@@ -31,7 +31,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 
   String? _categoryId;
   Money _amount = Money.zero();
-  String? _paidByUserId;
   DateTime _date = DateTime.now();
   Set<String> _participants = {};
   SplitType _splitType = SplitType.equal;
@@ -53,17 +52,19 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       _noteController.text = expense.note ?? '';
       _categoryId = expense.categoryId;
       _amount = expense.amount;
-      _paidByUserId = expense.paidByUserId;
       _date = expense.date;
       final shares = state.sharesForExpense(expense.id);
       _participants = shares.map((s) => s.userId).toSet();
       _splitType = _detectSplitType(shares);
       _percentages = {
         for (final s in shares)
-          if (s.percentage != null) s.userId: s.percentage!
+          if (s.percentage != null) s.userId: s.percentage!,
       };
       _customAmounts = {for (final s in shares) s.userId: s.amount};
-      _shareUnits = {for (final s in shares) if (s.shares != null) s.userId: s.shares!};
+      _shareUnits = {
+        for (final s in shares)
+          if (s.shares != null) s.userId: s.shares!,
+      };
     }
   }
 
@@ -92,7 +93,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final isPersonal = state.isPersonalMode;
     if (!isPersonal && _participants.isEmpty && state.members.isNotEmpty) {
       _participants = state.members.map((m) => m.userId).toSet();
-      _paidByUserId ??= state.currentUser?.id;
       if (_splitType == SplitType.equal) {
         _percentages = {};
         _customAmounts = {};
@@ -106,9 +106,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEdit ? l10n.editExpense : l10n.addExpense),
-      ),
+      appBar: AppBar(title: Text(_isEdit ? l10n.editExpense : l10n.addExpense)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         child: Column(
@@ -132,7 +130,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               decoration: InputDecoration(
                 labelText: l10n.description,
                 hintText: l10n.descriptionHint,
-                suffixIcon: const Icon(Icons.edit_outlined, size: 18),
+                prefixIcon: const Icon(Icons.edit_outlined, size: 18),
                 errorText: _descriptionError,
               ),
               onChanged: (_) {
@@ -149,7 +147,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               const SizedBox(height: 24),
               _Label(l10n.paidBy),
               const SizedBox(height: 10),
-              _buildPayerSelector(members),
+              _buildPayerDisplay(state),
               const SizedBox(height: 24),
               _Label(l10n.splitBetween),
               const SizedBox(height: 10),
@@ -168,7 +166,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 hintText: l10n.noteOptionalHint,
-                suffixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),
+                prefixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),
               ),
             ),
             if (!isPersonal) ...[
@@ -179,7 +177,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             if (_attemptedSave && !_canSave(state, l10n)) ...[
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.negativeSoft,
                   borderRadius: BorderRadius.circular(12),
@@ -187,8 +187,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.error_outline_rounded,
-                        size: 18, color: AppColors.negative),
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      size: 18,
+                      color: AppColors.negative,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -217,60 +220,81 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Widget _buildCategoryPicker(List<Category> categories) {
+    final midpoint = (categories.length / 2).ceil();
+    final firstRow = categories.take(midpoint).toList();
+    final secondRow = categories.skip(midpoint).toList();
+
+    Widget categoryChip(Category c) {
+      final selected = _categoryId == c.id;
+
+      return GestureDetector(
+        onTap: () => setState(() => _categoryId = c.id),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? _colorOf(c).withValues(alpha: 0.16)
+                : (Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.surfaceAltDark
+                      : AppColors.surfaceAlt),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected ? _colorOf(c) : Colors.transparent,
+              width: 1.4,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                iconForCodePoint(c.iconCodePoint),
+                size: 16,
+                color: _colorOf(c),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                c.name,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? _colorOf(c) : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget categoryRow(List<Category> items) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            categoryChip(items[i]),
+          ],
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Label(context.l10n.category),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            for (final c in categories)
-              GestureDetector(
-                onTap: () => setState(() => _categoryId = c.id),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _categoryId == c.id
-                        ? _colorOf(c).withValues(alpha: 0.16)
-                        : (Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.surfaceAltDark
-                            : AppColors.surfaceAlt),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _categoryId == c.id
-                          ? _colorOf(c)
-                          : Colors.transparent,
-                      width: 1.4,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        iconForCodePoint(c.iconCodePoint),
-                        size: 16,
-                        color: _colorOf(c),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        c.name,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: _categoryId == c.id
-                              ? _colorOf(c)
-                              : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              categoryRow(firstRow),
+              const SizedBox(height: 10),
+              categoryRow(secondRow),
+            ],
+          ),
         ),
       ],
     );
@@ -279,44 +303,47 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   Color _colorOf(Category c) =>
       c.colorValue == null ? AppColors.primary : Color(c.colorValue!);
 
-  Widget _buildPayerSelector(List<SpaceMember> members) {
-    return SizedBox(
-      height: 96,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: members.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          final m = members[index];
-          final selected = _paidByUserId == m.userId;
-          return GestureDetector(
-            onTap: () => setState(() => _paidByUserId = m.userId),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: selected ? AppColors.primary : Colors.transparent,
-                      width: 2.4,
-                    ),
-                  ),
-                  child: MemberAvatar(name: m.name, size: 52),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  m.name,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected ? AppColors.primary : AppColors.textSecondary,
-                  ),
-                ),
-              ],
+  Widget _buildPayerDisplay(AppState state) {
+    final l10n = context.l10n;
+    final uid = state.currentUserId;
+    final name = uid == null
+        ? l10n.you
+        : (state.memberName(uid) ?? state.currentUser?.name ?? l10n.you);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.surfaceAltDark
+            : AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          MemberAvatar(name: name, size: 40),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
-          );
-        },
+          ),
+          if (uid != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                l10n.you,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -340,8 +367,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today_outlined,
-                size: 20, color: AppColors.primary),
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 20,
+              color: AppColors.primary,
+            ),
             const SizedBox(width: 12),
             Text(
               formatFullDate(_date),
@@ -401,8 +431,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   decoration: BoxDecoration(
                     color: _splitType == type
                         ? (Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.surfaceDark
-                            : Colors.white)
+                              ? AppColors.surfaceDark
+                              : Colors.white)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -440,11 +470,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Widget _buildSplitInput(AppState state) {
-    final participants =
-        state.members.where((m) => _participants.contains(m.userId)).toList();
+    final participants = state.members
+        .where((m) => _participants.contains(m.userId))
+        .toList();
     if (participants.isEmpty) {
-      return Text(context.l10n.selectParticipant,
-          style: const TextStyle(color: AppColors.negative));
+      return Text(
+        context.l10n.selectParticipant,
+        style: const TextStyle(color: AppColors.negative),
+      );
     }
 
     switch (_splitType) {
@@ -473,8 +506,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Widget _buildPreview(AppState state) {
-    final participants =
-        state.members.where((m) => _participants.contains(m.userId)).toList();
+    final participants = state.members
+        .where((m) => _participants.contains(m.userId))
+        .toList();
     if (participants.isEmpty || _amount.isZero) return const SizedBox.shrink();
     final shares = SplitCalculator.build(
       expenseId: 'preview',
@@ -507,19 +541,25 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               child: Row(
                 children: [
                   MemberAvatar(
-                      name: state.memberName(share.userId) ?? '?', size: 26),
+                    name: state.memberName(share.userId) ?? '?',
+                    size: 26,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       state.memberName(share.userId) ?? '?',
                       style: const TextStyle(
-                          fontSize: 13.5, fontWeight: FontWeight.w600),
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   Text(
                     formatMoney(share.amount),
                     style: const TextStyle(
-                        fontSize: 13.5, fontWeight: FontWeight.w700),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -527,13 +567,20 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           const Divider(height: 20),
           Row(
             children: [
-              Text(context.l10n.total,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              Text(
+                context.l10n.total,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const Spacer(),
               Text(
                 formatMoney(_amount),
                 style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w800),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
@@ -543,7 +590,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   bool _canSave(AppState state, AppLocalizations l10n) =>
-    _validationMessage(state, l10n) == null;
+      _validationMessage(state, l10n) == null;
 
   String? _validationMessage(AppState state, AppLocalizations l10n) {
     if (_amount.isZero) return l10n.expenseAmountError;
@@ -551,7 +598,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       return l10n.expenseDescriptionError;
     }
     if (state.isPersonalMode) return null;
-    if (_paidByUserId == null) return l10n.expensePayerError;
     if (_participants.isEmpty) return l10n.expenseParticipantError;
     switch (_splitType) {
       case SplitType.percentage:
@@ -561,8 +607,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         }
         break;
       case SplitType.custom:
-        final sum = _customAmounts.values
-            .fold<int>(0, (a, m) => a + m.paisa);
+        final sum = _customAmounts.values.fold<int>(0, (a, m) => a + m.paisa);
         if (sum != _amount.paisa) {
           return l10n.expenseCustomError;
         }
@@ -616,7 +661,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       await state.addExpense(
         description: _descriptionController.text,
         amount: _amount,
-        paidByUserId: _paidByUserId!,
         date: _date,
         categoryId: _categoryId,
         note: _noteController.text,
@@ -631,7 +675,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         expense,
         description: _descriptionController.text,
         amount: _amount,
-        paidByUserId: _paidByUserId!,
         date: _date,
         categoryId: _categoryId,
         note: _noteController.text,
@@ -659,8 +702,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 MemberAvatar(name: m.name, size: 30),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(m.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(
+                    m.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
                 SizedBox(
                   width: 78,
@@ -668,11 +713,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     key: ValueKey('pct_${m.userId}'),
                     keyboardType: TextInputType.number,
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
                     controller: TextEditingController(
-                        text: (_percentages[m.userId] ?? 0)
-                            .toStringAsFixed(0)),
+                      text: (_percentages[m.userId] ?? 0).toStringAsFixed(0),
+                    ),
                     textAlign: TextAlign.right,
                     onChanged: (v) {
                       final val = double.tryParse(v) ?? 0;
@@ -680,8 +725,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     },
                     decoration: const InputDecoration(
                       suffixText: '%',
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
                     ),
                   ),
                 ),
@@ -690,8 +737,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           ),
         Row(
           children: [
-            Text(context.l10n.total,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            Text(
+              context.l10n.total,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
             const Spacer(),
             Text(
               '${NumberFormat.decimalPattern('en_IN').format(sum)}%',
@@ -725,30 +774,39 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 MemberAvatar(name: m.name, size: 30),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(m.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(
+                    m.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
                 SizedBox(
                   width: 120,
                   child: TextField(
                     key: ValueKey('amt_${m.userId}'),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
                     controller: TextEditingController(
-                        text: _customAmountText(_customAmounts[m.userId])),
+                      text: _customAmountText(_customAmounts[m.userId]),
+                    ),
                     textAlign: TextAlign.right,
                     onChanged: (v) {
                       final val = double.tryParse(v.replaceAll(',', '')) ?? 0;
-                      setState(() =>
-                          _customAmounts[m.userId] = Money((val * 100).round()));
+                      setState(
+                        () => _customAmounts[m.userId] = Money(
+                          (val * 100).round(),
+                        ),
+                      );
                     },
                     decoration: const InputDecoration(
                       prefixText: 'Rs. ',
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
                     ),
                   ),
                 ),
@@ -757,8 +815,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           ),
         Row(
           children: [
-            Text(context.l10n.assigned,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            Text(
+              context.l10n.assigned,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
             const Spacer(),
             Text(
               '${formatMoneyCompact(Money(assigned), showSymbol: false)} / ${formatMoneyCompact(_amount, showSymbol: false)}',
@@ -793,8 +853,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 MemberAvatar(name: m.name, size: 30),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(m.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(
+                    m.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
                 Text(
                   _shareAmountFor(m.userId, total),
@@ -817,7 +879,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 Text(
                   '${_shareUnits[m.userId] ?? 1}',
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w800),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 IconButton(
                   onPressed: () {
@@ -832,13 +896,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           ),
         Row(
           children: [
-            const Text('Total shares',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            const Text(
+              'Total shares',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
             const Spacer(),
             Text(
               '$total',
-              style: const TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w800),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
             ),
           ],
         ),
@@ -887,8 +952,10 @@ class _SharePreviewRow extends StatelessWidget {
           MemberAvatar(name: member.name, size: 28),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(member.name,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(
+              member.name,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
           Text(
             formatMoney(share),

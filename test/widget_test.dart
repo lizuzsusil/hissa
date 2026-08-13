@@ -223,6 +223,17 @@ void main() {
     });
   });
 
+  group('Payer restriction', () {
+    test('a new expense is always paid for by the authenticated user', () {
+      expect(payerForCurrentUser('u_ram'), 'u_ram');
+      expect(payerForCurrentUser('u_sita'), 'u_sita');
+    });
+
+    test('an anonymous user maps to an empty payer', () {
+      expect(payerForCurrentUser(null), '');
+    });
+  });
+
   group('SettlementCalculator', () {
     test('produces the minimal number of transactions', () {
       final proposals = SettlementCalculator.minimize({

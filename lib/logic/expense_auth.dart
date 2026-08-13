@@ -15,3 +15,11 @@ bool canEditExpenseBy({
   if (expense.createdBy == null) return false;
   return expense.createdBy == currentUserId;
 }
+
+/// The payer of a newly created expense is always the authenticated user.
+///
+/// Phase 5 rule: `paidBy` must equal the signed-in user; the client can never
+/// assign another member as the payer. Mirrors the Firestore security rule
+/// that rejects expense creates whose `paidByUserId` does not match the
+/// authenticated user.
+String payerForCurrentUser(String? currentUserId) => currentUserId ?? '';
