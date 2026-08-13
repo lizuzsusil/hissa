@@ -30,4 +30,10 @@ abstract class ExpenseRepository {
 
   Future<Household?> findHouseholdByInviteCode(String code);
   Future<String?> findHouseholdIdForUser(String userId);
+
+  /// All households the user belongs to, used by the Spaces dashboard.
+  Future<List<Household>> findHouseholdsForUser(String userId);
+
+  /// Number of members in a household, used for the Spaces dashboard card.
+  Future<int> countMembers(String householdId);
 }

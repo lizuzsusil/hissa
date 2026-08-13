@@ -39,6 +39,7 @@ class AppState extends ChangeNotifier {
   String? _onboardingMode;
   bool _introSeen = false;
   bool _loaded = false;
+  List<Household> _spaces = [];
 
   ExpenseRepository get repo => _repo;
   bool get isLoaded => _loaded;
@@ -47,6 +48,10 @@ class AppState extends ChangeNotifier {
   bool get isLoggedIn => _currentUserId != null;
   bool get hasHousehold => _householdId != null;
   bool get introSeen => _introSeen;
+
+  /// The Spaces the current user belongs to (all of them, not just the one
+  /// currently selected), used by the post-login Spaces dashboard.
+  List<Household> get spaces => List.unmodifiable(_spaces);
 
   /// Marks the feature-intro carousel as seen so it only shows on first run.
   Future<void> markIntroSeen() async {
@@ -119,8 +124,11 @@ class AppState extends ChangeNotifier {
   }
 
   /// Replaces the repository with a fresh Firestore-backed one subscribed to
-  /// the current user's profile and household (derived from their
-  /// membership, so it stays correct even after joining a new household).
+  /// the current user's profile and household.
+  ///
+  /// Loads every household the user belongs to into [_spaces] (for the Spaces
+  /// dashboard) and keeps the current [_householdId] selection when the user
+  /// is still a member, otherwise falling back to the first available Space.
   Future<void> _attachRepository() async {
     final uid = _currentUserId;
     if (uid == null) return;
@@ -129,16 +137,27 @@ class AppState extends ChangeNotifier {
     }
 
     final repo = FirestoreRepository(FirebaseFirestore.instance);
-    String? householdId;
+    List<Household> spaces = const [];
     try {
-      householdId = await repo.findHouseholdIdForUser(uid);
+      spaces = await repo.findHouseholdsForUser(uid);
     } catch (_) {
-      householdId = null;
+      spaces = const [];
     }
-    if (householdId == null) _cycleId = null;
-    _householdId = householdId;
+    _spaces = spaces;
+
+    if (spaces.isEmpty) {
+      _householdId = null;
+      _cycleId = null;
+    } else {
+      final stillMember = _householdId != null &&
+          spaces.any((h) => h.id == _householdId);
+      if (!stillMember) {
+        _householdId = spaces.first.id;
+        _cycleId = null;
+      }
+    }
     _repo = repo;
-    await repo.start(uid: uid, householdId: householdId, onChanged: notifyListeners);
+    await repo.start(uid: uid, householdId: _householdId, onChanged: notifyListeners);
   }
 
   // ---- auth ----
@@ -294,6 +313,7 @@ class AppState extends ChangeNotifier {
     _currentUserId = null;
     _householdId = null;
     _cycleId = null;
+    _spaces = [];
     try {
       await FirebaseAuth.instance.signOut();
     } on Exception {
@@ -375,6 +395,29 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Switches to a different Space the user belongs to, re-attaching the
+  /// repository so the shell reflects the newly selected Space.
+  Future<void> selectSpace(String householdId) async {
+    if (!_spaces.any((h) => h.id == householdId)) return;
+    if (_householdId == householdId) {
+      notifyListeners();
+      return;
+    }
+    _householdId = householdId;
+    _cycleId = null;
+    await _attachRepository();
+    await _commit();
+  }
+
+  /// Member count for the given Space, used by the Spaces dashboard.
+  Future<int> countMembers(String householdId) async {
+    try {
+      return await _repo.countMembers(householdId);
+    } catch (_) {
+      return 1;
+    }
+  }
+
   List<Category> get categories {
     if (_householdId == null) return const [];
     return _repo.categories
@@ -388,6 +431,7 @@ class AppState extends ChangeNotifier {
     required String name,
     required String currency,
     required List<String> memberNames,
+    SpaceMode mode = SpaceMode.split,
   }) async {
     final user = currentUser;
     if (user == null) return false;
@@ -399,6 +443,7 @@ class AppState extends ChangeNotifier {
       currency: currency,
       inviteCode: genInviteCode(),
       createdAt: DateTime.now(),
+      mode: mode,
     );
     // The owner membership is written before the household so security rules
     // (which gate household writes on membership) accept the create.

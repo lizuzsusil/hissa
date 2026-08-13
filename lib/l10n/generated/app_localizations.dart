@@ -914,6 +914,126 @@ abstract class AppLocalizations {
   /// **'Invite codes are 6 characters long'**
   String get inviteCodeFormatError;
 
+  /// No description provided for @mySpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'My Spaces'**
+  String get mySpaces;
+
+  /// No description provided for @mySpacesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All your expense spaces in one place'**
+  String get mySpacesSubtitle;
+
+  /// No description provided for @noSpacesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No spaces yet'**
+  String get noSpacesYet;
+
+  /// No description provided for @noSpacesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a space to start tracking your expenses, or join an existing space.'**
+  String get noSpacesMessage;
+
+  /// No description provided for @createSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Space'**
+  String get createSpace;
+
+  /// No description provided for @joinSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Join Space'**
+  String get joinSpace;
+
+  /// No description provided for @switchSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'My Spaces'**
+  String get switchSpace;
+
+  /// No description provided for @switchSpaceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch between your spaces'**
+  String get switchSpaceSubtitle;
+
+  /// No description provided for @splitMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Split Mode'**
+  String get splitMode;
+
+  /// No description provided for @personalMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Mode'**
+  String get personalMode;
+
+  /// No description provided for @spaceName.
+  ///
+  /// In en, this message translates to:
+  /// **'Space name'**
+  String get spaceName;
+
+  /// No description provided for @spaceNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Our Home'**
+  String get spaceNameHint;
+
+  /// No description provided for @spaceNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Space name is required'**
+  String get spaceNameRequired;
+
+  /// No description provided for @chooseSpaceMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how you\'ll use it'**
+  String get chooseSpaceMode;
+
+  /// No description provided for @splitModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Share expenses, calculate balances and settle up.'**
+  String get splitModeDescription;
+
+  /// No description provided for @personalModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your own spending without splitting or settling.'**
+  String get personalModeDescription;
+
+  /// No description provided for @createSpaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a Space'**
+  String get createSpaceTitle;
+
+  /// No description provided for @createSpaceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Name your space and pick how you\'ll use it.'**
+  String get createSpaceSubtitle;
+
+  /// No description provided for @createdSpaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Space created'**
+  String get createdSpaceTitle;
+
+  /// No description provided for @joinedSpaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Space joined'**
+  String get joinedSpaceTitle;
+
   /// No description provided for @createAccount.
   ///
   /// In en, this message translates to:

@@ -505,6 +505,38 @@ class FirestoreRepository implements ExpenseRepository {
     return snap.docs.first.data()['householdId'] as String?;
   }
 
+  @override
+  Future<List<Household>> findHouseholdsForUser(String userId) async {
+    final membershipSnap = await _db
+        .collection('householdMembers')
+        .where('userId', isEqualTo: userId)
+        .get();
+    final ids = membershipSnap.docs
+        .map((d) => d.data()['householdId'] as String?)
+        .whereType<String>()
+        .toSet();
+    final result = <Household>[];
+    for (final id in ids) {
+      try {
+        final doc = await _db.collection('households').doc(id).get();
+        if (doc.exists) result.add(Household.fromJson(doc.data()!));
+      } catch (_) {
+        // Ignore households that cannot be read.
+      }
+    }
+    result.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return result;
+  }
+
+  @override
+  Future<int> countMembers(String householdId) async {
+    final snap = await _db
+        .collection('householdMembers')
+        .where('householdId', isEqualTo: householdId)
+        .get();
+    return snap.docs.length;
+  }
+
   // ---- helpers ----
 
   static void _upsert<T>(List<T> list, T item, String Function(T) idOf) {

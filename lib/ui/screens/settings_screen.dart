@@ -18,7 +18,10 @@ import 'household_screen.dart';
 import 'profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  /// Invoked to return to the Spaces dashboard so the user can switch Spaces.
+  final VoidCallback? onOpenSpaces;
+
+  const SettingsScreen({super.key, this.onOpenSpaces});
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +44,16 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => _push(context, ProfileScreen()),
           ),
           const SizedBox(height: 24),
+          if (onOpenSpaces != null) ...[
+            SectionHeader(title: l10n.mySpaces),
+            _SettingTile(
+              icon: Icons.workspaces_outline,
+              title: l10n.switchSpace,
+              subtitle: l10n.switchSpaceSubtitle,
+              onTap: onOpenSpaces,
+            ),
+            const SizedBox(height: 24),
+          ],
           SectionHeader(title: l10n.household),
           _SettingTile(
             icon: Icons.home_work_outlined,

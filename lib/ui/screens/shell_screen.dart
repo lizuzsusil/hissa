@@ -14,7 +14,11 @@ import 'settle_screen.dart';
 import 'settings_screen.dart';
 
 class ShellScreen extends StatefulWidget {
-  const ShellScreen({super.key});
+  /// Invoked when the user wants to return to the Spaces dashboard to switch
+  /// between Spaces.
+  final VoidCallback? onBackToSpaces;
+
+  const ShellScreen({super.key, this.onBackToSpaces});
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -23,12 +27,12 @@ class ShellScreen extends StatefulWidget {
 class _ShellScreenState extends State<ShellScreen> {
   final ShellTabController _tabController = ShellTabController();
 
-  late final List<Widget> _screens = const [
-    DashboardScreen(),
-    ExpensesScreen(),
-    SettleScreen(),
-    InsightsScreen(),
-    SettingsScreen(),
+  late final List<Widget> _screens = [
+    const DashboardScreen(),
+    const ExpensesScreen(),
+    const SettleScreen(),
+    const InsightsScreen(),
+    SettingsScreen(onOpenSpaces: widget.onBackToSpaces),
   ];
 
   @override

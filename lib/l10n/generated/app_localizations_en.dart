@@ -482,6 +482,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteCodeFormatError => 'Invite codes are 6 characters long';
 
   @override
+  String get mySpaces => 'My Spaces';
+
+  @override
+  String get mySpacesSubtitle => 'All your expense spaces in one place';
+
+  @override
+  String get noSpacesYet => 'No spaces yet';
+
+  @override
+  String get noSpacesMessage =>
+      'Create a space to start tracking your expenses, or join an existing space.';
+
+  @override
+  String get createSpace => 'Create Space';
+
+  @override
+  String get joinSpace => 'Join Space';
+
+  @override
+  String get switchSpace => 'My Spaces';
+
+  @override
+  String get switchSpaceSubtitle => 'Switch between your spaces';
+
+  @override
+  String get splitMode => 'Split Mode';
+
+  @override
+  String get personalMode => 'Personal Mode';
+
+  @override
+  String get spaceName => 'Space name';
+
+  @override
+  String get spaceNameHint => 'e.g. Our Home';
+
+  @override
+  String get spaceNameRequired => 'Space name is required';
+
+  @override
+  String get chooseSpaceMode => 'Choose how you\'ll use it';
+
+  @override
+  String get splitModeDescription =>
+      'Share expenses, calculate balances and settle up.';
+
+  @override
+  String get personalModeDescription =>
+      'Track your own spending without splitting or settling.';
+
+  @override
+  String get createSpaceTitle => 'Create a Space';
+
+  @override
+  String get createSpaceSubtitle =>
+      'Name your space and pick how you\'ll use it.';
+
+  @override
+  String get createdSpaceTitle => 'Space created';
+
+  @override
+  String get joinedSpaceTitle => 'Space joined';
+
+  @override
   String get createAccount => 'Create account';
 
   @override

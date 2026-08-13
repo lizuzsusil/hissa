@@ -157,4 +157,19 @@ class InMemoryRepository implements ExpenseRepository {
     }
     return null;
   }
+
+  @override
+  Future<List<Household>> findHouseholdsForUser(String userId) async {
+    final result = <Household>[];
+    for (final h in _households) {
+      final joined = _members.any((m) => m.userId == userId);
+      if (joined) result.add(h);
+    }
+    return result;
+  }
+
+  @override
+  Future<int> countMembers(String householdId) async {
+    return _members.length;
+  }
 }

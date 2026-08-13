@@ -59,21 +59,28 @@ class Household {
   final String inviteCode;
   final DateTime createdAt;
 
+  /// The mode of this Space. Existing (legacy) households default to
+  /// [SpaceMode.split] so pre-existing records keep behaving exactly as
+  /// before.
+  SpaceMode mode;
+
   Household({
     required this.id,
     required this.name,
     required this.currency,
     required this.inviteCode,
     required this.createdAt,
+    this.mode = SpaceMode.split,
   });
 
-  Household copyWith({String? name, String? currency}) {
+  Household copyWith({String? name, String? currency, SpaceMode? mode}) {
     return Household(
       id: id,
       name: name ?? this.name,
       currency: currency ?? this.currency,
       inviteCode: inviteCode,
       createdAt: createdAt,
+      mode: mode ?? this.mode,
     );
   }
 
@@ -82,6 +89,7 @@ class Household {
         'name': name,
         'currency': currency,
         'inviteCode': inviteCode,
+        'mode': mode.value,
         'createdAt': createdAt.toIso8601String(),
       };
 
@@ -91,7 +99,17 @@ class Household {
         currency: json['currency'] as String,
         inviteCode: json['inviteCode'] as String,
         createdAt: DateTime.parse(json['createdAt'] as String),
+        mode: _parseMode(json['mode']),
       );
+
+  static SpaceMode _parseMode(Object? value) {
+    if (value is String) {
+      for (final m in SpaceMode.values) {
+        if (m.value == value) return m;
+      }
+    }
+    return SpaceMode.split;
+  }
 }
 
 class HouseholdMember {

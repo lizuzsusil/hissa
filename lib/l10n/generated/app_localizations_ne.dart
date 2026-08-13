@@ -481,6 +481,70 @@ class AppLocalizationsNe extends AppLocalizations {
   String get inviteCodeFormatError => 'इन्भाइट कोड ६ अक्षरको हुन्छ';
 
   @override
+  String get mySpaces => 'मेरा स्पेसहरू';
+
+  @override
+  String get mySpacesSubtitle => 'तपाईंका सबै खर्च स्पेस एकै ठाउँमा';
+
+  @override
+  String get noSpacesYet => 'अहिलेसम्म कुनै स्पेस छैन';
+
+  @override
+  String get noSpacesMessage =>
+      'खर्च ट्र्याक गर्न स्पेस सिर्जना गर्नुहोस्, वा अवस्थित स्पेसमा सामेल हुनुहोस्।';
+
+  @override
+  String get createSpace => 'स्पेस सिर्जना गर्नुहोस्';
+
+  @override
+  String get joinSpace => 'स्पेसमा सामेल हुनुहोस्';
+
+  @override
+  String get switchSpace => 'मेरा स्पेसहरू';
+
+  @override
+  String get switchSpaceSubtitle => 'आफ्ना स्पेसहरू बीच स्विच गर्नुहोस्';
+
+  @override
+  String get splitMode => 'विभाजन मोड';
+
+  @override
+  String get personalMode => 'व्यक्तिगत मोड';
+
+  @override
+  String get spaceName => 'स्पेसको नाम';
+
+  @override
+  String get spaceNameHint => 'जस्तै: हाम्रो घर';
+
+  @override
+  String get spaceNameRequired => 'स्पेसको नाम चाहिन्छ';
+
+  @override
+  String get chooseSpaceMode => 'यसलाई कसरी प्रयोग गर्नुहुन्छ छान्नुहोस्';
+
+  @override
+  String get splitModeDescription =>
+      'खर्च बाँड्नुहोस्, ब्यालेन्स गणना गर्नुहोस् र मिलान गर्नुहोस्।';
+
+  @override
+  String get personalModeDescription =>
+      'विभाजन वा मिलान बिना आफ्नै खर्च ट्र्याक गर्नुहोस्।';
+
+  @override
+  String get createSpaceTitle => 'स्पेस सिर्जना गर्नुहोस्';
+
+  @override
+  String get createSpaceSubtitle =>
+      'आफ्नो स्पेसको नाम लेख्नुहोस् र कसरी प्रयोग गर्ने छान्नुहोस्।';
+
+  @override
+  String get createdSpaceTitle => 'स्पेस सिर्जना भयो';
+
+  @override
+  String get joinedSpaceTitle => 'स्पेसमा सामेल भयो';
+
+  @override
   String get createAccount => 'खाता बनाउनुहोस्';
 
   @override

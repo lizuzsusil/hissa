@@ -74,3 +74,19 @@ enum MemberRole {
     }
   }
 }
+
+/// The mode of a Space (container). Stable internal values are `SPLIT` and
+/// `SOLO` (see [SpaceMode.value]); the UI shows friendlier labels
+/// ("Split Mode" / "Personal Mode").
+enum SpaceMode {
+  split('SPLIT', 'Split Mode'),
+  solo('SOLO', 'Personal Mode');
+
+  const SpaceMode(this.value, this.label);
+
+  /// Stable internal value used for persistence and comparisons.
+  final String value;
+
+  /// User-facing label for the mode.
+  final String label;
+}

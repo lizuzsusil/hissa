@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../models/models.dart';
 import '../state/app_state.dart';
 import '../ui/screens/auth_screen.dart';
 import '../ui/screens/intro_screen.dart';
@@ -10,6 +11,7 @@ import '../ui/screens/lock_screen.dart';
 import '../ui/screens/onboarding_screen.dart';
 import '../ui/screens/setup_screen.dart';
 import '../ui/screens/shell_screen.dart';
+import '../ui/screens/spaces_dashboard_screen.dart';
 import '../ui/screens/splash_screen.dart';
 import '../ui/state/biometric_controller.dart';
 import '../ui/state/locale_controller.dart';
@@ -59,7 +61,7 @@ class _AppView extends StatelessWidget {
   }
 }
 
-enum _FlowStep { splash, intro, onboarding, auth, setup, lock, app }
+enum _FlowStep { splash, intro, onboarding, auth, setup, lock, dashboard, app }
 
 class RootGate extends StatefulWidget {
   const RootGate({super.key});
@@ -70,6 +72,7 @@ class RootGate extends StatefulWidget {
 
 class _RootGateState extends State<RootGate> {
   _FlowStep _step = _FlowStep.splash;
+  bool _setupCreateMode = true;
 
   @override
   void initState() {
@@ -88,11 +91,13 @@ class _RootGateState extends State<RootGate> {
   }
 
   /// Sends the user to the login screen when they sign out from inside the
-  /// app shell (or back to mode selection if it was never completed).
+  /// app shell or the Spaces dashboard (or back to mode selection if it was
+  /// never completed).
   void _onStateChanged() {
     if (!mounted) return;
     final state = context.read<AppState>();
-    if (_step == _FlowStep.app && !state.isLoggedIn) {
+    if ((_step == _FlowStep.app || _step == _FlowStep.dashboard) &&
+        !state.isLoggedIn) {
       setState(() {
         _step = state.onboardingMode != null
             ? _FlowStep.auth
@@ -138,16 +143,30 @@ class _RootGateState extends State<RootGate> {
   }
 
   /// Where a signed-in user lands: a biometric gate when the user opted into
-  /// it, otherwise straight into the shell (or household setup).
+  /// it, otherwise straight onto the Spaces dashboard.
   _FlowStep _signedInStep(AppState state) {
     final biometrics = context.read<BiometricAuthController>();
     if (biometrics.enabled) return _FlowStep.lock;
-    return state.hasHousehold ? _FlowStep.app : _FlowStep.setup;
+    return _FlowStep.dashboard;
   }
 
   void _enterApp() {
-    final state = context.read<AppState>();
-    _go(state.hasHousehold ? _FlowStep.app : _FlowStep.setup);
+    _go(_FlowStep.dashboard);
+  }
+
+  void _selectSpace(Household household) {
+    context.read<AppState>().selectSpace(household.id);
+    _go(_FlowStep.app);
+  }
+
+  void _openSetup({required bool create}) {
+    _setupCreateMode = create;
+    _go(_FlowStep.setup);
+  }
+
+  void _signOutFromDashboard() {
+    context.read<AppState>().signOut();
+    _go(_FlowStep.auth);
   }
 
   void _go(_FlowStep step) => setState(() => _step = step);
@@ -177,9 +196,28 @@ class _RootGateState extends State<RootGate> {
           onUsePassword: () => _go(_FlowStep.auth),
         );
       case _FlowStep.setup:
-        return SetupScreen(onDone: () => _go(_FlowStep.app));
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            // Intercept the system back button so it returns to the Spaces
+            // dashboard instead of exiting the app.
+            if (!didPop) _go(_FlowStep.dashboard);
+          },
+          child: SetupScreen(
+            initialCreateMode: _setupCreateMode,
+            onDone: () => _go(_FlowStep.app),
+            onBack: () => _go(_FlowStep.dashboard),
+          ),
+        );
+      case _FlowStep.dashboard:
+        return SpacesDashboardScreen(
+          onSelect: _selectSpace,
+          onCreate: () => _openSetup(create: true),
+          onJoin: () => _openSetup(create: false),
+          onSignOut: _signOutFromDashboard,
+        );
       case _FlowStep.app:
-        return const ShellScreen();
+        return ShellScreen(onBackToSpaces: () => _go(_FlowStep.dashboard));
     }
   }
 }

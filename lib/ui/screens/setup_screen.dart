@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants.dart';
 import '../../core/validators.dart';
 import '../../l10n/l10n.dart';
+import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
@@ -13,14 +14,26 @@ import '../widgets/toasts.dart';
 class SetupScreen extends StatefulWidget {
   final VoidCallback onDone;
 
-  const SetupScreen({super.key, required this.onDone});
+  /// Whether the screen starts in create mode (true) or join mode (false).
+  final bool initialCreateMode;
+
+  /// Invoked when the user navigates back to the Spaces dashboard. When null,
+  /// no back button is shown.
+  final VoidCallback? onBack;
+
+  const SetupScreen({
+    super.key,
+    required this.onDone,
+    this.initialCreateMode = true,
+    this.onBack,
+  });
 
   @override
   State<SetupScreen> createState() => _SetupScreenState();
 }
 
 class _SetupScreenState extends State<SetupScreen> {
-  bool _createMode = true;
+  late bool _createMode = widget.initialCreateMode;
   bool _loading = false;
 
   final _nameController = TextEditingController();
@@ -29,6 +42,7 @@ class _SetupScreenState extends State<SetupScreen> {
   final _nameFocus = FocusNode();
   final List<String> _members = [];
   String _currency = kDefaultCurrency;
+  SpaceMode _mode = SpaceMode.split;
   String? _nameError;
   String? _codeError;
   String? _memberError;
@@ -43,7 +57,7 @@ class _SetupScreenState extends State<SetupScreen> {
     if (_nameFocus.hasFocus) return;
     setState(() {
       _nameError = _nameController.text.trim().isEmpty
-          ? context.l10n.householdNameRequired
+          ? context.l10n.spaceNameRequired
           : null;
     });
   }
@@ -61,7 +75,7 @@ class _SetupScreenState extends State<SetupScreen> {
     final vm = ValidatorMessages.fromL10n(context.l10n);
     final error = validateName(
       _nameController.text,
-      label: context.l10n.householdName,
+      label: context.l10n.spaceName,
       messages: vm,
     );
     if (error != null) {
@@ -74,6 +88,7 @@ class _SetupScreenState extends State<SetupScreen> {
       name: _nameController.text,
       currency: _currency,
       memberNames: _members,
+      mode: _mode,
     );
     if (mounted) {
       setState(() => _loading = false);
@@ -138,9 +153,19 @@ class _SetupScreenState extends State<SetupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (widget.onBack != null)
+                Row(
+                  children: [
+                    IconAction(
+                      icon: Icons.arrow_back_rounded,
+                      size: 46,
+                      onPressed: widget.onBack,
+                    ),
+                  ],
+                ),
               const SizedBox(height: 12),
               Text(
-                l10n.setUpHousehold,
+                _createMode ? l10n.createSpaceTitle : l10n.joinSpace,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -150,7 +175,7 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                l10n.setUpSubtitle,
+                _createMode ? l10n.createSpaceSubtitle : l10n.setUpSubtitle,
                 style: TextStyle(
                   fontSize: 15,
                   color: isDark
@@ -183,18 +208,18 @@ class _SetupScreenState extends State<SetupScreen> {
           focusNode: _nameFocus,
           textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
-            labelText: l10n.householdName,
-            hintText: l10n.householdNameHint,
-            suffixIcon: const Icon(Icons.home_outlined, size: 18),
+            labelText: l10n.spaceName,
+            hintText: l10n.spaceNameHint,
+            suffixIcon: const Icon(Icons.workspaces_outline, size: 18),
             errorText: _nameError,
           ),
           onChanged: (_) {
             if (_nameError != null) setState(() => _nameError = null);
           },
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 20),
         Text(
-          l10n.whoLivesHere,
+          l10n.chooseSpaceMode,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -203,52 +228,91 @@ class _SetupScreenState extends State<SetupScreen> {
                 : AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 8),
-        if (_members.isNotEmpty) ...[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final name in _members)
-                Chip(
-                  avatar: MemberAvatar(name: name, size: 24),
-                  label: Text(name),
-                  deleteIcon: const Icon(Icons.close, size: 16),
-                  onDeleted: () => setState(() => _members.remove(name)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-        ],
+        const SizedBox(height: 10),
         Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _memberController,
-                textCapitalization: TextCapitalization.words,
-                decoration: InputDecoration(
-                  labelText: l10n.addMember,
-                  hintText: l10n.name,
-                  suffixIcon:
-                      const Icon(Icons.person_add_alt_1_outlined, size: 18),
-                  errorText: _memberError,
-                ),
-                onChanged: (_) {
-                  if (_memberError != null) setState(() => _memberError = null);
-                },
-                onSubmitted: (_) => _addMember(),
+              child: _ModeCard(
+                icon: Icons.groups_outlined,
+                title: l10n.splitMode,
+                subtitle: l10n.splitModeDescription,
+                selected: _mode == SpaceMode.split,
+                onTap: () => setState(() => _mode = SpaceMode.split),
               ),
             ),
             const SizedBox(width: 10),
-            IconAction(
-              icon: Icons.add_rounded,
-              background: AppColors.primary,
-              foreground: Colors.white,
-              size: 50,
-              onPressed: _addMember,
+            Expanded(
+              child: _ModeCard(
+                icon: Icons.person_outline,
+                title: l10n.personalMode,
+                subtitle: l10n.personalModeDescription,
+                selected: _mode == SpaceMode.solo,
+                onTap: () => setState(() => _mode = SpaceMode.solo),
+              ),
             ),
           ],
         ),
+        if (_mode == SpaceMode.split) ...[
+          const SizedBox(height: 18),
+          Text(
+            l10n.whoLivesHere,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (_members.isNotEmpty) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final name in _members)
+                  Chip(
+                    avatar: MemberAvatar(name: name, size: 24),
+                    label: Text(name),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    onDeleted: () => setState(() => _members.remove(name)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _memberController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    labelText: l10n.addMember,
+                    hintText: l10n.name,
+                    suffixIcon:
+                        const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                    errorText: _memberError,
+                  ),
+                  onChanged: (_) {
+                    if (_memberError != null) {
+                      setState(() => _memberError = null);
+                    }
+                  },
+                  onSubmitted: (_) => _addMember(),
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconAction(
+                icon: Icons.add_rounded,
+                background: AppColors.primary,
+                foreground: Colors.white,
+                size: 50,
+                onPressed: _addMember,
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 14),
         Text(
           l10n.currency,
@@ -276,7 +340,7 @@ class _SetupScreenState extends State<SetupScreen> {
         ),
         const SizedBox(height: 28),
         PrimaryButton(
-          label: l10n.createHousehold,
+          label: l10n.createSpace,
           icon: Icons.check_circle_outline_rounded,
           loading: _loading,
           onPressed: _loading ? null : _create,
@@ -332,12 +396,97 @@ class _SetupScreenState extends State<SetupScreen> {
         ),
         const SizedBox(height: 28),
         PrimaryButton(
-          label: l10n.joinHousehold,
+          label: l10n.joinSpace,
           icon: Icons.group_add_outlined,
           loading: _loading,
           onPressed: _loading ? null : _join,
         ),
       ],
+    );
+  }
+}
+
+class _ModeCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ModeCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = selected
+        ? AppColors.primary
+        : (isDark ? AppColors.borderDark : AppColors.border);
+    return Material(
+      color: selected
+          ? AppColors.primary.withValues(alpha: 0.08)
+          : (isDark ? AppColors.surfaceDark : Colors.white),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor, width: selected ? 1.8 : 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(
+                    icon,
+                    size: 22,
+                    color: selected ? AppColors.primary : AppColors.textMuted,
+                  ),
+                  Icon(
+                    selected
+                        ? Icons.check_circle_rounded
+                        : Icons.circle_outlined,
+                    size: 20,
+                    color: selected ? AppColors.primary : AppColors.textMuted,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  height: 1.35,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

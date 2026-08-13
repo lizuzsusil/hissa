@@ -181,6 +181,88 @@ void main() {
       writer.stop();
       observer.stop();
     });
+
+    test('findHouseholdsForUser returns every household the user belongs to',
+        () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreRepository(db);
+      await repo.saveHousehold(_household('h1', 'AAAAA'));
+      await repo.saveHousehold(_household('h2', 'BBBBB'));
+      await repo.saveMember(
+        HouseholdMember(
+          userId: 'u1',
+          name: 'A',
+          role: MemberRole.owner,
+          joinedAt: DateTime(2026, 1, 1),
+        ),
+        'h1',
+      );
+      await repo.saveMember(
+        HouseholdMember(
+          userId: 'u1',
+          name: 'A',
+          role: MemberRole.member,
+          joinedAt: DateTime(2026, 1, 1),
+        ),
+        'h2',
+      );
+
+      final spaces = await repo.findHouseholdsForUser('u1');
+      expect(spaces.map((h) => h.id).toSet(), {'h1', 'h2'});
+      expect(await repo.findHouseholdsForUser('u999'), isEmpty);
+    });
+
+    test('countMembers counts the household membership docs', () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreRepository(db);
+      await repo.saveMember(
+        HouseholdMember(
+          userId: 'u1',
+          name: 'A',
+          role: MemberRole.owner,
+          joinedAt: DateTime(2026, 1, 1),
+        ),
+        'h1',
+      );
+      await repo.saveMember(
+        HouseholdMember(
+          userId: 'u2',
+          name: 'B',
+          role: MemberRole.member,
+          joinedAt: DateTime(2026, 1, 1),
+        ),
+        'h1',
+      );
+
+      expect(await repo.countMembers('h1'), 2);
+      expect(await repo.countMembers('h9'), 0);
+    });
+
+    test('household mode is persisted and defaults to SPLIT for legacy docs',
+        () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreRepository(db);
+      await repo.saveHousehold(
+        _household('h1', 'AAAAA').copyWith(mode: SpaceMode.solo),
+      );
+      expect((await repo.findHouseholdsForUser('u1')), isEmpty);
+      final solo = Household.fromJson(
+        (await db.collection('households').doc('h1').get()).data()!,
+      );
+      expect(solo.mode, SpaceMode.solo);
+
+      await db.collection('households').doc('legacy').set({
+        'id': 'legacy',
+        'name': 'Old home',
+        'currency': 'NPR',
+        'inviteCode': 'LEGACY',
+        'createdAt': '2026-01-01T00:00:00.000',
+      });
+      final legacy = Household.fromJson(
+        (await db.collection('households').doc('legacy').get()).data()!,
+      );
+      expect(legacy.mode, SpaceMode.split);
+    });
   });
 }
 
