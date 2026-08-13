@@ -158,7 +158,8 @@ class AppState extends ChangeNotifier {
         email: normalized,
         password: password,
       );
-    } on FirebaseAuthException {
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'network-request-failed') rethrow;
       return false;
     }
     _currentUserId = FirebaseAuth.instance.currentUser!.uid;

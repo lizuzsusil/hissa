@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -64,6 +65,18 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  /// Returns `true` when the device appears to have a network connection,
+  /// otherwise shows an offline toast and returns `false`.
+  Future<bool> _ensureOnline() async {
+    final results = await Connectivity().checkConnectivity();
+    final online = results.any((r) => r != ConnectivityResult.none);
+    if (!online && mounted) {
+      final message = context.l10n.authNetwork;
+      showToast(context, message, type: ToastType.danger);
+    }
+    return online;
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -73,11 +86,14 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _submit() async {
-    final vm = ValidatorMessages.fromL10n(context.l10n);
+    final state = context.read<AppState>();
+    final l10n = context.l10n;
+    if (!await _ensureOnline()) return;
+    final vm = ValidatorMessages.fromL10n(l10n);
     final nameError = _isSignUp
         ? validateName(
             _nameController.text,
-            label: context.l10n.yourName,
+            label: l10n.yourName,
             messages: vm,
           )
         : null;
@@ -97,7 +113,6 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     setState(() => _loading = true);
-    final state = context.read<AppState>();
     if (_isSignUp) {
       try {
         await state.signUp(
@@ -113,14 +128,22 @@ class _AuthScreenState extends State<AuthScreen> {
         }
       }
     } else {
-      final ok = await state.signIn(email: email, password: password);
-      if (mounted && !ok) {
-        setState(() => _loading = false);
-        showToast(
-          context,
-          context.l10n.errIncorrectCredentials,
-          type: ToastType.danger,
-        );
+      try {
+        final ok = await state.signIn(email: email, password: password);
+        if (mounted && !ok) {
+          setState(() => _loading = false);
+          showToast(
+            context,
+            context.l10n.errIncorrectCredentials,
+            type: ToastType.danger,
+          );
+          return;
+        }
+      } on Exception catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          showToast(context, _friendlyAuthMessage(e), type: ToastType.danger);
+        }
         return;
       }
       await _persistRememberedEmail();
@@ -132,8 +155,9 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _google() async {
-    setState(() => _loading = true);
     final state = context.read<AppState>();
+    if (!await _ensureOnline()) return;
+    setState(() => _loading = true);
     try {
       final ok = await state.signInWithGoogle();
       if (!mounted) return;
