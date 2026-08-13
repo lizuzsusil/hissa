@@ -75,6 +75,25 @@ enum MemberRole {
   }
 }
 
+/// The membership status of a [SpaceMember]. Legacy memberships default to
+/// [MembershipStatus.active].
+enum MembershipStatus {
+  active,
+  invited,
+  removed;
+
+  String get label {
+    switch (this) {
+      case MembershipStatus.active:
+        return 'Active';
+      case MembershipStatus.invited:
+        return 'Invited';
+      case MembershipStatus.removed:
+        return 'Removed';
+    }
+  }
+}
+
 /// The mode of a Space (container). Stable internal values are `SPLIT` and
 /// `SOLO` (see [SpaceMode.value]); the UI shows friendlier labels
 /// ("Split Mode" / "Personal Mode").

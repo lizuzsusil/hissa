@@ -64,7 +64,7 @@ void main() {
   group('BalanceCalculator', () {
     test('balance is paid minus share', () {
       final balances = BalanceCalculator.compute(
-        household: _household,
+        space: _household,
         members: _members,
         cycle: _cycle,
         expenses: [
@@ -85,7 +85,7 @@ void main() {
 
     test('settlement reduces outstanding balances', () {
       final balances = BalanceCalculator.compute(
-        household: _household,
+        space: _household,
         members: _members,
         cycle: _cycle,
         expenses: [

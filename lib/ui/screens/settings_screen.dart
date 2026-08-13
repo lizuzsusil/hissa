@@ -28,7 +28,7 @@ class SettingsScreen extends StatelessWidget {
     final state = context.watch<AppState>();
     final biometrics = context.watch<BiometricAuthController>();
     final user = state.currentUser;
-    final household = state.household;
+    final space = state.space;
     final cycle = state.selectedCycle;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
@@ -58,7 +58,7 @@ class SettingsScreen extends StatelessWidget {
           _SettingTile(
             icon: Icons.home_work_outlined,
             title: l10n.householdAndMembers,
-            subtitle: household?.name ?? 'No household',
+            subtitle: space?.name ?? 'No household',
             onTap: () => _push(context, HouseholdScreen()),
           ),
           _SettingTile(
@@ -70,7 +70,7 @@ class SettingsScreen extends StatelessWidget {
           _SettingTile(
             icon: Icons.currency_rupee,
             title: l10n.currency,
-            subtitle: household?.currency ?? 'NPR',
+            subtitle: space?.currency ?? 'NPR',
             onTap: () => _showCurrencyPicker(context, state),
           ),
           const SizedBox(height: 24),
@@ -307,7 +307,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showCurrencyPicker(BuildContext context, AppState state) {
-    final current = state.household?.currency ?? 'NPR';
+    final current = state.space?.currency ?? 'NPR';
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -343,8 +343,8 @@ class SettingsScreen extends StatelessWidget {
                         )
                       : null,
                   onTap: () {
-                    if (state.household != null) {
-                      state.renameHouseholdCurrency(code);
+                    if (state.space != null) {
+                      state.renameSpaceCurrency(code);
                     }
                     Navigator.pop(context);
                   },

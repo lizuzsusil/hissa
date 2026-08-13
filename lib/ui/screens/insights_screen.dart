@@ -142,7 +142,7 @@ Map<String, Money> _categoryTotals(AppState state) {
 Map<String, Money> _memberPaidTotals(
   AppState state,
   List<BalanceInfo> balances,
-  List<HouseholdMember> members,
+  List<SpaceMember> members,
 ) {
   final totals = <String, Money>{};
   for (final b in balances) {

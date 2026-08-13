@@ -15,7 +15,7 @@ import '../widgets/misc.dart';
 /// Selecting a Space opens its dashboard via [onSelect]; Create/Join flow to
 /// the setup screens via [onCreate]/[onJoin]; [onSignOut] returns to auth.
 class SpacesDashboardScreen extends StatefulWidget {
-  final ValueChanged<Household> onSelect;
+  final ValueChanged<Space> onSelect;
   final VoidCallback onCreate;
   final VoidCallback onJoin;
   final VoidCallback onSignOut;
@@ -176,7 +176,7 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
 }
 
 class _SpaceCard extends StatelessWidget {
-  final Household space;
+  final Space space;
   final int? memberCount;
   final VoidCallback onTap;
 

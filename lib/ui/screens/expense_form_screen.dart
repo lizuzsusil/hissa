@@ -274,7 +274,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   Color _colorOf(Category c) =>
       c.colorValue == null ? AppColors.primary : Color(c.colorValue!);
 
-  Widget _buildPayerSelector(List<HouseholdMember> members) {
+  Widget _buildPayerSelector(List<SpaceMember> members) {
     return SizedBox(
       height: 96,
       child: ListView.separated(
@@ -350,7 +350,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
   }
 
-  Widget _buildParticipantSelector(List<HouseholdMember> members) {
+  Widget _buildParticipantSelector(List<SpaceMember> members) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -619,7 +619,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 
   // ---- split type inputs ----
 
-  Widget _percentageInput({required List<HouseholdMember> participants}) {
+  Widget _percentageInput({required List<SpaceMember> participants}) {
     final sum = _percentages.values.fold<double>(0, (a, b) => a + b);
     return Column(
       children: [
@@ -681,7 +681,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
   }
 
-  Widget _customAmountInput({required List<HouseholdMember> participants}) {
+  Widget _customAmountInput({required List<SpaceMember> participants}) {
     var assigned = 0;
     for (final m in participants) {
       assigned += (_customAmounts[m.userId] ?? Money.zero()).paisa;
@@ -753,7 +753,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     return isWhole ? major.round().toString() : major.toStringAsFixed(2);
   }
 
-  Widget _sharesInput({required List<HouseholdMember> participants}) {
+  Widget _sharesInput({required List<SpaceMember> participants}) {
     final total = _shareUnits.values.fold<int>(0, (a, b) => a + b);
     return Column(
       children: [
@@ -845,7 +845,7 @@ class _Label extends StatelessWidget {
 }
 
 class _SharePreviewRow extends StatelessWidget {
-  final HouseholdMember member;
+  final SpaceMember member;
   final Money share;
 
   const _SharePreviewRow({required this.member, required this.share});

@@ -13,17 +13,19 @@ import 'repository.dart';
 ///
 /// Document id conventions:
 ///   users/{userId}                      -> global (uid or pseudo-user id)
-///   households/{householdId}            -> global
-///   householdMembers/{householdId}_{userId}
-///   categories|cycles|expenses|expenseShares|settlements/{householdId}_{id}
+///   households/{spaceId}                -> global (legacy collection name)
+///   householdMembers/{spaceId}_{userId}
+///   categories|cycles|expenses|expenseShares|settlements/{spaceId}_{id}
 ///
-/// Household-scoped collections store a `householdId` field so Firestore
-/// security rules can enforce membership and queries stay scoped.
+/// Space-scoped collections store a `householdId` field so Firestore
+/// security rules can enforce membership and queries stay scoped. The legacy
+/// collection and field names are intentionally preserved so pre-existing
+/// Split Mode records remain readable without a migration.
 class FirestoreRepository implements ExpenseRepository {
   final FirebaseFirestore _db;
   final List<User> _users = [];
-  final List<Household> _households = [];
-  final List<HouseholdMember> _members = [];
+  final List<Space> _spaces = [];
+  final List<SpaceMember> _members = [];
   final List<Cycle> _cycles = [];
   final List<Expense> _expenses = [];
   final List<ExpenseShare> _shares = [];
@@ -33,7 +35,7 @@ class FirestoreRepository implements ExpenseRepository {
   final List<StreamSubscription<dynamic>> _subs = [];
   final Map<String, StreamSubscription<dynamic>> _userDocSubs = {};
   String? _ownUid;
-  String? _currentHouseholdId;
+  String? _currentSpaceId;
   void Function()? _onChanged;
 
   FirestoreRepository(this._db);
@@ -43,15 +45,15 @@ class FirestoreRepository implements ExpenseRepository {
   // ---- lifecycle ----
 
   /// Tears down any existing listeners, loads the current snapshot for
-  /// [householdId] (if any) and subscribes to realtime updates.
+  /// [spaceId] (if any) and subscribes to realtime updates.
   Future<void> start({
     required String uid,
-    String? householdId,
+    String? spaceId,
     required void Function() onChanged,
   }) async {
     stop();
     _ownUid = uid;
-    _currentHouseholdId = householdId;
+    _currentSpaceId = spaceId;
     _onChanged = onChanged;
 
     try {
@@ -73,30 +75,30 @@ class FirestoreRepository implements ExpenseRepository {
       ),
     );
 
-    if (householdId != null) {
-      await _loadHouseholdScope(householdId);
-      _subscribeHousehold(householdId);
+    if (spaceId != null) {
+      await _loadSpaceScope(spaceId);
+      _subscribeSpace(spaceId);
     }
     _notify();
   }
 
-  Future<void> _loadHouseholdScope(String householdId) async {
+  Future<void> _loadSpaceScope(String spaceId) async {
     try {
-      final householdSnap =
-          await _db.collection('households').doc(householdId).get();
-      _households.clear();
-      if (householdSnap.exists) {
-        _households.add(Household.fromJson(householdSnap.data()!));
+      final spaceSnap =
+          await _db.collection('households').doc(spaceId).get();
+      _spaces.clear();
+      if (spaceSnap.exists) {
+        _spaces.add(Space.fromJson(spaceSnap.data()!));
       }
 
       final membersSnap = await _db
           .collection('householdMembers')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .get();
       _members
         ..clear()
         ..addAll(
-          membersSnap.docs.map((d) => HouseholdMember.fromJson(d.data())),
+          membersSnap.docs.map((d) => SpaceMember.fromJson(d.data())),
         );
       await _loadMemberUserDocs(
         membersSnap.docs.map((d) => d.data()['userId'] as String),
@@ -104,7 +106,7 @@ class FirestoreRepository implements ExpenseRepository {
 
       final categories = await _db
           .collection('categories')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .get();
       _categories
         ..clear()
@@ -112,7 +114,7 @@ class FirestoreRepository implements ExpenseRepository {
 
       final cycles = await _db
           .collection('cycles')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .get();
       _cycles
         ..clear()
@@ -120,7 +122,7 @@ class FirestoreRepository implements ExpenseRepository {
 
       final expenses = await _db
           .collection('expenses')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .get();
       _expenses
         ..clear()
@@ -128,7 +130,7 @@ class FirestoreRepository implements ExpenseRepository {
 
       final shares = await _db
           .collection('expenseShares')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .get();
       _shares
         ..clear()
@@ -136,7 +138,7 @@ class FirestoreRepository implements ExpenseRepository {
 
       final settlements = await _db
           .collection('settlements')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .get();
       _settlements
         ..clear()
@@ -159,13 +161,13 @@ class FirestoreRepository implements ExpenseRepository {
     }
   }
 
-  void _subscribeHousehold(String householdId) {
+  void _subscribeSpace(String spaceId) {
     _subs.add(
-      _db.collection('households').doc(householdId).snapshots().listen(
+      _db.collection('households').doc(spaceId).snapshots().listen(
         (snap) {
           if (snap.exists) {
-            final h = Household.fromJson(snap.data()!);
-            _upsert(_households, h, (x) => x.id);
+            final s = Space.fromJson(snap.data()!);
+            _upsert(_spaces, s, (x) => x.id);
           }
           _notify();
         },
@@ -176,14 +178,14 @@ class FirestoreRepository implements ExpenseRepository {
     _subs.add(
       _db
           .collection('householdMembers')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .snapshots()
           .listen(
         (snap) {
           _members
             ..clear()
             ..addAll(
-              snap.docs.map((d) => HouseholdMember.fromJson(d.data())),
+              snap.docs.map((d) => SpaceMember.fromJson(d.data())),
             );
           _syncMemberUserDocs(snap.docs.map((d) => d.data()['userId'] as String));
           _notify();
@@ -195,7 +197,7 @@ class FirestoreRepository implements ExpenseRepository {
     _subs.add(
       _db
           .collection('categories')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .snapshots()
           .listen(
         (snap) {
@@ -211,7 +213,7 @@ class FirestoreRepository implements ExpenseRepository {
     _subs.add(
       _db
           .collection('cycles')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .snapshots()
           .listen(
         (snap) {
@@ -227,7 +229,7 @@ class FirestoreRepository implements ExpenseRepository {
     _subs.add(
       _db
           .collection('expenses')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .snapshots()
           .listen(
         (snap) {
@@ -243,7 +245,7 @@ class FirestoreRepository implements ExpenseRepository {
     _subs.add(
       _db
           .collection('expenseShares')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .snapshots()
           .listen(
         (snap) {
@@ -259,7 +261,7 @@ class FirestoreRepository implements ExpenseRepository {
     _subs.add(
       _db
           .collection('settlements')
-          .where('householdId', isEqualTo: householdId)
+          .where('householdId', isEqualTo: spaceId)
           .snapshots()
           .listen(
         (snap) {
@@ -307,7 +309,7 @@ class FirestoreRepository implements ExpenseRepository {
     _userDocSubs.clear();
     _onChanged = null;
     _users.clear();
-    _households.clear();
+    _spaces.clear();
     _members.clear();
     _cycles.clear();
     _expenses.clear();
@@ -322,10 +324,10 @@ class FirestoreRepository implements ExpenseRepository {
   List<User> get users => List.unmodifiable(_users);
 
   @override
-  List<Household> get households => List.unmodifiable(_households);
+  List<Space> get spaces => List.unmodifiable(_spaces);
 
   @override
-  List<HouseholdMember> get members => List.unmodifiable(_members);
+  List<SpaceMember> get members => List.unmodifiable(_members);
 
   @override
   List<Cycle> get cycles => List.unmodifiable(_cycles);
@@ -362,30 +364,30 @@ class FirestoreRepository implements ExpenseRepository {
   }
 
   @override
-  Future<void> saveHousehold(Household household) async {
-    _upsert(_households, household, (h) => h.id);
-    await _db.collection('households').doc(household.id).set(household.toJson());
+  Future<void> saveSpace(Space space) async {
+    _upsert(_spaces, space, (s) => s.id);
+    await _db.collection('households').doc(space.id).set(space.toJson());
   }
 
   @override
-  Future<void> saveMember(HouseholdMember member, [String? householdId]) async {
-    final hid = householdId ?? _currentHouseholdId;
-    if (hid == null) {
-      throw StateError('Cannot save a member without a household');
+  Future<void> saveMember(SpaceMember member, [String? spaceId]) async {
+    final sid = spaceId ?? _currentSpaceId;
+    if (sid == null) {
+      throw StateError('Cannot save a member without a space');
     }
     _upsert(_members, member, (m) => m.userId);
-    await _db.collection('householdMembers').doc('${hid}_${member.userId}').set({
+    await _db.collection('householdMembers').doc('${sid}_${member.userId}').set({
       ...member.toJson(),
-      'householdId': hid,
+      'householdId': sid,
     });
   }
 
   @override
-  Future<void> removeMember(String userId, String householdId) async {
+  Future<void> removeMember(String userId, String spaceId) async {
     _members.removeWhere((m) => m.userId == userId);
     await _db
         .collection('householdMembers')
-        .doc('${householdId}_$userId')
+        .doc('${spaceId}_$userId')
         .delete();
   }
 
@@ -429,18 +431,18 @@ class FirestoreRepository implements ExpenseRepository {
 
   @override
   Future<void> deleteExpense(String expenseId) async {
-    final hid = _expenses
+    final sid = _expenses
             .where((e) => e.id == expenseId)
             .firstOrNull
             ?.householdId ??
-        _currentHouseholdId;
+        _currentSpaceId;
     _expenses.removeWhere((e) => e.id == expenseId);
     _shares.removeWhere((s) => s.expenseId == expenseId);
-    if (hid == null) return;
-    await _db.collection('expenses').doc('${hid}_$expenseId').delete();
+    if (sid == null) return;
+    await _db.collection('expenses').doc('${sid}_$expenseId').delete();
     final shares = await _db
         .collection('expenseShares')
-        .where('householdId', isEqualTo: hid)
+        .where('householdId', isEqualTo: sid)
         .where('expenseId', isEqualTo: expenseId)
         .get();
     for (final d in shares.docs) {
@@ -451,14 +453,14 @@ class FirestoreRepository implements ExpenseRepository {
   @override
   Future<void> addShare(ExpenseShare share) async {
     _upsert(_shares, share, (s) => s.id);
-    final hid = _expenses
+    final sid = _expenses
         .where((e) => e.id == share.expenseId)
         .firstOrNull
         ?.householdId;
-    if (hid == null) return;
-    await _db.collection('expenseShares').doc('${hid}_${share.id}').set({
+    if (sid == null) return;
+    await _db.collection('expenseShares').doc('${sid}_${share.id}').set({
       ...share.toJson(),
-      'householdId': hid,
+      'householdId': sid,
     });
   }
 
@@ -483,7 +485,7 @@ class FirestoreRepository implements ExpenseRepository {
   // ---- queries ----
 
   @override
-  Future<Household?> findHouseholdByInviteCode(String code) async {
+  Future<Space?> findSpaceByInviteCode(String code) async {
     final normalized = code.trim().toUpperCase();
     final snap = await _db
         .collection('households')
@@ -491,11 +493,11 @@ class FirestoreRepository implements ExpenseRepository {
         .limit(1)
         .get();
     if (snap.docs.isEmpty) return null;
-    return Household.fromJson(snap.docs.first.data());
+    return Space.fromJson(snap.docs.first.data());
   }
 
   @override
-  Future<String?> findHouseholdIdForUser(String userId) async {
+  Future<String?> findSpaceIdForUser(String userId) async {
     final snap = await _db
         .collection('householdMembers')
         .where('userId', isEqualTo: userId)
@@ -506,7 +508,7 @@ class FirestoreRepository implements ExpenseRepository {
   }
 
   @override
-  Future<List<Household>> findHouseholdsForUser(String userId) async {
+  Future<List<Space>> findSpacesForUser(String userId) async {
     final membershipSnap = await _db
         .collection('householdMembers')
         .where('userId', isEqualTo: userId)
@@ -515,13 +517,13 @@ class FirestoreRepository implements ExpenseRepository {
         .map((d) => d.data()['householdId'] as String?)
         .whereType<String>()
         .toSet();
-    final result = <Household>[];
+    final result = <Space>[];
     for (final id in ids) {
       try {
         final doc = await _db.collection('households').doc(id).get();
-        if (doc.exists) result.add(Household.fromJson(doc.data()!));
+        if (doc.exists) result.add(Space.fromJson(doc.data()!));
       } catch (_) {
-        // Ignore households that cannot be read.
+        // Ignore spaces that cannot be read.
       }
     }
     result.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -529,10 +531,10 @@ class FirestoreRepository implements ExpenseRepository {
   }
 
   @override
-  Future<int> countMembers(String householdId) async {
+  Future<int> countMembers(String spaceId) async {
     final snap = await _db
         .collection('householdMembers')
-        .where('householdId', isEqualTo: householdId)
+        .where('householdId', isEqualTo: spaceId)
         .get();
     return snap.docs.length;
   }

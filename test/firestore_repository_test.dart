@@ -7,15 +7,15 @@ import 'package:hissa/models/models.dart';
 
 void main() {
   group('FirestoreRepository', () {
-    test('start loads a household into the caches', () async {
+    test('start loads a space into the caches', () async {
       final db = FakeFirebaseFirestore();
       final writer = FirestoreRepository(db);
       await writer.saveUser(
         User(id: 'u1', name: 'A', email: 'a@x.com', createdAt: DateTime(2026, 1, 1)),
       );
-      await writer.saveHousehold(_household('h1', 'ABCDE'));
+      await writer.saveSpace(_space('h1', 'ABCDE'));
       await writer.saveMember(
-        HouseholdMember(
+        SpaceMember(
           userId: 'u1',
           name: 'A',
           role: MemberRole.owner,
@@ -52,12 +52,12 @@ void main() {
       final repo = FirestoreRepository(db);
       await repo.start(
         uid: 'u1',
-        householdId: 'h1',
+        spaceId: 'h1',
         onChanged: () => notified++,
       );
 
       expect(repo.users.map((u) => u.id), contains('u1'));
-      expect(repo.households.map((h) => h.id), contains('h1'));
+      expect(repo.spaces.map((h) => h.id), contains('h1'));
       expect(repo.members.map((m) => m.userId), contains('u1'));
       expect(repo.expenses.map((e) => e.id), contains('e1'));
       expect(repo.cycles.map((c) => c.id), contains('c1'));
@@ -84,7 +84,7 @@ void main() {
       expect(repo.sharesForExpense('e1'), hasLength(3));
 
       final reader = FirestoreRepository(db);
-      await reader.start(uid: 'u1', householdId: 'h1', onChanged: () {});
+      await reader.start(uid: 'u1', spaceId: 'h1', onChanged: () {});
       expect(reader.expenses.map((e) => e.id), contains('e1'));
       expect(reader.sharesForExpense('e1'), hasLength(3));
 
@@ -118,21 +118,21 @@ void main() {
       expect(snap.docs, isEmpty);
     });
 
-    test('findHouseholdByInviteCode matches case-insensitively', () async {
+    test('findSpaceByInviteCode matches case-insensitively', () async {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);
-      final household = _household('h1', 'ABCDE');
-      await repo.saveHousehold(household);
+      final space = _space('h1', 'ABCDE');
+      await repo.saveSpace(space);
 
-      expect((await repo.findHouseholdByInviteCode('abcde'))?.id, 'h1');
-      expect(await repo.findHouseholdByInviteCode('ZZZZZ'), isNull);
+      expect((await repo.findSpaceByInviteCode('abcde'))?.id, 'h1');
+      expect(await repo.findSpaceByInviteCode('ZZZZZ'), isNull);
     });
 
-    test('findHouseholdIdForUser returns the membership household', () async {
+    test('findSpaceIdForUser returns the membership space', () async {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);
       await repo.saveMember(
-        HouseholdMember(
+        SpaceMember(
           userId: 'u1',
           name: 'A',
           role: MemberRole.owner,
@@ -141,8 +141,8 @@ void main() {
         'h1',
       );
 
-      expect(await repo.findHouseholdIdForUser('u1'), 'h1');
-      expect(await repo.findHouseholdIdForUser('u999'), isNull);
+      expect(await repo.findSpaceIdForUser('u1'), 'h1');
+      expect(await repo.findSpaceIdForUser('u999'), isNull);
     });
 
     test('saveMember and removeMember persist and mirror to the cache',
@@ -150,7 +150,7 @@ void main() {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);
       await repo.saveMember(
-        HouseholdMember(
+        SpaceMember(
           userId: 'u2',
           name: 'B',
           role: MemberRole.member,
@@ -170,8 +170,8 @@ void main() {
       final db = FakeFirebaseFirestore();
       final writer = FirestoreRepository(db);
       final observer = FirestoreRepository(db);
-      await writer.start(uid: 'u1', householdId: 'h1', onChanged: () {});
-      await observer.start(uid: 'u1', householdId: 'h1', onChanged: () {});
+      await writer.start(uid: 'u1', spaceId: 'h1', onChanged: () {});
+      await observer.start(uid: 'u1', spaceId: 'h1', onChanged: () {});
 
       await writer.saveExpense(_expense('e1'), const []);
       await _waitUntil(() => observer.expenses.any((e) => e.id == 'e1'));
@@ -182,14 +182,14 @@ void main() {
       observer.stop();
     });
 
-    test('findHouseholdsForUser returns every household the user belongs to',
+    test('findSpacesForUser returns every space the user belongs to',
         () async {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);
-      await repo.saveHousehold(_household('h1', 'AAAAA'));
-      await repo.saveHousehold(_household('h2', 'BBBBB'));
+      await repo.saveSpace(_space('h1', 'AAAAA'));
+      await repo.saveSpace(_space('h2', 'BBBBB'));
       await repo.saveMember(
-        HouseholdMember(
+        SpaceMember(
           userId: 'u1',
           name: 'A',
           role: MemberRole.owner,
@@ -198,7 +198,7 @@ void main() {
         'h1',
       );
       await repo.saveMember(
-        HouseholdMember(
+        SpaceMember(
           userId: 'u1',
           name: 'A',
           role: MemberRole.member,
@@ -207,16 +207,16 @@ void main() {
         'h2',
       );
 
-      final spaces = await repo.findHouseholdsForUser('u1');
+      final spaces = await repo.findSpacesForUser('u1');
       expect(spaces.map((h) => h.id).toSet(), {'h1', 'h2'});
-      expect(await repo.findHouseholdsForUser('u999'), isEmpty);
+      expect(await repo.findSpacesForUser('u999'), isEmpty);
     });
 
-    test('countMembers counts the household membership docs', () async {
+    test('countMembers counts the space membership docs', () async {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);
       await repo.saveMember(
-        HouseholdMember(
+        SpaceMember(
           userId: 'u1',
           name: 'A',
           role: MemberRole.owner,
@@ -225,7 +225,7 @@ void main() {
         'h1',
       );
       await repo.saveMember(
-        HouseholdMember(
+        SpaceMember(
           userId: 'u2',
           name: 'B',
           role: MemberRole.member,
@@ -238,15 +238,15 @@ void main() {
       expect(await repo.countMembers('h9'), 0);
     });
 
-    test('household mode is persisted and defaults to SPLIT for legacy docs',
+    test('space mode is persisted and defaults to SPLIT for legacy docs',
         () async {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);
-      await repo.saveHousehold(
-        _household('h1', 'AAAAA').copyWith(mode: SpaceMode.solo),
+      await repo.saveSpace(
+        _space('h1', 'AAAAA').copyWith(mode: SpaceMode.solo),
       );
-      expect((await repo.findHouseholdsForUser('u1')), isEmpty);
-      final solo = Household.fromJson(
+      expect((await repo.findSpacesForUser('u1')), isEmpty);
+      final solo = Space.fromJson(
         (await db.collection('households').doc('h1').get()).data()!,
       );
       expect(solo.mode, SpaceMode.solo);
@@ -258,10 +258,12 @@ void main() {
         'inviteCode': 'LEGACY',
         'createdAt': '2026-01-01T00:00:00.000',
       });
-      final legacy = Household.fromJson(
+      final legacy = Space.fromJson(
         (await db.collection('households').doc('legacy').get()).data()!,
       );
       expect(legacy.mode, SpaceMode.split);
+      expect(legacy.createdBy, isNull);
+      expect(legacy.updatedAt, isNull);
     });
   });
 }
@@ -279,7 +281,7 @@ Future<void> _waitUntil(
   }
 }
 
-Household _household(String id, String inviteCode) => Household(
+Space _space(String id, String inviteCode) => Space(
       id: id,
       name: 'Home',
       currency: 'NPR',

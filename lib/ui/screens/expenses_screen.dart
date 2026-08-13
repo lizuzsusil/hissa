@@ -196,7 +196,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   void _showFilterSheet(
     AppState state,
-    List<HouseholdMember> members,
+    List<SpaceMember> members,
     List<Category> categories,
   ) {
     showModalBottomSheet(

@@ -21,10 +21,10 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final household = state.household;
+    final space = state.space;
     final cycle = state.selectedCycle;
 
-    if (household == null || cycle == null) {
+    if (space == null || cycle == null) {
       return const SizedBox.shrink();
     }
 
@@ -46,7 +46,7 @@ class DashboardScreen extends StatelessWidget {
           flexibleSpace: FlexibleSpaceBar(
             collapseMode: CollapseMode.pin,
             background: _Header(
-              household: household,
+              space: space,
               cycle: cycle,
               members: members,
               totalSpent: totalSpent,
@@ -104,13 +104,13 @@ class DashboardScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  final Household household;
+  final Space space;
   final Cycle cycle;
-  final List<HouseholdMember> members;
+  final List<SpaceMember> members;
   final Money totalSpent;
 
   const _Header({
-    required this.household,
+    required this.space,
     required this.cycle,
     required this.members,
     required this.totalSpent,
@@ -140,15 +140,15 @@ class _Header extends StatelessWidget {
                             color: Colors.white, size: 20),
                         const SizedBox(width: 8),
                         Flexible(
-                          child: Text(
-                            household.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                      child: Text(
+                        space.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                         ),
                       ],
                     ),
@@ -551,7 +551,7 @@ class _ActionButton extends StatelessWidget {
 }
 
 class _MemberBalanceCard extends StatelessWidget {
-  final HouseholdMember member;
+  final SpaceMember member;
   final BalanceInfo? balance;
   final bool isYou;
 

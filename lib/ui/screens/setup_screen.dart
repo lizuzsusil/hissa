@@ -84,7 +84,7 @@ class _SetupScreenState extends State<SetupScreen> {
     }
     setState(() => _loading = true);
     final state = context.read<AppState>();
-    await state.createHousehold(
+    await state.createSpace(
       name: _nameController.text,
       currency: _currency,
       memberNames: _members,
@@ -106,7 +106,7 @@ class _SetupScreenState extends State<SetupScreen> {
     }
     setState(() => _loading = true);
     final state = context.read<AppState>();
-    final ok = await state.joinHousehold(code);
+    final ok = await state.joinSpace(code);
     if (!mounted) return;
     setState(() => _loading = false);
     if (!ok) {

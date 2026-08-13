@@ -25,7 +25,7 @@ bool _googleInitialized = false;
 /// imperative API that the UI calls.
 ///
 /// Authentication is handled by Firebase Auth; account state is persisted
-/// natively by the SDK and mirrored to a session blob for the household /
+/// natively by the SDK and mirrored to a session blob for the space /
 /// cycle selections. When signed in, the repository is a [FirestoreRepository]
 /// that keeps local caches in sync via realtime listeners.
 class AppState extends ChangeNotifier {
@@ -34,24 +34,24 @@ class AppState extends ChangeNotifier {
 
   ExpenseRepository _repo = InMemoryRepository();
   String? _currentUserId;
-  String? _householdId;
+  String? _spaceId;
   String? _cycleId;
   String? _onboardingMode;
   bool _introSeen = false;
   bool _loaded = false;
-  List<Household> _spaces = [];
+  List<Space> _spaces = [];
 
   ExpenseRepository get repo => _repo;
   bool get isLoaded => _loaded;
   String? get onboardingMode => _onboardingMode;
   String? get currentUserId => _currentUserId;
   bool get isLoggedIn => _currentUserId != null;
-  bool get hasHousehold => _householdId != null;
+  bool get hasSpace => _spaceId != null;
   bool get introSeen => _introSeen;
 
   /// The Spaces the current user belongs to (all of them, not just the one
   /// currently selected), used by the post-login Spaces dashboard.
-  List<Household> get spaces => List.unmodifiable(_spaces);
+  List<Space> get spaces => List.unmodifiable(_spaces);
 
   /// Marks the feature-intro carousel as seen so it only shows on first run.
   Future<void> markIntroSeen() async {
@@ -68,13 +68,13 @@ class AppState extends ChangeNotifier {
     final sessionRaw = await prefs.getString(_sessionKey);
 
     String? userId;
-    String? householdId;
+    String? spaceId;
     String? cycleId;
     if (sessionRaw != null) {
       try {
         final json = jsonDecode(sessionRaw) as Map<String, dynamic>;
         userId = json['userId'] as String?;
-        householdId = json['householdId'] as String?;
+        spaceId = json['householdId'] as String?; // legacy key name kept for compat
         cycleId = json['cycleId'] as String?;
         _onboardingMode = json['mode'] as String?;
       } catch (_) {
@@ -88,7 +88,7 @@ class AppState extends ChangeNotifier {
     if (authUser != null) {
       final restore = userId != null && userId == authUser.uid;
       _currentUserId = authUser.uid;
-      _householdId = restore ? householdId : null;
+      _spaceId = restore ? spaceId : null;
       _cycleId = restore ? cycleId : null;
       await _attachRepository();
     }
@@ -103,7 +103,7 @@ class AppState extends ChangeNotifier {
       _sessionKey,
       jsonEncode({
         'userId': _currentUserId,
-        'householdId': _householdId,
+        'householdId': _spaceId, // legacy key name kept for session compat
         'cycleId': _cycleId,
         'mode': _onboardingMode,
       }),
@@ -124,10 +124,10 @@ class AppState extends ChangeNotifier {
   }
 
   /// Replaces the repository with a fresh Firestore-backed one subscribed to
-  /// the current user's profile and household.
+  /// the current user's profile and Space.
   ///
-  /// Loads every household the user belongs to into [_spaces] (for the Spaces
-  /// dashboard) and keeps the current [_householdId] selection when the user
+  /// Loads every Space the user belongs to into [_spaces] (for the Spaces
+  /// dashboard) and keeps the current [_spaceId] selection when the user
   /// is still a member, otherwise falling back to the first available Space.
   Future<void> _attachRepository() async {
     final uid = _currentUserId;
@@ -137,27 +137,27 @@ class AppState extends ChangeNotifier {
     }
 
     final repo = FirestoreRepository(FirebaseFirestore.instance);
-    List<Household> spaces = const [];
+    List<Space> spaces = const [];
     try {
-      spaces = await repo.findHouseholdsForUser(uid);
+      spaces = await repo.findSpacesForUser(uid);
     } catch (_) {
       spaces = const [];
     }
     _spaces = spaces;
 
     if (spaces.isEmpty) {
-      _householdId = null;
+      _spaceId = null;
       _cycleId = null;
     } else {
-      final stillMember = _householdId != null &&
-          spaces.any((h) => h.id == _householdId);
+      final stillMember = _spaceId != null &&
+          spaces.any((s) => s.id == _spaceId);
       if (!stillMember) {
-        _householdId = spaces.first.id;
+        _spaceId = spaces.first.id;
         _cycleId = null;
       }
     }
     _repo = repo;
-    await repo.start(uid: uid, householdId: _householdId, onChanged: notifyListeners);
+    await repo.start(uid: uid, spaceId: _spaceId, onChanged: notifyListeners);
   }
 
   // ---- auth ----
@@ -182,7 +182,7 @@ class AppState extends ChangeNotifier {
       return false;
     }
     _currentUserId = FirebaseAuth.instance.currentUser!.uid;
-    _householdId = null;
+    _spaceId = null;
     _cycleId = null;
     await _attachRepository();
     await _commit();
@@ -263,7 +263,7 @@ class AppState extends ChangeNotifier {
     }
 
     _currentUserId = uid;
-    _householdId = null;
+    _spaceId = null;
     _cycleId = null;
     await _attachRepository();
     if (currentUser == null) {
@@ -293,7 +293,7 @@ class AppState extends ChangeNotifier {
     );
     final uid = cred.user!.uid;
     _currentUserId = uid;
-    _householdId = null;
+    _spaceId = null;
     _cycleId = null;
     await _attachRepository();
     final displayName = name.trim().isEmpty
@@ -311,7 +311,7 @@ class AppState extends ChangeNotifier {
     }
     _repo = InMemoryRepository();
     _currentUserId = null;
-    _householdId = null;
+    _spaceId = null;
     _cycleId = null;
     _spaces = [];
     try {
@@ -329,8 +329,8 @@ class AppState extends ChangeNotifier {
     if (trimmed.isEmpty) return;
     await _repo.saveUser(user.copyWith(name: trimmed));
     final member = members.where((m) => m.userId == user.id).firstOrNull;
-    if (member != null && _householdId != null) {
-      await _repo.saveMember(member.copyWith(name: trimmed), _householdId);
+    if (member != null && _spaceId != null) {
+      await _repo.saveMember(member.copyWith(name: trimmed), _spaceId);
     }
     await _commit();
   }
@@ -342,13 +342,13 @@ class AppState extends ChangeNotifier {
     return _repo.users.where((u) => u.id == _currentUserId).firstOrNull;
   }
 
-  Household? get household {
-    if (_householdId == null) return null;
-    return _repo.households.where((h) => h.id == _householdId).firstOrNull;
+  Space? get space {
+    if (_spaceId == null) return null;
+    return _repo.spaces.where((s) => s.id == _spaceId).firstOrNull;
   }
 
-  List<HouseholdMember> get members {
-    if (_householdId == null) return const [];
+  List<SpaceMember> get members {
+    if (_spaceId == null) return const [];
     return _repo.members.toList();
   }
 
@@ -361,24 +361,24 @@ class AppState extends ChangeNotifier {
   }
 
   List<Cycle> get cycles {
-    if (_householdId == null) return const [];
+    if (_spaceId == null) return const [];
     final all =
-        _repo.cycles.where((c) => c.householdId == _householdId).toList()
-          ..sort((a, b) => b.startDate.compareTo(a.startDate));
+        _repo.cycles.where((c) => c.householdId == _spaceId).toList()
+      ..sort((a, b) => b.startDate.compareTo(a.startDate));
     return all;
   }
 
   Cycle? get activeCycle {
-    if (_householdId == null) return null;
+    if (_spaceId == null) return null;
     final active = _repo.cycles
         .where(
           (c) =>
-              c.householdId == _householdId && c.status == CycleStatus.active,
+              c.householdId == _spaceId && c.status == CycleStatus.active,
         )
         .firstOrNull;
     if (active != null) return active;
     return _repo.cycles
-        .where((c) => c.householdId == _householdId)
+        .where((c) => c.householdId == _spaceId)
         .toList()
         .lastOrNull;
   }
@@ -397,37 +397,37 @@ class AppState extends ChangeNotifier {
 
   /// Switches to a different Space the user belongs to, re-attaching the
   /// repository so the shell reflects the newly selected Space.
-  Future<void> selectSpace(String householdId) async {
-    if (!_spaces.any((h) => h.id == householdId)) return;
-    if (_householdId == householdId) {
+  Future<void> selectSpace(String spaceId) async {
+    if (!_spaces.any((s) => s.id == spaceId)) return;
+    if (_spaceId == spaceId) {
       notifyListeners();
       return;
     }
-    _householdId = householdId;
+    _spaceId = spaceId;
     _cycleId = null;
     await _attachRepository();
     await _commit();
   }
 
   /// Member count for the given Space, used by the Spaces dashboard.
-  Future<int> countMembers(String householdId) async {
+  Future<int> countMembers(String spaceId) async {
     try {
-      return await _repo.countMembers(householdId);
+      return await _repo.countMembers(spaceId);
     } catch (_) {
       return 1;
     }
   }
 
   List<Category> get categories {
-    if (_householdId == null) return const [];
+    if (_spaceId == null) return const [];
     return _repo.categories
-        .where((c) => c.householdId == _householdId)
+        .where((c) => c.householdId == _spaceId)
         .toList();
   }
 
-  // ---- household ----
+  // ---- space ----
 
-  Future<bool> createHousehold({
+  Future<bool> createSpace({
     required String name,
     required String currency,
     required List<String> memberNames,
@@ -436,27 +436,29 @@ class AppState extends ChangeNotifier {
     final user = currentUser;
     if (user == null) return false;
 
-    final householdId = 'h_${genId(8)}';
-    final household = Household(
-      id: householdId,
+    final spaceId = 'h_${genId(8)}';
+    final space = Space(
+      id: spaceId,
       name: name.trim().isEmpty ? 'Our Home' : name.trim(),
       currency: currency,
       inviteCode: genInviteCode(),
       createdAt: DateTime.now(),
+      createdBy: user.id,
+      updatedAt: DateTime.now(),
       mode: mode,
     );
-    // The owner membership is written before the household so security rules
-    // (which gate household writes on membership) accept the create.
+    // The owner membership is written before the Space so security rules
+    // (which gate Space writes on membership) accept the create.
     await _repo.saveMember(
-      HouseholdMember(
+      SpaceMember(
         userId: user.id,
         name: user.name,
         role: MemberRole.owner,
         joinedAt: DateTime.now(),
       ),
-      householdId,
+      spaceId,
     );
-    await _repo.saveHousehold(household);
+    await _repo.saveSpace(space);
 
     for (final memberName in memberNames) {
       final trimmed = memberName.trim();
@@ -471,70 +473,70 @@ class AppState extends ChangeNotifier {
       );
       await _repo.saveUser(newUser);
       await _repo.saveMember(
-        HouseholdMember(
+        SpaceMember(
           userId: newUser.id,
           name: trimmed,
           role: MemberRole.member,
           joinedAt: DateTime.now(),
         ),
-        householdId,
+        spaceId,
       );
     }
 
-    await _seedCategories(householdId);
-    await _startCycleFor(householdId, DateTime.now());
+    await _seedCategories(spaceId);
+    await _startCycleFor(spaceId, DateTime.now());
 
-    _householdId = householdId;
+    _spaceId = spaceId;
     _cycleId = null;
     await _attachRepository();
     await _commit();
     return true;
   }
 
-  Future<bool> joinHousehold(String code) async {
+  Future<bool> joinSpace(String code) async {
     final user = currentUser;
     if (user == null) return false;
     final normalized = code.trim().toUpperCase();
-    final household = await _repo.findHouseholdByInviteCode(normalized);
-    if (household == null) return false;
+    final space = await _repo.findSpaceByInviteCode(normalized);
+    if (space == null) return false;
 
     if (!_repo.members.any((m) => m.userId == user.id)) {
       await _repo.saveMember(
-        HouseholdMember(
+        SpaceMember(
           userId: user.id,
           name: user.name,
           role: MemberRole.member,
           joinedAt: DateTime.now(),
         ),
-        household.id,
+        space.id,
       );
     }
-    _householdId = household.id;
+    _spaceId = space.id;
     _cycleId = null;
     await _attachRepository();
     await _commit();
     return true;
   }
 
-  Future<void> renameHousehold(String name) async {
-    final h = household;
-    if (h == null) return;
-    await _repo.saveHousehold(
-      h.copyWith(name: name.trim().isEmpty ? h.name : name.trim()),
+  Future<void> renameSpace(String name) async {
+    final s = space;
+    if (s == null) return;
+    await _repo.saveSpace(
+      s.copyWith(name: name.trim().isEmpty ? s.name : name.trim()),
     );
     await _commit();
   }
 
-  Future<void> renameHouseholdCurrency(String code) async {
-    final h = household;
-    if (h == null) return;
-    await _repo.saveHousehold(h.copyWith(currency: code));
+  Future<void> renameSpaceCurrency(String code) async {
+    final s = space;
+    if (s == null) return;
+    await _repo.saveSpace(s.copyWith(currency: code));
     await _commit();
   }
 
   Future<void> addMember(String name) async {
-    final h = household;
-    if (h == null) return;
+    final s = space;
+    if (s == null) return;
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
     if (_repo.members.any(
@@ -551,32 +553,32 @@ class AppState extends ChangeNotifier {
     );
     await _repo.saveUser(newUser);
     await _repo.saveMember(
-      HouseholdMember(
+      SpaceMember(
         userId: newUser.id,
         name: trimmed,
         role: MemberRole.member,
         joinedAt: DateTime.now(),
       ),
-      h.id,
+      s.id,
     );
     await _commit();
   }
 
   Future<void> removeMember(String userId) async {
     if (userId == currentUser?.id) return;
-    await _repo.removeMember(userId, _householdId ?? '');
+    await _repo.removeMember(userId, _spaceId ?? '');
     await _commit();
   }
 
   // ---- categories ----
 
   Future<void> addCategory(String name, IconData icon, Color color) async {
-    final h = household;
-    if (h == null) return;
+    final s = space;
+    if (s == null) return;
     await _repo.saveCategory(
       Category(
         id: 'cat_${genId(8)}',
-        householdId: h.id,
+        householdId: s.id,
         name: name.trim(),
         iconCodePoint: icon.codePoint,
         colorValue: color.toARGB32(),
@@ -586,12 +588,12 @@ class AppState extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> _seedCategories(String householdId) async {
+  Future<void> _seedCategories(String spaceId) async {
     for (final preset in kDefaultCategories) {
       await _repo.saveCategory(
         Category.preset(
           id: 'cat_${preset.name.toLowerCase()}',
-          householdId: householdId,
+          householdId: spaceId,
           name: preset.name,
           icon: preset.icon,
           color: preset.color,
@@ -602,13 +604,13 @@ class AppState extends ChangeNotifier {
 
   // ---- cycles ----
 
-  Future<void> _startCycleFor(String householdId, DateTime anchor) async {
+  Future<void> _startCycleFor(String spaceId, DateTime anchor) async {
     final start = DateTime(anchor.year, anchor.month, 1);
     final end = DateTime(anchor.year, anchor.month + 1, 0);
     final existing = _repo.cycles
         .where(
           (c) =>
-              c.householdId == householdId &&
+              c.householdId == spaceId &&
               c.startDate.year == start.year &&
               c.startDate.month == start.month,
         )
@@ -617,7 +619,7 @@ class AppState extends ChangeNotifier {
     await _repo.saveCycle(
       Cycle(
         id: 'c_${genId(8)}',
-        householdId: householdId,
+        householdId: spaceId,
         name: '${_monthLabel(start)} ${start.year}',
         startDate: start,
         endDate: end,
@@ -639,16 +641,16 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> startNewCycle() async {
-    final h = household;
+    final s = space;
     final cycle = selectedCycle;
-    if (h == null) return;
+    if (s == null) return;
     final anchor = DateTime.now();
     if (cycle != null && cycle.status == CycleStatus.active) {
       await _repo.saveCycle(
         cycle.copyWith(status: CycleStatus.closed, closedAt: DateTime.now()),
       );
     }
-    await _startCycleFor(h.id, anchor);
+    await _startCycleFor(s.id, anchor);
     _cycleId = null;
     await _commit();
   }
@@ -668,13 +670,13 @@ class AppState extends ChangeNotifier {
     Map<String, Money> customAmounts = const {},
     Map<String, int> shareUnits = const {},
   }) async {
-    final h = household;
+    final s = space;
     final cycle = selectedCycle;
-    if (h == null || cycle == null) return;
+    if (s == null || cycle == null) return;
 
     final expense = Expense(
       id: 'e_${genId(8)}',
-      householdId: h.id,
+      householdId: s.id,
       cycleId: cycle.id,
       paidByUserId: paidByUserId,
       amount: amount,
@@ -748,18 +750,18 @@ class AppState extends ChangeNotifier {
     required DateTime date,
     String? note,
   }) async {
-    final h = household;
+    final s = space;
     final cycle = selectedCycle;
-    if (h == null || cycle == null) return;
+    if (s == null || cycle == null) return;
     await _repo.saveSettlement(
       Settlement(
         id: 's_${genId(8)}',
-        householdId: h.id,
+        householdId: s.id,
         cycleId: cycle.id,
         fromUserId: fromUserId,
         toUserId: toUserId,
         amount: amount,
-        currency: h.currency,
+        currency: s.currency,
         paymentMethod: paymentMethod,
         date: date,
         note: note?.trim().isEmpty ?? true ? null : note!.trim(),
@@ -792,13 +794,13 @@ class AppState extends ChangeNotifier {
   }
 
   List<BalanceInfo> computeBalances([String? cycleId]) {
-    final h = household;
+    final s = space;
     final cycle = cycleId == null
         ? selectedCycle
         : _repo.cycles.where((c) => c.id == cycleId).firstOrNull;
-    if (h == null || cycle == null) return const [];
+    if (s == null || cycle == null) return const [];
     return BalanceCalculator.compute(
-      household: h,
+      space: s,
       members: members,
       cycle: cycle,
       expenses: _repo.expenses,

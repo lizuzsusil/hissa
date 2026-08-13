@@ -8,8 +8,8 @@ import 'repository.dart';
 /// tests) still observe the mutation right away.
 class InMemoryRepository implements ExpenseRepository {
   final List<User> _users = [];
-  final List<Household> _households = [];
-  final List<HouseholdMember> _members = [];
+  final List<Space> _spaces = [];
+  final List<SpaceMember> _members = [];
   final List<Cycle> _cycles = [];
   final List<Expense> _expenses = [];
   final List<ExpenseShare> _shares = [];
@@ -20,10 +20,10 @@ class InMemoryRepository implements ExpenseRepository {
   List<User> get users => List.unmodifiable(_users);
 
   @override
-  List<Household> get households => List.unmodifiable(_households);
+  List<Space> get spaces => List.unmodifiable(_spaces);
 
   @override
-  List<HouseholdMember> get members => List.unmodifiable(_members);
+  List<SpaceMember> get members => List.unmodifiable(_members);
 
   @override
   List<Cycle> get cycles => List.unmodifiable(_cycles);
@@ -51,17 +51,17 @@ class InMemoryRepository implements ExpenseRepository {
   }
 
   @override
-  Future<void> saveHousehold(Household household) async {
-    final idx = _households.indexWhere((h) => h.id == household.id);
+  Future<void> saveSpace(Space space) async {
+    final idx = _spaces.indexWhere((s) => s.id == space.id);
     if (idx >= 0) {
-      _households[idx] = household;
+      _spaces[idx] = space;
     } else {
-      _households.add(household);
+      _spaces.add(space);
     }
   }
 
   @override
-  Future<void> saveMember(HouseholdMember member, [String? householdId]) async {
+  Future<void> saveMember(SpaceMember member, [String? spaceId]) async {
     final idx = _members.indexWhere((m) => m.userId == member.userId);
     if (idx >= 0) {
       _members[idx] = member;
@@ -71,7 +71,7 @@ class InMemoryRepository implements ExpenseRepository {
   }
 
   @override
-  Future<void> removeMember(String userId, String householdId) async {
+  Future<void> removeMember(String userId, String spaceId) async {
     _members.removeWhere((m) => m.userId == userId);
   }
 
@@ -141,35 +141,35 @@ class InMemoryRepository implements ExpenseRepository {
   }
 
   @override
-  Future<Household?> findHouseholdByInviteCode(String code) async {
+  Future<Space?> findSpaceByInviteCode(String code) async {
     final normalized = code.trim().toUpperCase();
-    for (final h in _households) {
-      if (h.inviteCode.toUpperCase() == normalized) return h;
+    for (final s in _spaces) {
+      if (s.inviteCode.toUpperCase() == normalized) return s;
     }
     return null;
   }
 
   @override
-  Future<String?> findHouseholdIdForUser(String userId) async {
-    for (final h in _households) {
+  Future<String?> findSpaceIdForUser(String userId) async {
+    for (final s in _spaces) {
       final joined = _members.any((m) => m.userId == userId);
-      if (joined) return h.id;
+      if (joined) return s.id;
     }
     return null;
   }
 
   @override
-  Future<List<Household>> findHouseholdsForUser(String userId) async {
-    final result = <Household>[];
-    for (final h in _households) {
+  Future<List<Space>> findSpacesForUser(String userId) async {
+    final result = <Space>[];
+    for (final s in _spaces) {
       final joined = _members.any((m) => m.userId == userId);
-      if (joined) result.add(h);
+      if (joined) result.add(s);
     }
     return result;
   }
 
   @override
-  Future<int> countMembers(String householdId) async {
+  Future<int> countMembers(String spaceId) async {
     return _members.length;
   }
 }

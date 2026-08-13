@@ -29,10 +29,10 @@ class BalanceInfo {
 }
 
 class BalanceCalculator {
-  /// Computes [BalanceInfo] for every member of [household] within [cycle].
+  /// Computes [BalanceInfo] for every member of [space] within [cycle].
   static List<BalanceInfo> compute({
-    required Household household,
-    required List<HouseholdMember> members,
+    required Space space,
+    required List<SpaceMember> members,
     required Cycle cycle,
     required List<Expense> expenses,
     required List<ExpenseShare> shares,

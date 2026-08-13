@@ -33,13 +33,13 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final household = state.household;
+    final space = state.space;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary =
         isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
     final l10n = context.l10n;
 
-    if (household == null) {
+    if (space == null) {
       return const SizedBox.shrink();
     }
 
@@ -77,7 +77,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  household.name,
+                  space.name,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -89,7 +89,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 Row(
                   children: [
                     Text(
-                      '${household.currency} · ${l10n.householdMembersCount(state.members.length)}',
+                      '${space.currency} · ${l10n.householdMembersCount(state.members.length)}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 13,
@@ -120,7 +120,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    household.inviteCode,
+                    space.inviteCode,
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
@@ -131,7 +131,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 ),
                 InkResponse(
                   onTap: () {
-                    Clipboard.setData(ClipboardData(text: household.inviteCode));
+                    Clipboard.setData(ClipboardData(text: space.inviteCode));
                     showToast(context, l10n.inviteCodeCopied,
                         type: ToastType.success);
                   },
@@ -231,7 +231,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
         type: ToastType.success);
   }
 
-  Future<void> _confirmRemove(AppState state, HouseholdMember member) async {
+  Future<void> _confirmRemove(AppState state, SpaceMember member) async {
     final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -257,7 +257,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
 }
 
 class _MemberRow extends StatelessWidget {
-  final HouseholdMember member;
+  final SpaceMember member;
   final bool isYou;
   final bool canRemove;
   final VoidCallback onRemove;

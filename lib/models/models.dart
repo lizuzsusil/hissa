@@ -52,34 +52,53 @@ class User {
       );
 }
 
-class Household {
+/// The container for expenses and members in Hissa. Supersedes the legacy
+/// [Household] terminology; existing (legacy) records are read through the
+/// same Firestore schema (`households/{id}`) so pre-existing Split Mode data
+/// stays fully readable without a data migration.
+class Space {
   final String id;
   String name;
   String currency;
   final String inviteCode;
-  final DateTime createdAt;
+  final String? createdBy;
 
   /// The mode of this Space. Existing (legacy) households default to
   /// [SpaceMode.split] so pre-existing records keep behaving exactly as
   /// before.
   SpaceMode mode;
 
-  Household({
+  final DateTime createdAt;
+
+  /// Last update timestamp. Nullable because legacy records predate this
+  /// field.
+  DateTime? updatedAt;
+
+  Space({
     required this.id,
     required this.name,
     required this.currency,
     required this.inviteCode,
     required this.createdAt,
+    this.createdBy,
+    this.updatedAt,
     this.mode = SpaceMode.split,
   });
 
-  Household copyWith({String? name, String? currency, SpaceMode? mode}) {
-    return Household(
+  Space copyWith({
+    String? name,
+    String? currency,
+    SpaceMode? mode,
+    String? createdBy,
+  }) {
+    return Space(
       id: id,
       name: name ?? this.name,
       currency: currency ?? this.currency,
       inviteCode: inviteCode,
+      createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt,
+      updatedAt: DateTime.now(),
       mode: mode ?? this.mode,
     );
   }
@@ -89,16 +108,22 @@ class Household {
         'name': name,
         'currency': currency,
         'inviteCode': inviteCode,
+        'createdBy': createdBy,
         'mode': mode.value,
         'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt?.toIso8601String(),
       };
 
-  factory Household.fromJson(Map<String, dynamic> json) => Household(
+  factory Space.fromJson(Map<String, dynamic> json) => Space(
         id: json['id'] as String,
         name: json['name'] as String,
         currency: json['currency'] as String,
         inviteCode: json['inviteCode'] as String,
+        createdBy: json['createdBy'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
+        updatedAt: json['updatedAt'] == null
+            ? null
+            : DateTime.parse(json['updatedAt'] as String),
         mode: _parseMode(json['mode']),
       );
 
@@ -112,28 +137,48 @@ class Household {
   }
 }
 
-class HouseholdMember {
+/// A member of a [Space]. Replaces the legacy [HouseholdMember] model; the
+/// persisted record shape is unchanged (a `householdId` field scopes the
+/// membership) so existing members stay associated with their Space.
+class SpaceMember {
   final String userId;
   String name;
   final MemberRole role;
   final DateTime joinedAt;
   final String? avatarUrl;
 
-  HouseholdMember({
+  /// The Space this membership belongs to. Populated from the persisted
+  /// `householdId` (or `spaceId`) field when loaded from Firestore.
+  final String? spaceId;
+  final MembershipStatus status;
+
+  SpaceMember({
     required this.userId,
     required this.name,
     required this.role,
     required this.joinedAt,
     this.avatarUrl,
+    this.spaceId,
+    this.status = MembershipStatus.active,
   });
 
-  HouseholdMember copyWith({String? name, MemberRole? role}) {
-    return HouseholdMember(
+  /// Composite membership id, matching the Firestore doc convention
+  /// `${spaceId}_${userId}` (or just [userId] when [spaceId] is unknown).
+  String get id => spaceId == null ? userId : '${spaceId}_$userId';
+
+  SpaceMember copyWith({
+    String? name,
+    MemberRole? role,
+    MembershipStatus? status,
+  }) {
+    return SpaceMember(
       userId: userId,
       name: name ?? this.name,
       role: role ?? this.role,
       joinedAt: joinedAt,
       avatarUrl: avatarUrl,
+      spaceId: spaceId,
+      status: status ?? this.status,
     );
   }
 
@@ -143,16 +188,38 @@ class HouseholdMember {
         'role': role.name,
         'joinedAt': joinedAt.toIso8601String(),
         'avatarUrl': avatarUrl,
+        'spaceId': spaceId,
+        'status': status.name,
       };
 
-  factory HouseholdMember.fromJson(Map<String, dynamic> json) => HouseholdMember(
+  factory SpaceMember.fromJson(Map<String, dynamic> json) => SpaceMember(
         userId: json['userId'] as String,
         name: json['name'] as String,
         role: MemberRole.values.byName(json['role'] as String),
         joinedAt: DateTime.parse(json['joinedAt'] as String),
         avatarUrl: json['avatarUrl'] as String?,
+        spaceId: json['spaceId'] as String? ??
+            json['householdId'] as String?,
+        status: _parseStatus(json['status']),
       );
+
+  static MembershipStatus _parseStatus(Object? value) {
+    if (value is String) {
+      for (final s in MembershipStatus.values) {
+        if (s.name == value) return s;
+      }
+    }
+    return MembershipStatus.active;
+  }
 }
+
+/// Compatibility aliases for the legacy terminology, kept until the migration
+/// (Phase 7) is verified. New code should use [Space]/[SpaceMember].
+@Deprecated('Use Space instead.')
+typedef Household = Space;
+
+@Deprecated('Use SpaceMember instead.')
+typedef HouseholdMember = SpaceMember;
 
 class Category {
   final String id;
