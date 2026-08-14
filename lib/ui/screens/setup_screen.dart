@@ -41,7 +41,6 @@ class _SetupScreenState extends State<SetupScreen> {
   final _memberController = TextEditingController();
   final _nameFocus = FocusNode();
   final List<String> _members = [];
-  String _currency = kDefaultCurrency;
   SpaceMode _mode = SpaceMode.split;
   String? _nameError;
   String? _codeError;
@@ -86,7 +85,7 @@ class _SetupScreenState extends State<SetupScreen> {
     final state = context.read<AppState>();
     await state.createSpace(
       name: _nameController.text,
-      currency: _currency,
+      currency: kDefaultCurrency,
       memberNames: _members,
       mode: _mode,
     );
@@ -325,33 +324,6 @@ class _SetupScreenState extends State<SetupScreen> {
             ],
           ),
         ],
-        const SizedBox(height: 14),
-        Text(
-          l10n.currency,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _currency,
-          decoration: const InputDecoration(
-            suffixIcon: Icon(Icons.currency_rupee, size: 18),
-          ),
-          items: const [
-            DropdownMenuItem(value: 'NPR', child: Text('NPR - Nepalese Rupee')),
-            DropdownMenuItem(value: 'USD', child: Text('USD - US Dollar')),
-            DropdownMenuItem(value: 'INR', child: Text('INR - Indian Rupee')),
-            DropdownMenuItem(value: 'EUR', child: Text('EUR - Euro')),
-          ],
-          onChanged: _loading
-              ? null
-              : (v) => setState(() => _currency = v ?? kDefaultCurrency),
-        ),
         const SizedBox(height: 28),
         PrimaryButton(
           label: l10n.createSpace,

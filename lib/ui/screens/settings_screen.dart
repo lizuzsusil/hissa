@@ -68,12 +68,6 @@ class SettingsScreen extends StatelessWidget {
             subtitle: '${state.categories.length} categories',
             onTap: () => _push(context, CategoriesScreen()),
           ),
-          _SettingTile(
-            icon: Icons.currency_rupee,
-            title: l10n.currency,
-            subtitle: space?.currency ?? 'NPR',
-            onTap: () => _showCurrencyPicker(context, state),
-          ),
           if (!state.isPersonalMode) ...[
             const SizedBox(height: 24),
             SectionHeader(title: l10n.spendingCycle),
@@ -307,56 +301,6 @@ class SettingsScreen extends StatelessWidget {
 
   String formatMonthRange(Cycle c) {
     return '${c.startDate.month}/${c.startDate.year}';
-  }
-
-  void _showCurrencyPicker(BuildContext context, AppState state) {
-    final current = state.space?.currency ?? 'NPR';
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.l10n.currency,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 16),
-              for (final code in const ['NPR', 'USD', 'INR', 'EUR'])
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.currency_exchange_outlined),
-                  title: Text(code),
-                  trailing: current == code
-                      ? const Icon(
-                          Icons.check_rounded,
-                          color: AppColors.primary,
-                        )
-                      : null,
-                  onTap: () {
-                    if (state.space != null) {
-                      state.renameSpaceCurrency(code);
-                    }
-                    Navigator.pop(context);
-                  },
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   void _showNotifications(BuildContext context) {
