@@ -680,6 +680,12 @@ abstract class AppLocalizations {
   /// **'Monthly spending'**
   String get monthlySpending;
 
+  /// No description provided for @categoryBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Category breakdown'**
+  String get categoryBreakdown;
+
   /// No description provided for @whoPaidThisCycle.
   ///
   /// In en, this message translates to:

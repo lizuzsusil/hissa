@@ -359,6 +359,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monthlySpending => 'Monthly spending';
 
   @override
+  String get categoryBreakdown => 'Category breakdown';
+
+  @override
   String get whoPaidThisCycle => 'Who paid this cycle';
 
   @override

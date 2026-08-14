@@ -194,6 +194,7 @@
   "deleteExpenseTitle": "Delete this expense?",
   "deleteExpenseMessage": "Deleting an expense changes the current space balances for everyone.",
   "monthlySpending": "Monthly spending",
+  "categoryBreakdown": "Category breakdown",
   "whoPaidThisCycle": "Who paid this cycle",
   "selectCycle": "Select cycle",
   "nothingToChart": "Nothing to chart yet",

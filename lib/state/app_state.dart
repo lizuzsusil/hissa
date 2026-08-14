@@ -140,47 +140,71 @@ class AppState extends ChangeNotifier {
   /// Loads every Space the user belongs to into [_spaces] (for the Spaces
   /// dashboard) and keeps the current [_spaceId] selection when the user
   /// is still a member, otherwise falling back to the first available Space.
-  Future<void> _attachRepository() async {
+  ///
+  /// When switching Spaces, [targetSpaceId] selects the Space to load and
+  /// [knownSpaces] lets the caller skip the extra `findSpacesForUser`
+  /// round-trip. The fresh repo is fully loaded *before* it replaces the old
+  /// one, so the shell keeps showing the previous Space until the new one is
+  /// ready instead of flashing a blank loading screen.
+  Future<void> _attachRepository({
+    String? targetSpaceId,
+    List<Space>? knownSpaces,
+  }) async {
     final uid = _currentUserId;
     if (uid == null) return;
-    if (_repo is FirestoreRepository) {
-      (_repo as FirestoreRepository).stop();
-    }
 
     final repo = FirestoreRepository(FirebaseFirestore.instance);
-    List<Space> spaces = const [];
-    try {
-      spaces = await repo.findSpacesForUser(uid);
-    } catch (_) {
-      spaces = const [];
+    List<Space> spaces = knownSpaces ?? const [];
+    if (knownSpaces == null) {
+      try {
+        spaces = await repo.findSpacesForUser(uid);
+      } catch (_) {
+        spaces = const [];
+      }
     }
     _spaces = spaces;
 
+    String? nextSpaceId = targetSpaceId;
     if (spaces.isEmpty) {
-      _spaceId = null;
-      _cycleId = null;
+      nextSpaceId = null;
     } else {
-      final stillMember = _spaceId != null &&
-          spaces.any((s) => s.id == _spaceId);
+      final stillMember = nextSpaceId != null &&
+          spaces.any((s) => s.id == nextSpaceId);
       if (!stillMember) {
-        _spaceId = spaces.first.id;
-        _cycleId = null;
+        nextSpaceId = _spaceId != null && spaces.any((s) => s.id == _spaceId)
+            ? _spaceId
+            : spaces.first.id;
       }
     }
+    if (nextSpaceId != _spaceId) _cycleId = null;
+
+    // Load the full scope into the fresh repo first, then swap atomically.
+    await repo.start(
+      uid: uid,
+      spaceId: nextSpaceId,
+      onChanged: notifyListeners,
+    );
+    if (_repo is FirestoreRepository) {
+      (_repo as FirestoreRepository).stop();
+    }
     _repo = repo;
-    await repo.start(uid: uid, spaceId: _spaceId, onChanged: notifyListeners);
-    await _runLegacyMigration();
+    _spaceId = nextSpaceId;
+    await _runLegacyMigration(spaces);
+    notifyListeners();
   }
 
   /// Phase 7: one-time legacy data migration. Idempotent — it only rewrites
   /// Spaces that still lack an explicit mode and never touches legacy
   /// expenses (ambiguous ones stay read-only historical records).
-  Future<void> _runLegacyMigration() async {
+  ///
+  /// [spaces] is the already-fetched Space list so migration does not issue a
+  /// redundant `findSpacesForUser` query while switching Spaces.
+  Future<void> _runLegacyMigration(List<Space> spaces) async {
     final uid = _currentUserId;
     if (uid == null) return;
     try {
       final report =
-          await SpaceMigrator().run(_repo, userId: uid);
+          await SpaceMigrator().run(_repo, userId: uid, spaces: spaces);
       if (report.spacesAssignedMode > 0) {
         // Refresh the dashboard list so migrated Spaces show their mode.
         _spaces = await _repo.findSpacesForUser(uid);
@@ -434,9 +458,11 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    _spaceId = spaceId;
     _cycleId = null;
-    await _attachRepository();
+    // The Space list is already loaded and the previous Space stays visible
+    // while the new scope loads, so switching is fast and never flashes a
+    // blank loading screen.
+    await _attachRepository(targetSpaceId: spaceId, knownSpaces: _spaces);
     await _commit();
   }
 

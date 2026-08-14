@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
+import 'package:hissa/core/money.dart';
 import 'package:hissa/l10n/generated/app_localizations.dart';
 import 'package:hissa/models/models.dart';
 import 'package:hissa/state/app_state.dart';
@@ -15,6 +19,11 @@ import 'package:hissa/ui/state/theme_controller.dart';
 /// Phase 8 — Navigation tests: the shell exposes mode-appropriate tabs and
 /// the Spaces dashboard never auto-redirects into Create/Join.
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
+  });
+
   Future<AppState> makeState({required SpaceMode mode}) async {
     final state = AppState();
     final repo = state.repo;
@@ -85,15 +94,37 @@ void main() {
     expect(find.text('Home'), findsOneWidget);
   });
 
-  testWidgets('personal mode does not expose settlement', (tester) async {
+  testWidgets('personal mode exposes insights but not settlement', (tester) async {
     final state = await makeState(mode: SpaceMode.solo);
     await tester.pumpWidget(appHarness(state, const ShellScreen()));
     await tester.pump();
 
     expect(find.text('Settle'), findsNothing);
-    expect(find.text('Insights'), findsNothing);
+    expect(find.text('Insights'), findsOneWidget);
     expect(find.text('Expenses'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
+  });
+
+  testWidgets('personal insights tab shows spending breakdown, not cycles',
+      (tester) async {
+    final state = await makeState(mode: SpaceMode.solo);
+    await state.addPersonalExpense(
+      description: 'Coffee',
+      amount: const Money(50000),
+      date: DateTime(2026, 1, 12),
+    );
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    // Open the Insights tab (index 2 in the personal shell).
+    await tester.tap(find.text('Insights'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Category breakdown'), findsOneWidget);
+    expect(find.text('Lifetime summary'), findsOneWidget);
+    // Cycle-specific UI is absent in personal mode.
+    expect(find.text('Select cycle'), findsNothing);
+    expect(find.text('Who paid this cycle'), findsNothing);
   });
 
   testWidgets('spaces dashboard shows empty state with create/join actions',

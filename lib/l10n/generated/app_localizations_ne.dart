@@ -358,6 +358,9 @@ class AppLocalizationsNe extends AppLocalizations {
   String get monthlySpending => 'मासिक खर्च';
 
   @override
+  String get categoryBreakdown => 'श्रेणी विभाजन';
+
+  @override
   String get whoPaidThisCycle => 'यो चक्रमा कसले तिर्यो';
 
   @override

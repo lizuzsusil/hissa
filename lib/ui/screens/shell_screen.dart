@@ -42,6 +42,7 @@ class _ShellScreenState extends State<ShellScreen> {
         ? <Widget>[
             const PersonalDashboardScreen(),
             const ExpensesScreen(),
+            const InsightsScreen(),
             settings,
           ]
         : <Widget>[
@@ -120,6 +121,7 @@ class _NavBar extends StatelessWidget {
         ? [
             (Icons.home_rounded, Icons.home_outlined, l10n.home),
             (Icons.receipt_long_rounded, Icons.receipt_long_outlined, l10n.expenses),
+            (Icons.donut_small_rounded, Icons.donut_small_outlined, l10n.insights),
             (Icons.settings_rounded, Icons.settings_outlined, l10n.settings),
           ]
         : [

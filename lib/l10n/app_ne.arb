@@ -102,6 +102,7 @@
   "deleteExpenseTitle": "यो खर्च मेट्ने हो?",
   "deleteExpenseMessage": "खर्च मेट्दा सबैको हालको ठाउँ ब्यालेन्समा परिवर्तन आउँछ।",
   "monthlySpending": "मासिक खर्च",
+  "categoryBreakdown": "श्रेणी विभाजन",
   "whoPaidThisCycle": "यो चक्रमा कसले तिर्यो",
   "selectCycle": "चक्र छान्नुहोस्",
   "nothingToChart": "चार्ट बनाउन केही छैन",

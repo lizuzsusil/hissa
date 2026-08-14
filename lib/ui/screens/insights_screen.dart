@@ -19,6 +19,18 @@ class InsightsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final l10n = context.l10n;
+    final isPersonal = state.isPersonalMode;
+
+    // Personal (solo) spaces have no cycles or shares, so Insights shows
+    // monthly spending, category breakdown and the lifetime summary.
+    if (isPersonal) {
+      return _PersonalInsights(
+        monthlyData: _personalMonthlyData(state),
+        categoryData: _categoryTotals(state.personalExpenses),
+        categories: state.categories,
+      );
+    }
 
     final cycles = state.cycles;
     final cycle = state.selectedCycle;
@@ -31,9 +43,8 @@ class InsightsScreen extends StatelessWidget {
       monthlyData.add((label: formatMonthShort(c.startDate), total: state.totalSpent(c.id)));
     }
 
-    final categoryData = _categoryTotals(state);
+    final categoryData = _categoryTotals(state.expensesInCycle);
     final memberPaid = _memberPaidTotals(state, cycleBalances, members);
-    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.insights)),
@@ -130,9 +141,9 @@ String _cycleStatusLabel(AppLocalizations l10n, CycleStatus status) {
   }
 }
 
-Map<String, Money> _categoryTotals(AppState state) {
+Map<String, Money> _categoryTotals(List<Expense> expenses) {
   final totals = <String, Money>{};
-  for (final e in state.expensesInCycle) {
+  for (final e in expenses) {
     final id = e.categoryId ?? 'other';
     totals[id] = (totals[id] ?? Money.zero()) + e.amount;
   }
@@ -149,6 +160,58 @@ Map<String, Money> _memberPaidTotals(
     totals[b.userId] = b.paid;
   }
   return totals;
+}
+
+/// Groups a solo space's expenses by calendar month, newest first, for the
+/// monthly spending chart.
+List<({String label, Money total})> _personalMonthlyData(AppState state) {
+  final byMonth = <String, Money>{};
+  for (final e in state.personalExpenses) {
+    final key = '${e.date.year}-${e.date.month.toString().padLeft(2, '0')}';
+    byMonth[key] = (byMonth[key] ?? Money.zero()) + e.amount;
+  }
+  final months = byMonth.keys.toList()..sort();
+  return months.reversed.map((key) {
+    final parts = key.split('-');
+    final month = DateTime(int.parse(parts[0]), int.parse(parts[1]));
+    return (label: formatMonthShort(month), total: byMonth[key]!);
+  }).toList();
+}
+
+/// Insights layout for solo spaces: monthly spending + category breakdown +
+/// lifetime summary. No cycle picker or per-member settlement section.
+class _PersonalInsights extends StatelessWidget {
+  final List<({String label, Money total})> monthlyData;
+  final Map<String, Money> categoryData;
+  final List<Category> categories;
+
+  const _PersonalInsights({
+    required this.monthlyData,
+    required this.categoryData,
+    required this.categories,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.insights)),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+        children: [
+          if (monthlyData.length > 1) ...[
+            SectionHeader(title: l10n.monthlySpending),
+            _MonthlyBarChart(data: monthlyData),
+            const SizedBox(height: 24),
+          ],
+          SectionHeader(title: l10n.categoryBreakdown),
+          _CategoryPie(categories: categories, categoryData: categoryData),
+          const SizedBox(height: 24),
+          const _SummaryRow(cycles: null),
+        ],
+      ),
+    );
+  }
 }
 
 class _MonthlyBarChart extends StatelessWidget {
@@ -457,9 +520,9 @@ class _MemberPaidRow extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  final List<Cycle> cycles;
+  final List<Cycle>? cycles;
 
-  const _SummaryRow({required this.cycles});
+  const _SummaryRow({this.cycles});
 
   @override
   Widget build(BuildContext context) {

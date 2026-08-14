@@ -70,14 +70,18 @@ class SpaceMigrator {
   /// Only Firestore-worthy legacy records are rewritten: spaces missing an
   /// explicit mode. Legacy expenses are classified but never modified, so a
   /// re-run is always safe (the pass is idempotent).
+  ///
+  /// [spaces] lets callers pass the already-fetched Space list to avoid a
+  /// second `findSpacesForUser` round-trip during Space switching.
   Future<MigrationReport> run(
     ExpenseRepository repo, {
     required String userId,
+    List<Space>? spaces,
   }) async {
     var assigned = 0;
     try {
-      final spaces = await repo.findSpacesForUser(userId);
-      for (final space in spaces) {
+      final list = spaces ?? await repo.findSpacesForUser(userId);
+      for (final space in list) {
         if (!isLegacySpace(space)) continue;
         await repo.saveSpace(space.copyWith(mode: SpaceMode.split));
         assigned++;
