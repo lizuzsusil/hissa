@@ -56,15 +56,23 @@ class _ShellScreenState extends State<ShellScreen> {
       value: _tabController,
       child: ListenableBuilder(
         listenable: _tabController,
-        builder: (context, _) => Scaffold(
-          body: IndexedStack(index: _tabController.index, children: screens),
-          floatingActionButton: _tabController.index == screens.length - 1
-              ? null
-              : _FloatingAddButton(),
-          bottomNavigationBar: _NavBar(
-            index: _tabController.index,
-            isPersonal: isPersonal,
-            onChanged: _tabController.switchTo,
+        builder: (context, _) => PopScope(
+          canPop: _tabController.index == 0,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop && _tabController.index != 0) {
+              _tabController.switchTo(0);
+            }
+          },
+          child: Scaffold(
+            body: IndexedStack(index: _tabController.index, children: screens),
+            floatingActionButton: _tabController.index == screens.length - 1
+                ? null
+                : _FloatingAddButton(),
+            bottomNavigationBar: _NavBar(
+              index: _tabController.index,
+              isPersonal: isPersonal,
+              onChanged: _tabController.switchTo,
+            ),
           ),
         ),
       ),
