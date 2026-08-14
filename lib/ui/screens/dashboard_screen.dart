@@ -73,6 +73,7 @@ class DashboardScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _MemberBalanceCard(
                       member: m,
+                      avatarUrl: state.memberAvatarUrl(m.userId),
                       balance: balances
                           .where((b) => b.userId == m.userId)
                           .firstOrNull,
@@ -729,11 +730,13 @@ class _GroupBalanceCard extends StatelessWidget {
 
 class _MemberBalanceCard extends StatelessWidget {
   final SpaceMember member;
+  final String? avatarUrl;
   final BalanceInfo? balance;
   final bool isYou;
 
   const _MemberBalanceCard({
     required this.member,
+    required this.avatarUrl,
     required this.balance,
     required this.isYou,
   });
@@ -761,11 +764,7 @@ class _MemberBalanceCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          MemberAvatar(
-            name: member.name,
-            avatarUrl: member.avatarUrl,
-            size: 46,
-          ),
+          MemberAvatar(name: member.name, avatarUrl: avatarUrl, size: 46),
           const SizedBox(width: 14),
           Expanded(
             child: Column(

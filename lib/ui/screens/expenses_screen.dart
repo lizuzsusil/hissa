@@ -45,19 +45,22 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     var filtered = allExpenses;
 
     if (_categoryFilter != null) {
-      filtered = filtered.where((e) => e.categoryId == _categoryFilter).toList();
+      filtered = filtered
+          .where((e) => e.categoryId == _categoryFilter)
+          .toList();
     }
     if (_memberFilter != null) {
-      filtered =
-          filtered.where((e) => e.paidByUserId == _memberFilter).toList();
+      filtered = filtered
+          .where((e) => e.paidByUserId == _memberFilter)
+          .toList();
     }
     if (_query.trim().isNotEmpty) {
       final q = _query.trim().toLowerCase();
       filtered = filtered.where((e) {
         final description = (e.description ?? '').toLowerCase();
         final payer = (state.memberName(e.paidByUserId) ?? '').toLowerCase();
-        final category =
-            (state.categoryFor(e.categoryId)?.name ?? '').toLowerCase();
+        final category = (state.categoryFor(e.categoryId)?.name ?? '')
+            .toLowerCase();
         return description.contains(q) ||
             payer.contains(q) ||
             category.contains(q);
@@ -89,9 +92,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
                 hintText: l10n.searchExpenses,
-                suffixIcon: const Icon(Icons.search_rounded, size: 18),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
             ),
           ),
@@ -132,15 +137,16 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                     children: [
-                      for (final entry
-                          in _groupByDay(filtered).entries) ...[
+                      for (final entry in _groupByDay(filtered).entries) ...[
                         Padding(
                           padding: const EdgeInsets.fromLTRB(2, 14, 2, 10),
                           child: Row(
                             children: [
                               Text(
-                                formatRelativeDay(entry.value.first.date,
-                                    l10n: l10n),
+                                formatRelativeDay(
+                                  entry.value.first.date,
+                                  l10n: l10n,
+                                ),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
@@ -188,12 +194,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Map<String, List<Expense>> _groupByDay(List<Expense> expenses) {
     final map = <String, List<Expense>>{};
     for (final e in expenses) {
-      final key = DateTime(e.date.year, e.date.month, e.date.day)
-          .toIso8601String();
+      final key = DateTime(
+        e.date.year,
+        e.date.month,
+        e.date.day,
+      ).toIso8601String();
       map.putIfAbsent(key, () => []).add(e);
     }
-    final sortedKeys = map.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
+    final sortedKeys = map.keys.toList()..sort((a, b) => b.compareTo(a));
     return {for (final k in sortedKeys) k: map[k]!};
   }
 
@@ -220,15 +228,21 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               children: [
                 Text(
                   context.l10n.filterExpenses,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 if (state.isPersonalMode) ...[
-                  Text(context.l10n.category,
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary)),
+                  Text(
+                    context.l10n.category,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -242,21 +256,26 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       ),
                       for (final c in categories)
                         ChoiceChip(
-                          avatar:
-                              Icon(iconForCodePoint(c.iconCodePoint), size: 16),
+                          avatar: Icon(
+                            iconForCodePoint(c.iconCodePoint),
+                            size: 16,
+                          ),
                           label: Text(c.name),
                           selected: _categoryFilter == c.id,
-                          onSelected: (_) => setSheetState(
-                              () => _categoryFilter = c.id),
+                          onSelected: (_) =>
+                              setSheetState(() => _categoryFilter = c.id),
                         ),
                     ],
                   ),
                 ] else ...[
-                  Text(context.l10n.paidBy,
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary)),
+                  Text(
+                    context.l10n.paidBy,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -272,17 +291,20 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         ChoiceChip(
                           label: Text(m.name),
                           selected: _memberFilter == m.userId,
-                          onSelected: (_) => setSheetState(
-                              () => _memberFilter = m.userId),
+                          onSelected: (_) =>
+                              setSheetState(() => _memberFilter = m.userId),
                         ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(context.l10n.category,
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary)),
+                  Text(
+                    context.l10n.category,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -296,12 +318,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       ),
                       for (final c in categories)
                         ChoiceChip(
-                          avatar:
-                              Icon(iconForCodePoint(c.iconCodePoint), size: 16),
+                          avatar: Icon(
+                            iconForCodePoint(c.iconCodePoint),
+                            size: 16,
+                          ),
                           label: Text(c.name),
                           selected: _categoryFilter == c.id,
-                          onSelected: (_) => setSheetState(
-                              () => _categoryFilter = c.id),
+                          onSelected: (_) =>
+                              setSheetState(() => _categoryFilter = c.id),
                         ),
                     ],
                   ),
@@ -341,8 +365,9 @@ class PrimaryButtonLocal extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
       ),
@@ -402,9 +427,11 @@ class _ExpenseRow extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => ExpenseDetailScreen(expense: expense),
-        ));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ExpenseDetailScreen(expense: expense),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -426,7 +453,9 @@ class _ExpenseRow extends StatelessWidget {
                   Text(
                     expense.description ?? l10n.expense,
                     style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -446,10 +475,7 @@ class _ExpenseRow extends StatelessWidget {
             ),
             Text(
               formatMoney(expense.amount),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
           ],
         ),

@@ -59,7 +59,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = state.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
-    final name = _nameController.text.trim().isEmpty ? (user?.name ?? 'You') : _nameController.text.trim();
+    final name = _nameController.text.trim().isEmpty
+        ? (user?.name ?? 'You')
+        : _nameController.text.trim();
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profile)),
@@ -80,7 +82,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               user?.email ?? '',
               style: TextStyle(
                 fontSize: 14,
-                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
               ),
             ),
           ),
@@ -96,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             enabled: !_saving,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              suffixIcon: const Icon(Icons.badge_outlined, size: 18),
+              prefixIcon: const Icon(Icons.badge_outlined, size: 18),
               errorText: _nameError,
             ),
             onChanged: (_) {

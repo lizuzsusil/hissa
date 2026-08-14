@@ -36,7 +36,9 @@ class CategoriesScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
           SectionHeader(title: l10n.defaultCategories),
-          _CategoryGrid(categories: categories.where((c) => c.isDefault).toList()),
+          _CategoryGrid(
+            categories: categories.where((c) => c.isDefault).toList(),
+          ),
           if (custom.isNotEmpty) ...[
             const SizedBox(height: 20),
             SectionHeader(title: l10n.customCategories),
@@ -106,7 +108,9 @@ class _CategoryGrid extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -192,18 +196,18 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
       return;
     }
     final exists = context.read<AppState>().categories.any(
-          (c) => c.name.toLowerCase() == name.toLowerCase(),
-        );
+      (c) => c.name.toLowerCase() == name.toLowerCase(),
+    );
     if (exists) {
       setState(() => _nameError = context.l10n.duplicateCategoryError);
       return;
     }
     setState(() => _saving = true);
     context.read<AppState>().addCategory(
-          name,
-          _icons[_iconIndex],
-          _colors[_colorIndex],
-        );
+      name,
+      _icons[_iconIndex],
+      _colors[_colorIndex],
+    );
     Navigator.pop(context);
   }
 
@@ -221,8 +225,10 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.newCategory,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          Text(
+            l10n.newCategory,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 20),
           TextField(
             controller: _nameController,
@@ -233,7 +239,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
             decoration: InputDecoration(
               labelText: l10n.categoryName,
               hintText: l10n.categoryNameHint,
-              suffixIcon: const Icon(Icons.label_outline, size: 18),
+              prefixIcon: const Icon(Icons.label_outline, size: 18),
               errorText: _nameError,
             ),
             onChanged: (_) {
@@ -244,8 +250,10 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
             },
           ),
           const SizedBox(height: 20),
-          Text(l10n.icon,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          Text(
+            l10n.icon,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           SizedBox(
             height: 46,
@@ -288,8 +296,10 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
             ),
           ),
           const SizedBox(height: 20),
-          Text(l10n.colour,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          Text(
+            l10n.colour,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 12,
@@ -297,9 +307,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
             children: [
               for (var i = 0; i < _colors.length; i++)
                 GestureDetector(
-                  onTap: _saving
-                      ? null
-                      : () => setState(() => _colorIndex = i),
+                  onTap: _saving ? null : () => setState(() => _colorIndex = i),
                   child: ColorDot(
                     color: _colors[i],
                     selected: _colorIndex == i,

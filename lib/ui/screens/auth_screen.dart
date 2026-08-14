@@ -352,13 +352,13 @@ class _AuthScreenState extends State<AuthScreen> {
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: l10n.password,
-                  prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18),
                   errorText: _passwordError,
-                  suffixIcon: IconButton(
+                  prefixIcon: IconButton(
                     onPressed: _busy
                         ? null
-                        : () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
+                        : () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
                     icon: Icon(
                       _obscurePassword
                           ? Icons.visibility_outlined
@@ -381,7 +381,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       onChanged: _busy
                           ? null
                           : (value) =>
-                              setState(() => _rememberMe = value ?? false),
+                                setState(() => _rememberMe = value ?? false),
                     ),
                     Text(
                       l10n.rememberMe,
@@ -465,11 +465,11 @@ class _AuthScreenState extends State<AuthScreen> {
                   onTap: _busy
                       ? null
                       : () => setState(() {
-                            _isSignUp = !_isSignUp;
-                            _nameError = null;
-                            _emailError = null;
-                            _passwordError = null;
-                          }),
+                          _isSignUp = !_isSignUp;
+                          _nameError = null;
+                          _emailError = null;
+                          _passwordError = null;
+                        }),
                   child: RichText(
                     text: TextSpan(
                       style: TextStyle(

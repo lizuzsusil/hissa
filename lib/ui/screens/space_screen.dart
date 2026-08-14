@@ -35,8 +35,9 @@ class _SpaceScreenState extends State<SpaceScreen> {
     final state = context.watch<AppState>();
     final space = state.space;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textSecondary =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondary;
+    final textSecondary = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondary;
     final l10n = context.l10n;
 
     if (space == null) {
@@ -66,13 +67,20 @@ class _SpaceScreenState extends State<SpaceScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.home_work_rounded, color: Colors.white, size: 22),
+                    Icon(
+                      Icons.home_work_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                     const SizedBox(width: 8),
-                    Text(l10n.space,
-                        style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500)),
+                    Text(
+                      l10n.space,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -101,8 +109,10 @@ class _SpaceScreenState extends State<SpaceScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text(l10n.inviteCode,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          Text(
+            l10n.inviteCode,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           Text(
             l10n.shareInviteHint,
@@ -114,7 +124,9 @@ class _SpaceScreenState extends State<SpaceScreen> {
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.25),
+              ),
             ),
             child: Row(
               children: [
@@ -132,8 +144,11 @@ class _SpaceScreenState extends State<SpaceScreen> {
                 InkResponse(
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: space.inviteCode));
-                    showToast(context, l10n.inviteCodeCopied,
-                        type: ToastType.success);
+                    showToast(
+                      context,
+                      l10n.inviteCodeCopied,
+                      type: ToastType.success,
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.all(12),
@@ -141,8 +156,11 @@ class _SpaceScreenState extends State<SpaceScreen> {
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.copy_rounded,
-                        color: Colors.white, size: 20),
+                    child: const Icon(
+                      Icons.copy_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ),
               ],
@@ -151,8 +169,13 @@ class _SpaceScreenState extends State<SpaceScreen> {
           const SizedBox(height: 28),
           Row(
             children: [
-              Text(l10n.members,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              Text(
+                l10n.members,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const Spacer(),
               Text(
                 l10n.spaceMembersCount(state.members.length),
@@ -169,7 +192,8 @@ class _SpaceScreenState extends State<SpaceScreen> {
             _MemberRow(
               member: member,
               isYou: member.userId == state.currentUser?.id,
-              canRemove: state.isOwner && member.userId != state.currentUser?.id,
+              canRemove:
+                  state.isOwner && member.userId != state.currentUser?.id,
               onRemove: () => _confirmRemove(state, member),
             ),
           const SizedBox(height: 20),
@@ -182,8 +206,10 @@ class _SpaceScreenState extends State<SpaceScreen> {
                   decoration: InputDecoration(
                     labelText: l10n.addMember,
                     hintText: l10n.name,
-                    suffixIcon:
-                        const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                    prefixIcon: const Icon(
+                      Icons.person_add_alt_1_outlined,
+                      size: 18,
+                    ),
                     errorText: _memberError,
                   ),
                   onChanged: (_) {
@@ -227,8 +253,7 @@ class _SpaceScreenState extends State<SpaceScreen> {
     if (!mounted) return;
     _memberController.clear();
     setState(() => _memberError = null);
-    showToast(context, context.l10n.addedMember(name),
-        type: ToastType.success);
+    showToast(context, context.l10n.addedMember(name), type: ToastType.success);
   }
 
   Future<void> _confirmRemove(AppState state, SpaceMember member) async {
@@ -240,8 +265,9 @@ class _SpaceScreenState extends State<SpaceScreen> {
         content: Text(l10n.removeMemberMessage),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.cancel)),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.negative),
@@ -297,13 +323,17 @@ class _MemberRow extends StatelessWidget {
                       Text(
                         member.name,
                         style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w700),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       if (isYou) ...[
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 2),
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
@@ -311,9 +341,10 @@ class _MemberRow extends StatelessWidget {
                           child: Text(
                             l10n.you,
                             style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ),
                       ],
@@ -344,8 +375,11 @@ class _MemberRow extends StatelessWidget {
                     color: AppColors.negativeSoft,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.person_remove_outlined,
-                      size: 18, color: AppColors.negative),
+                  child: const Icon(
+                    Icons.person_remove_outlined,
+                    size: 18,
+                    color: AppColors.negative,
+                  ),
                 ),
               ),
           ],

@@ -65,23 +65,23 @@ class AppTheme {
 
   static ThemeData _base(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: brightness,
-      primary: AppColors.primary,
-      secondary: AppColors.secondary,
-      error: AppColors.negative,
-    ).copyWith(
-      surface: isDark ? AppColors.surfaceDark : AppColors.surface,
-      onSurface: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: brightness,
+          primary: AppColors.primary,
+          secondary: AppColors.secondary,
+          error: AppColors.negative,
+        ).copyWith(
+          surface: isDark ? AppColors.surfaceDark : AppColors.surface,
+          onSurface: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+        );
 
     final base = ThemeData(
       brightness: brightness,
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor:
-          isDark ? AppColors.bgDark : AppColors.bg,
+      scaffoldBackgroundColor: isDark ? AppColors.bgDark : AppColors.bg,
       fontFamily: 'Roboto',
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -122,8 +122,9 @@ class AppTheme {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      foregroundColor:
-          isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+      foregroundColor: isDark
+          ? AppColors.textPrimaryDark
+          : AppColors.textPrimary,
       titleTextStyle: TextStyle(
         color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
         fontSize: 20,
@@ -157,9 +158,11 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           fontSize: 12.5,
         ),
-        suffixIconColor: isDark ? AppColors.textMutedDark : AppColors.textMuted,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        prefixIconColor: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
           borderSide: BorderSide(
@@ -187,16 +190,18 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor:
-            isDark ? AppColors.surfaceAltDark : const Color(0xFF2A2725),
+        backgroundColor: isDark
+            ? AppColors.surfaceAltDark
+            : const Color(0xFF2A2725),
         contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor:
-            isDark ? AppColors.textMutedDark : AppColors.textMuted,
+        unselectedItemColor: isDark
+            ? AppColors.textMutedDark
+            : AppColors.textMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
@@ -208,8 +213,8 @@ class AppTheme {
             color: states.contains(WidgetState.selected)
                 ? AppColors.primary
                 : isDark
-                    ? AppColors.textMutedDark
-                    : AppColors.textMuted,
+                ? AppColors.textMutedDark
+                : AppColors.textMuted,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
@@ -221,13 +226,15 @@ class AppTheme {
             color: states.contains(WidgetState.selected)
                 ? AppColors.primary
                 : isDark
-                    ? AppColors.textMutedDark
-                    : AppColors.textMuted,
+                ? AppColors.textMutedDark
+                : AppColors.textMuted,
           ),
         ),
       ),
       chipTheme: base.chipTheme.copyWith(
-        backgroundColor: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+        backgroundColor: isDark
+            ? AppColors.surfaceAltDark
+            : AppColors.surfaceAlt,
         selectedColor: AppColors.primary.withValues(alpha: 0.16),
         labelStyle: TextStyle(
           color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
@@ -255,11 +262,16 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor:
-              colorScheme.onSurface.withValues(alpha: 0.08),
-          disabledForegroundColor:
-              colorScheme.onSurface.withValues(alpha: 0.38),
-          textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700),
+          disabledBackgroundColor: colorScheme.onSurface.withValues(
+            alpha: 0.08,
+          ),
+          disabledForegroundColor: colorScheme.onSurface.withValues(
+            alpha: 0.38,
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w700,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(13),
           ),
@@ -272,7 +284,10 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 2,
           shadowColor: AppColors.primary.withValues(alpha: 0.3),
-          textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w700,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(13),
           ),
@@ -285,7 +300,10 @@ class AppTheme {
           side: BorderSide(
             color: isDark ? AppColors.borderDark : AppColors.border,
           ),
-          textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w700,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(13),
           ),
@@ -296,7 +314,9 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
       switchTheme: SwitchThemeData(
@@ -304,38 +324,37 @@ class AppTheme {
           (states) => states.contains(WidgetState.selected)
               ? Colors.white
               : isDark
-                  ? AppColors.textMutedDark
-                  : AppColors.textMuted,
+              ? AppColors.textMutedDark
+              : AppColors.textMuted,
         ),
         trackColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
               ? AppColors.primary
               : isDark
-                  ? AppColors.surfaceAltDark
-                  : AppColors.surfaceAlt,
+              ? AppColors.surfaceAltDark
+              : AppColors.surfaceAlt,
         ),
         trackOutlineColor: WidgetStateProperty.resolveWith((_) => null),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? AppColors.primary
-              : null,
+          (states) =>
+              states.contains(WidgetState.selected) ? AppColors.primary : null,
         ),
         checkColor: const WidgetStatePropertyAll(Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       ),
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? AppColors.primary
-              : null,
+          (states) =>
+              states.contains(WidgetState.selected) ? AppColors.primary : null,
         ),
       ),
       tabBarTheme: TabBarThemeData(
         labelColor: AppColors.primary,
-        unselectedLabelColor:
-            isDark ? AppColors.textMutedDark : AppColors.textMuted,
+        unselectedLabelColor: isDark
+            ? AppColors.textMutedDark
+            : AppColors.textMuted,
         indicatorColor: AppColors.primary,
         indicatorSize: TabBarIndicatorSize.label,
         labelStyle: const TextStyle(fontWeight: FontWeight.w700),
@@ -343,9 +362,7 @@ class AppTheme {
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.surfaceAltDark
-              : const Color(0xFF333F48),
+          color: isDark ? AppColors.surfaceAltDark : const Color(0xFF333F48),
           borderRadius: BorderRadius.circular(8),
         ),
         textStyle: const TextStyle(color: Colors.white, fontSize: 12),

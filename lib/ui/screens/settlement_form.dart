@@ -59,7 +59,11 @@ class _SettlementFormState extends State<SettlementForm> {
     if (mounted) {
       setState(() => _saving = false);
       Navigator.pop(context);
-      showToast(context, context.l10n.settlementRecorded, type: ToastType.success);
+      showToast(
+        context,
+        context.l10n.settlementRecorded,
+        type: ToastType.success,
+      );
     }
   }
 
@@ -95,36 +99,53 @@ class _SettlementFormState extends State<SettlementForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(fromName,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w700)),
-                    Text(l10n.pays,
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary)),
+                    Text(
+                      fromName,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      l10n.pays,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_rounded,
-                  color: AppColors.primary, size: 22),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: AppColors.primary,
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(toName,
-                        textAlign: TextAlign.end,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w700)),
-                    Text(l10n.receives,
-                        textAlign: TextAlign.end,
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary)),
+                    Text(
+                      toName,
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      l10n.receives,
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -145,11 +166,16 @@ class _SettlementFormState extends State<SettlementForm> {
           ),
         ),
         const SizedBox(height: 20),
-        Text(l10n.paymentMethod,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary)),
+        Text(
+          l10n.paymentMethod,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondary,
+          ),
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -179,16 +205,18 @@ class _SettlementFormState extends State<SettlementForm> {
                   if (picked != null) setState(() => _date = picked);
                 },
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
               color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
               children: [
-                const Icon(Icons.event_outlined,
-                    size: 20, color: AppColors.primary),
+                const Icon(
+                  Icons.event_outlined,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 12),
                 Text(
                   formatShortDate(_date),
@@ -206,7 +234,7 @@ class _SettlementFormState extends State<SettlementForm> {
           enabled: !_saving,
           decoration: InputDecoration(
             hintText: l10n.noteOptionalHint,
-            suffixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),
+            prefixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),
           ),
         ),
         const SizedBox(height: 20),

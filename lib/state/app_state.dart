@@ -1139,6 +1139,28 @@ class AppState extends ChangeNotifier {
     return _repo.memberGroups.where((g) => g.id == id).firstOrNull?.name;
   }
 
+  /// The profile photo for [userId], resolved from the user profile first and
+  /// falling back to the member record (which may lag behind the profile).
+  String? memberAvatarUrl(String userId) {
+    final user = _repo.users.where((u) => u.id == userId).firstOrNull;
+    final url = user?.avatarUrl;
+    if (url != null && url.isNotEmpty) {
+      return url;
+    }
+    return members.where((m) => m.userId == userId).firstOrNull?.avatarUrl;
+  }
+
+  /// The profile photo for a user whose name is [name], or null when the name
+  /// does not resolve to a user with a photo. Used as a last-resort fallback
+  /// for avatar widgets that only know a display name.
+  String? avatarUrlForName(String name) {
+    final user = _repo.users
+        .where((u) => u.name == name)
+        .where((u) => u.avatarUrl != null && u.avatarUrl!.isNotEmpty)
+        .firstOrNull;
+    return user?.avatarUrl;
+  }
+
   Category? categoryFor(String? categoryId) {
     if (categoryId == null) return null;
     return _repo.categories.where((c) => c.id == categoryId).firstOrNull;

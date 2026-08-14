@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
+import '../../state/app_state.dart';
 
 const List<Color> _avatarColors = [
   Color(0xFFBF5700), // burnt orange
@@ -40,7 +42,7 @@ class MemberAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = avatarColorFor(name);
-    final url = avatarUrl;
+    final url = avatarUrl ?? _resolveFromState(context);
     final Widget child;
     if (url != null && url.isNotEmpty) {
       child = ClipOval(
@@ -91,6 +93,13 @@ class MemberAvatar extends StatelessWidget {
         fontWeight: FontWeight.w700,
       ),
     );
+  }
+
+  /// Resolves the profile photo for [name] from the current space's user
+  /// profiles, so avatars rendered with only a display name still show the
+  /// profile image when one exists.
+  String? _resolveFromState(BuildContext context) {
+    return context.read<AppState>().avatarUrlForName(name);
   }
 }
 
