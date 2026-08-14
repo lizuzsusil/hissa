@@ -614,46 +614,64 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Widget _buildSplitTypeSelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.surfaceAltDark
-            : AppColors.surfaceAlt,
+        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        children: [
-          for (final type in SplitType.values)
-            Expanded(
-              child: GestureDetector(
-                onTap: _saving ? null : () => setState(() => _splitType = type),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final values = SplitType.values;
+          final width = constraints.maxWidth / values.length;
+          final selected = values.indexOf(_splitType);
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                left: selected * width,
+                width: width,
+                top: 0,
+                bottom: 0,
+                child: Container(
                   decoration: BoxDecoration(
-                    color: _splitType == type
-                        ? (Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.surfaceDark
-                              : Colors.white)
-                        : Colors.transparent,
+                    color: isDark ? AppColors.surfaceDark : Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _splitLabel(type),
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: _splitType == type
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
-                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+              Row(
+                children: [
+                  for (final type in values)
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _saving
+                            ? null
+                            : () => setState(() => _splitType = type),
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Text(
+                            _splitLabel(type),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: _splitType == type
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }

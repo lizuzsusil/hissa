@@ -498,47 +498,62 @@ class _Segmented extends StatelessWidget {
         color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        children: [
-          for (var i = 0; i < options.length; i++)
-            Expanded(
-              child: GestureDetector(
-                onTap: onChanged == null ? null : () => onChanged!(i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(vertical: 11),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth / options.length;
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                left: index * width,
+                width: width,
+                top: 0,
+                bottom: 0,
+                child: Container(
                   decoration: BoxDecoration(
-                    color: i == index
-                        ? (isDark ? AppColors.surfaceDark : Colors.white)
-                        : Colors.transparent,
+                    color: isDark ? AppColors.surfaceDark : Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: i == index
-                        ? [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    options[i],
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: i == index
-                          ? AppColors.primary
-                          : (isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary),
-                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-        ],
+              Row(
+                children: [
+                  for (var i = 0; i < options.length; i++)
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: onChanged == null ? null : () => onChanged!(i),
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          child: Text(
+                            options[i],
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: i == index
+                                  ? AppColors.primary
+                                  : (isDark
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textSecondary),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
