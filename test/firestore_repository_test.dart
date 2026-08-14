@@ -11,7 +11,12 @@ void main() {
       final db = FakeFirebaseFirestore();
       final writer = FirestoreRepository(db);
       await writer.saveUser(
-        User(id: 'u1', name: 'A', email: 'a@x.com', createdAt: DateTime(2026, 1, 1)),
+        User(
+          id: 'u1',
+          name: 'A',
+          email: 'a@x.com',
+          createdAt: DateTime(2026, 1, 1),
+        ),
       );
       await writer.saveSpace(_space('h1', 'ABCDE'));
       await writer.saveMember(
@@ -50,11 +55,7 @@ void main() {
 
       var notified = 0;
       final repo = FirestoreRepository(db);
-      await repo.start(
-        uid: 'u1',
-        spaceId: 'h1',
-        onChanged: () => notified++,
-      );
+      await repo.start(uid: 'u1', spaceId: 'h1', onChanged: () => notified++);
 
       expect(repo.users.map((u) => u.id), contains('u1'));
       expect(repo.spaces.map((h) => h.id), contains('h1'));
@@ -68,38 +69,40 @@ void main() {
       repo.stop();
     });
 
-    test('saveExpense persists participant groups and their member shares',
-        () async {
-      final db = FakeFirebaseFirestore();
-      final repo = FirestoreRepository(db);
+    test(
+      'saveExpense persists participant groups and their member shares',
+      () async {
+        final db = FakeFirebaseFirestore();
+        final repo = FirestoreRepository(db);
 
-      final grouped = _groupedExpense('e1');
-      final shares = SplitCalculator.buildGrouped(
-        expenseId: 'e1',
-        amount: grouped.amount,
-        parties: [
-          SplitParty.individual('u1'),
-          SplitParty(id: 'g1', name: 'B + C', userIds: ['u2', 'u3']),
-        ],
-      );
-      await repo.saveExpense(grouped, shares);
+        final grouped = _groupedExpense('e1');
+        final shares = SplitCalculator.buildGrouped(
+          expenseId: 'e1',
+          amount: grouped.amount,
+          parties: [
+            SplitParty.individual('u1'),
+            SplitParty(id: 'g1', name: 'B + C', userIds: ['u2', 'u3']),
+          ],
+        );
+        await repo.saveExpense(grouped, shares);
 
-      final reader = FirestoreRepository(db);
-      await reader.start(uid: 'u1', spaceId: 'h1', onChanged: () {});
-      final saved = reader.expenses.firstWhere((e) => e.id == 'e1');
-      expect(saved.participantGroups, hasLength(1));
-      expect(saved.participantGroups.first.name, 'B + C');
-      expect(saved.participantGroups.first.userIds, ['u2', 'u3']);
+        final reader = FirestoreRepository(db);
+        await reader.start(uid: 'u1', spaceId: 'h1', onChanged: () {});
+        final saved = reader.expenses.firstWhere((e) => e.id == 'e1');
+        expect(saved.participantGroups, hasLength(1));
+        expect(saved.participantGroups.first.name, 'B + C');
+        expect(saved.participantGroups.first.userIds, ['u2', 'u3']);
 
-      final savedShares = reader.sharesForExpense('e1');
-      expect(savedShares, hasLength(3));
-      final b = savedShares.firstWhere((s) => s.userId == 'u2');
-      final c = savedShares.firstWhere((s) => s.userId == 'u3');
-      expect(b.groupId, 'g1');
-      expect(c.groupId, 'g1');
+        final savedShares = reader.sharesForExpense('e1');
+        expect(savedShares, hasLength(3));
+        final b = savedShares.firstWhere((s) => s.userId == 'u2');
+        final c = savedShares.firstWhere((s) => s.userId == 'u3');
+        expect(b.groupId, 'g1');
+        expect(c.groupId, 'g1');
 
-      repo.stop();
-    });
+        repo.stop();
+      },
+    );
 
     test('saveExpense writes shares and replaces them on update', () async {
       final db = FakeFirebaseFirestore();
@@ -137,14 +140,12 @@ void main() {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);
 
-      final expense = _expense('e1').copyWith(
-        paidByUserId: 'u1',
-        createdBy: 'u1',
-      );
+      final expense = _expense(
+        'e1',
+      ).copyWith(paidByUserId: 'u1', createdBy: 'u1');
       await repo.saveExpense(expense, const []);
 
-      final doc =
-          await db.collection('expenses').doc('h1_e1').get();
+      final doc = await db.collection('expenses').doc('h1_e1').get();
       expect(doc.data()!['paidByUserId'], 'u1');
       expect(doc.data()!['createdBy'], 'u1');
     });
@@ -223,26 +224,30 @@ void main() {
       expect(await repo.findSpaceIdForUser('u999'), isNull);
     });
 
-    test('saveMember and removeMember persist and mirror to the cache',
-        () async {
-      final db = FakeFirebaseFirestore();
-      final repo = FirestoreRepository(db);
-      await repo.saveMember(
-        SpaceMember(
-          userId: 'u2',
-          name: 'B',
-          role: MemberRole.member,
-          joinedAt: DateTime(2026, 1, 1),
-        ),
-        'h1',
-      );
-      expect(repo.members.map((m) => m.userId), contains('u2'));
+    test(
+      'saveMember and removeMember persist and mirror to the cache',
+      () async {
+        final db = FakeFirebaseFirestore();
+        final repo = FirestoreRepository(db);
+        await repo.saveMember(
+          SpaceMember(
+            userId: 'u2',
+            name: 'B',
+            role: MemberRole.member,
+            joinedAt: DateTime(2026, 1, 1),
+          ),
+          'h1',
+        );
+        expect(repo.members.map((m) => m.userId), contains('u2'));
 
-      await repo.removeMember('u2', 'h1');
-      expect(repo.members.map((m) => m.userId), isNot(contains('u2')));
-      expect((await db.collection('spaceMembers').doc('h1_u2').get()).exists,
-          isFalse);
-    });
+        await repo.removeMember('u2', 'h1');
+        expect(repo.members.map((m) => m.userId), isNot(contains('u2')));
+        expect(
+          (await db.collection('spaceMembers').doc('h1_u2').get()).exists,
+          isFalse,
+        );
+      },
+    );
 
     test('realtime listeners propagate another instance write', () async {
       final db = FakeFirebaseFirestore();
@@ -260,8 +265,7 @@ void main() {
       observer.stop();
     });
 
-    test('findSpacesForUser returns every space the user belongs to',
-        () async {
+    test('findSpacesForUser returns every space the user belongs to', () async {
       final db = FakeFirebaseFirestore();
       final repo = FirestoreRepository(db);
       await repo.saveSpace(_space('h1', 'AAAAA'));
@@ -316,33 +320,35 @@ void main() {
       expect(await repo.countMembers('h9'), 0);
     });
 
-    test('space mode is persisted and defaults to SPLIT for legacy docs',
-        () async {
-      final db = FakeFirebaseFirestore();
-      final repo = FirestoreRepository(db);
-      await repo.saveSpace(
-        _space('h1', 'AAAAA').copyWith(mode: SpaceMode.solo),
-      );
-      expect((await repo.findSpacesForUser('u1')), isEmpty);
-      final solo = Space.fromJson(
-        (await db.collection('spaces').doc('h1').get()).data()!,
-      );
-      expect(solo.mode, SpaceMode.solo);
+    test(
+      'space mode is persisted and defaults to SPLIT for legacy docs',
+      () async {
+        final db = FakeFirebaseFirestore();
+        final repo = FirestoreRepository(db);
+        await repo.saveSpace(
+          _space('h1', 'AAAAA').copyWith(mode: SpaceMode.personal),
+        );
+        expect((await repo.findSpacesForUser('u1')), isEmpty);
+        final personal = Space.fromJson(
+          (await db.collection('spaces').doc('h1').get()).data()!,
+        );
+        expect(personal.mode, SpaceMode.personal);
 
-      await db.collection('spaces').doc('legacy').set({
-        'id': 'legacy',
-        'name': 'Old home',
-        'currency': 'NPR',
-        'inviteCode': 'LEGACY',
-        'createdAt': '2026-01-01T00:00:00.000',
-      });
-      final legacy = Space.fromJson(
-        (await db.collection('spaces').doc('legacy').get()).data()!,
-      );
-      expect(legacy.mode, SpaceMode.split);
-      expect(legacy.createdBy, isNull);
-      expect(legacy.updatedAt, isNull);
-    });
+        await db.collection('spaces').doc('legacy').set({
+          'id': 'legacy',
+          'name': 'Old home',
+          'currency': 'NPR',
+          'inviteCode': 'LEGACY',
+          'createdAt': '2026-01-01T00:00:00.000',
+        });
+        final legacy = Space.fromJson(
+          (await db.collection('spaces').doc('legacy').get()).data()!,
+        );
+        expect(legacy.mode, SpaceMode.split);
+        expect(legacy.createdBy, isNull);
+        expect(legacy.updatedAt, isNull);
+      },
+    );
   });
 }
 
@@ -360,50 +366,50 @@ Future<void> _waitUntil(
 }
 
 Space _space(String id, String inviteCode) => Space(
-      id: id,
-      name: 'Home',
-      currency: 'NPR',
-      inviteCode: inviteCode,
-      createdAt: DateTime(2026, 1, 1),
-    );
+  id: id,
+  name: 'Home',
+  currency: 'NPR',
+  inviteCode: inviteCode,
+  createdAt: DateTime(2026, 1, 1),
+);
 
 Cycle _cycle(String id, String spaceId) => Cycle(
-      id: id,
-      spaceId: spaceId,
-      name: 'January 2026',
-      startDate: DateTime(2026, 1, 1),
-      endDate: DateTime(2026, 1, 31),
-      status: CycleStatus.active,
-    );
+  id: id,
+  spaceId: spaceId,
+  name: 'January 2026',
+  startDate: DateTime(2026, 1, 1),
+  endDate: DateTime(2026, 1, 31),
+  status: CycleStatus.active,
+);
 
 Expense _expense(String id) => Expense(
-      id: id,
-      spaceId: 'h1',
-      cycleId: 'c1',
-      paidByUserId: 'u1',
-      amount: const Money(100000),
-      description: 'Test',
-      date: DateTime(2026, 1, 1),
-      createdAt: DateTime(2026, 1, 1),
-      updatedAt: DateTime(2026, 1, 1),
-    );
+  id: id,
+  spaceId: 'h1',
+  cycleId: 'c1',
+  paidByUserId: 'u1',
+  amount: const Money(100000),
+  description: 'Test',
+  date: DateTime(2026, 1, 1),
+  createdAt: DateTime(2026, 1, 1),
+  updatedAt: DateTime(2026, 1, 1),
+);
 
 Expense _groupedExpense(String id) => Expense(
-      id: id,
-      spaceId: 'h1',
-      cycleId: 'c1',
-      paidByUserId: 'u1',
-      amount: const Money(100000),
-      description: 'Test',
-      date: DateTime(2026, 1, 1),
-      createdAt: DateTime(2026, 1, 1),
-      updatedAt: DateTime(2026, 1, 1),
-      participantGroups: const [
-        ParticipantGroup(
-          id: 'g1',
-          expenseId: 'e1',
-          name: 'B + C',
-          userIds: ['u2', 'u3'],
-        ),
-      ],
-    );
+  id: id,
+  spaceId: 'h1',
+  cycleId: 'c1',
+  paidByUserId: 'u1',
+  amount: const Money(100000),
+  description: 'Test',
+  date: DateTime(2026, 1, 1),
+  createdAt: DateTime(2026, 1, 1),
+  updatedAt: DateTime(2026, 1, 1),
+  participantGroups: const [
+    ParticipantGroup(
+      id: 'g1',
+      expenseId: 'e1',
+      name: 'B + C',
+      userIds: ['u2', 'u3'],
+    ),
+  ],
+);

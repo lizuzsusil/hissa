@@ -21,7 +21,8 @@ import 'package:hissa/ui/state/theme_controller.dart';
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
   });
 
   Future<AppState> makeState({required SpaceMode mode}) async {
@@ -30,7 +31,7 @@ void main() {
     await repo.saveSpace(
       Space(
         id: 'h1',
-        name: mode == SpaceMode.solo ? 'Me' : 'My Space',
+        name: mode == SpaceMode.personal ? 'Me' : 'My Space',
         currency: 'NPR',
         inviteCode: 'ABC12',
         mode: mode,
@@ -47,7 +48,7 @@ void main() {
       ),
       'h1',
     );
-    if (mode != SpaceMode.solo) {
+    if (mode != SpaceMode.personal) {
       await repo.saveCycle(
         Cycle(
           id: 'c1',
@@ -94,8 +95,10 @@ void main() {
     expect(find.text('Home'), findsOneWidget);
   });
 
-  testWidgets('personal mode exposes insights but not settlement', (tester) async {
-    final state = await makeState(mode: SpaceMode.solo);
+  testWidgets('personal mode exposes insights but not settlement', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
     await tester.pumpWidget(appHarness(state, const ShellScreen()));
     await tester.pump();
 
@@ -105,9 +108,10 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
   });
 
-  testWidgets('personal insights tab shows spending breakdown, not cycles',
-      (tester) async {
-    final state = await makeState(mode: SpaceMode.solo);
+  testWidgets('personal insights tab shows spending breakdown, not cycles', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
     await state.addPersonalExpense(
       description: 'Coffee',
       amount: const Money(50000),
@@ -127,8 +131,9 @@ void main() {
     expect(find.text('Who paid this cycle'), findsNothing);
   });
 
-  testWidgets('spaces dashboard shows empty state with create/join actions',
-      (tester) async {
+  testWidgets('spaces dashboard shows empty state with create/join actions', (
+    tester,
+  ) async {
     final state = await makeState(mode: SpaceMode.split);
     await tester.pumpWidget(
       appHarness(

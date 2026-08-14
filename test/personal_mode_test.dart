@@ -8,11 +8,12 @@ import 'package:hissa/models/models.dart';
 import 'package:hissa/state/app_state.dart';
 
 /// Phase 8 — Personal Mode tests: expense CRUD works without settlement or
-/// balance calculations leaking into a solo space.
+/// balance calculations leaking into a personal space.
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
   });
 
   Future<AppState> makePersonalState() async {
@@ -24,7 +25,7 @@ void main() {
         name: 'Me',
         currency: 'NPR',
         inviteCode: 'ABC12',
-        mode: SpaceMode.solo,
+        mode: SpaceMode.personal,
         createdAt: DateTime(2026, 1, 1),
       ),
     );
@@ -79,28 +80,34 @@ void main() {
       date: DateTime(2026, 1, 13),
     );
     final expense = state.personalExpenses.single;
-    expect(state.sharesForExpense(expense.id), isEmpty,
-        reason: 'personal mode must not mint participant shares');
+    expect(
+      state.sharesForExpense(expense.id),
+      isEmpty,
+      reason: 'personal mode must not mint participant shares',
+    );
   });
 
   test('settlement logic is not exposed in personal mode', () async {
     final state = await makePersonalState();
-    // A solo space has no cycles, so cycle-based calculations are empty.
+    // A personal space has no cycles, so cycle-based calculations are empty.
     expect(state.cycles, isEmpty);
     expect(state.expensesInCycle, isEmpty);
     expect(state.settlementProposals(), isEmpty);
     expect(state.computeBalances(), isEmpty);
   });
 
-  test('a settlement cannot be recorded in a solo space (no cycle)', () async {
-    final state = await makePersonalState();
-    await state.addSettlement(
-      fromUserId: 'u1',
-      toUserId: 'u1',
-      amount: const Money(1000),
-      paymentMethod: 'Cash',
-      date: DateTime(2026, 1, 15),
-    );
-    expect(state.repo.settlements, isEmpty);
-  });
+  test(
+    'a settlement cannot be recorded in a personal space (no cycle)',
+    () async {
+      final state = await makePersonalState();
+      await state.addSettlement(
+        fromUserId: 'u1',
+        toUserId: 'u1',
+        amount: const Money(1000),
+        paymentMethod: 'Cash',
+        date: DateTime(2026, 1, 15),
+      );
+      expect(state.repo.settlements, isEmpty);
+    },
+  );
 }

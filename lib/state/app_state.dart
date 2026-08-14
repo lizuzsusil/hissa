@@ -168,8 +168,8 @@ class AppState extends ChangeNotifier {
     if (spaces.isEmpty) {
       nextSpaceId = null;
     } else {
-      final stillMember = nextSpaceId != null &&
-          spaces.any((s) => s.id == nextSpaceId);
+      final stillMember =
+          nextSpaceId != null && spaces.any((s) => s.id == nextSpaceId);
       if (!stillMember) {
         nextSpaceId = _spaceId != null && spaces.any((s) => s.id == _spaceId)
             ? _spaceId
@@ -203,8 +203,11 @@ class AppState extends ChangeNotifier {
     final uid = _currentUserId;
     if (uid == null) return;
     try {
-      final report =
-          await SpaceMigrator().run(_repo, userId: uid, spaces: spaces);
+      final report = await SpaceMigrator().run(
+        _repo,
+        userId: uid,
+        spaces: spaces,
+      );
       if (report.spacesAssignedMode > 0) {
         // Refresh the dashboard list so migrated Spaces show their mode.
         _spaces = await _repo.findSpacesForUser(uid);
@@ -222,10 +225,7 @@ class AppState extends ChangeNotifier {
     await _persist();
   }
 
-  Future<bool> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> signIn({required String email, required String password}) async {
     final normalized = email.trim().toLowerCase();
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -256,7 +256,9 @@ class AppState extends ChangeNotifier {
       // google_sign_in.
       final UserCredential cred;
       try {
-        cred = await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
+        cred = await FirebaseAuth.instance.signInWithPopup(
+          GoogleAuthProvider(),
+        );
       } on FirebaseAuthException catch (e) {
         if (e.code == 'account-exists-with-different-credential') {
           throw const GoogleAccountConflictException();
@@ -355,7 +357,12 @@ class AppState extends ChangeNotifier {
         ? _capitalize(normalized.split('@').first)
         : name.trim();
     await _repo.saveUser(
-      User(id: uid, name: displayName, email: normalized, createdAt: DateTime.now()),
+      User(
+        id: uid,
+        name: displayName,
+        email: normalized,
+        createdAt: DateTime.now(),
+      ),
     );
     await _commit();
   }
@@ -417,8 +424,7 @@ class AppState extends ChangeNotifier {
 
   List<Cycle> get cycles {
     if (_spaceId == null) return const [];
-    final all =
-        _repo.cycles.where((c) => c.spaceId == _spaceId).toList()
+    final all = _repo.cycles.where((c) => c.spaceId == _spaceId).toList()
       ..sort((a, b) => b.startDate.compareTo(a.startDate));
     return all;
   }
@@ -426,16 +432,10 @@ class AppState extends ChangeNotifier {
   Cycle? get activeCycle {
     if (_spaceId == null) return null;
     final active = _repo.cycles
-        .where(
-          (c) =>
-              c.spaceId == _spaceId && c.status == CycleStatus.active,
-        )
+        .where((c) => c.spaceId == _spaceId && c.status == CycleStatus.active)
         .firstOrNull;
     if (active != null) return active;
-    return _repo.cycles
-        .where((c) => c.spaceId == _spaceId)
-        .toList()
-        .lastOrNull;
+    return _repo.cycles.where((c) => c.spaceId == _spaceId).toList().lastOrNull;
   }
 
   Cycle? get selectedCycle {
@@ -477,9 +477,7 @@ class AppState extends ChangeNotifier {
 
   List<Category> get categories {
     if (_spaceId == null) return const [];
-    return _repo.categories
-        .where((c) => c.spaceId == _spaceId)
-        .toList();
+    return _repo.categories.where((c) => c.spaceId == _spaceId).toList();
   }
 
   // ---- space ----
@@ -541,7 +539,7 @@ class AppState extends ChangeNotifier {
     }
 
     await _seedCategories(spaceId);
-    if (mode != SpaceMode.solo) {
+    if (mode != SpaceMode.personal) {
       await _startCycleFor(spaceId, DateTime.now());
     }
 
@@ -652,7 +650,7 @@ class AppState extends ChangeNotifier {
       await _repo.saveCategory(
         Category.preset(
           id: 'cat_${preset.name.toLowerCase()}',
-spaceId: spaceId,
+          spaceId: spaceId,
           name: preset.name,
           icon: preset.icon,
           color: preset.color,
@@ -810,10 +808,7 @@ spaceId: spaceId,
     final shares = SplitCalculator.buildGrouped(
       expenseId: expense.id,
       amount: expense.amount,
-      parties: _partiesFrom(
-        participantIds: participantIds,
-        groups: groups,
-      ),
+      parties: _partiesFrom(participantIds: participantIds, groups: groups),
       type: splitType,
       percentages: percentages,
       customAmounts: customAmounts,
@@ -850,10 +845,7 @@ spaceId: spaceId,
     final shares = SplitCalculator.buildGrouped(
       expenseId: expense.id,
       amount: updated.amount,
-      parties: _partiesFrom(
-        participantIds: participantIds,
-        groups: groups,
-      ),
+      parties: _partiesFrom(participantIds: participantIds, groups: groups),
       type: splitType,
       percentages: percentages,
       customAmounts: customAmounts,
@@ -864,29 +856,29 @@ spaceId: spaceId,
   }
 
   Future<void> deleteExpense(String expenseId) async {
-    final expense =
-        _repo.expenses.where((e) => e.id == expenseId).firstOrNull;
+    final expense = _repo.expenses.where((e) => e.id == expenseId).firstOrNull;
     if (expense == null || !canEditExpense(expense)) return;
     await _repo.deleteExpense(expenseId);
     await _commit();
   }
 
-  // ---- personal expenses (solo / personal mode) ----
+  // ---- personal expenses (personal / personal mode) ----
 
-  /// Whether the selected Space is a Personal (solo) space.
+  /// Whether the selected Space is a Personal (personal) space.
   bool get isPersonalMode {
     final s = space;
-    return s != null && s.mode == SpaceMode.solo;
+    return s != null && s.mode == SpaceMode.personal;
   }
 
   /// Personal expenses: those created without a cycle (cycleId == null) in
   /// the selected Space, most recent first.
   List<Expense> get personalExpenses {
     if (_spaceId == null) return const [];
-    final list = _repo.expenses
-        .where((e) => e.spaceId == _spaceId && e.cycleId == null)
-        .toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    final list =
+        _repo.expenses
+            .where((e) => e.spaceId == _spaceId && e.cycleId == null)
+            .toList()
+          ..sort((a, b) => b.date.compareTo(a.date));
     return list;
   }
 
@@ -997,10 +989,8 @@ spaceId: spaceId,
   ///
   /// Mirrors the Firestore security rules: only the expense creator may
   /// update/delete it. Legacy expenses without a creator are locked.
-  bool canEditExpense(Expense expense) => canEditExpenseBy(
-        currentUserId: _currentUserId,
-        expense: expense,
-      );
+  bool canEditExpense(Expense expense) =>
+      canEditExpenseBy(currentUserId: _currentUserId, expense: expense);
 
   List<Settlement> get settlementsInCycle {
     final cycle = selectedCycle;

@@ -17,7 +17,7 @@ service cloud.firestore {
     // The Space mode must be one of the supported values; a create/update that
     // omits `mode` is rejected so a Space can never be saved without one.
     function validSpaceMode() {
-      return request.resource.data.mode in ['SPLIT', 'SOLO'];
+      return request.resource.data.mode in ['SPLIT', 'PERSONAL'];
     }
 
     // Whether the user identified by `userId` is a member of `spaceId`.

@@ -95,11 +95,11 @@ enum MembershipStatus {
 }
 
 /// The mode of a Space (container). Stable internal values are `SPLIT` and
-/// `SOLO` (see [SpaceMode.value]); the UI shows friendlier labels
+/// `PERSONAL` (see [SpaceMode.value]); the UI shows friendlier labels
 /// ("Split Mode" / "Personal Mode").
 enum SpaceMode {
   split('SPLIT', 'Split Mode'),
-  solo('SOLO', 'Personal Mode');
+  personal('PERSONAL', 'Personal Mode');
 
   const SpaceMode(this.value, this.label);
 

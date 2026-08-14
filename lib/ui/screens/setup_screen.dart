@@ -110,11 +110,7 @@ class _SetupScreenState extends State<SetupScreen> {
     if (!mounted) return;
     setState(() => _loading = false);
     if (!ok) {
-      showToast(
-        context,
-        context.l10n.inviteNotFound,
-        type: ToastType.danger,
-      );
+      showToast(context, context.l10n.inviteNotFound, type: ToastType.danger);
       return;
     }
     widget.onDone();
@@ -255,10 +251,10 @@ class _SetupScreenState extends State<SetupScreen> {
                 icon: Icons.person_outline,
                 title: l10n.personalMode,
                 subtitle: l10n.personalModeDescription,
-                selected: _mode == SpaceMode.solo,
+                selected: _mode == SpaceMode.personal,
                 onTap: _loading
                     ? null
-                    : () => setState(() => _mode = SpaceMode.solo),
+                    : () => setState(() => _mode = SpaceMode.personal),
               ),
             ),
           ],
@@ -304,8 +300,10 @@ class _SetupScreenState extends State<SetupScreen> {
                   decoration: InputDecoration(
                     labelText: l10n.addMember,
                     hintText: l10n.name,
-                    suffixIcon:
-                        const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                    suffixIcon: const Icon(
+                      Icons.person_add_alt_1_outlined,
+                      size: 18,
+                    ),
                     errorText: _memberError,
                   ),
                   onChanged: (_) {

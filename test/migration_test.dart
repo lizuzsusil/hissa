@@ -25,7 +25,7 @@ void main() {
         inviteCode: 'XYZ99',
         createdAt: DateTime(2026, 1, 1),
         updatedAt: DateTime(2026, 1, 1),
-        mode: SpaceMode.solo,
+        mode: SpaceMode.personal,
       );
       await repo.saveSpace(legacy);
       await repo.saveSpace(modern);
@@ -52,13 +52,19 @@ void main() {
 
       final report = await SpaceMigrator().run(repo, userId: 'u1');
 
-      expect(report.spacesAssignedMode, 1,
-          reason: 'only the legacy record is touched');
+      expect(
+        report.spacesAssignedMode,
+        1,
+        reason: 'only the legacy record is touched',
+      );
       final migrated = repo.spaces.firstWhere((s) => s.id == 'h1');
       expect(migrated.mode, SpaceMode.split);
       expect(migrated.updatedAt, isNotNull);
-      // The modern solo space keeps its mode.
-      expect(repo.spaces.firstWhere((s) => s.id == 'h2').mode, SpaceMode.solo);
+      // The modern personal space keeps its mode.
+      expect(
+        repo.spaces.firstWhere((s) => s.id == 'h2').mode,
+        SpaceMode.personal,
+      );
     });
 
     test('a second run is idempotent', () async {
@@ -128,8 +134,11 @@ void main() {
       final report = await SpaceMigrator().run(repo, userId: 'u1');
 
       expect(report.legacyExpensesFound, 1);
-      expect(report.creatorsBackfilled, 0,
-          reason: 'ownership is never invented');
+      expect(
+        report.creatorsBackfilled,
+        0,
+        reason: 'ownership is never invented',
+      );
       expect(report.ambiguousExpenses, 1);
       // The legacy expense is untouched.
       expect(repo.expenses.single.createdBy, isNull);
@@ -144,7 +153,7 @@ void main() {
         inviteCode: 'ABC12',
         createdAt: DateTime(2025, 6, 1),
       );
-      final modernSpace = legacySpace.copyWith(mode: SpaceMode.solo);
+      final modernSpace = legacySpace.copyWith(mode: SpaceMode.personal);
       expect(migrator.isLegacySpace(legacySpace), isTrue);
       expect(migrator.isLegacySpace(modernSpace), isFalse);
 

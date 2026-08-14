@@ -22,7 +22,7 @@ class InsightsScreen extends StatelessWidget {
     final l10n = context.l10n;
     final isPersonal = state.isPersonalMode;
 
-    // Personal (solo) spaces have no cycles or shares, so Insights shows
+    // Personal (personal) spaces have no cycles or shares, so Insights shows
     // monthly spending, category breakdown and the lifetime summary.
     if (isPersonal) {
       return _PersonalInsights(
@@ -40,7 +40,10 @@ class InsightsScreen extends StatelessWidget {
 
     final monthlyData = <({String label, Money total})>[];
     for (final c in cycles) {
-      monthlyData.add((label: formatMonthShort(c.startDate), total: state.totalSpent(c.id)));
+      monthlyData.add((
+        label: formatMonthShort(c.startDate),
+        total: state.totalSpent(c.id),
+      ));
     }
 
     final categoryData = _categoryTotals(state.expensesInCycle);
@@ -73,7 +76,9 @@ class InsightsScreen extends StatelessWidget {
                   name: m.name,
                   paid: memberPaid[m.userId] ?? Money.zero(),
                   total: cycleBalances.fold<int>(
-                          0, (sum, b) => sum + b.paid.paisa),
+                    0,
+                    (sum, b) => sum + b.paid.paisa,
+                  ),
                 ),
               ),
             const SizedBox(height: 12),
@@ -85,7 +90,10 @@ class InsightsScreen extends StatelessWidget {
   }
 
   void _showCyclePicker(
-      BuildContext context, AppState state, List<Cycle> cycles) {
+    BuildContext context,
+    AppState state,
+    List<Cycle> cycles,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -101,8 +109,10 @@ class InsightsScreen extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(context.l10n.selectCycle,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              child: Text(
+                context.l10n.selectCycle,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
             ),
             for (final c in cycles)
               ListTile(
@@ -162,7 +172,7 @@ Map<String, Money> _memberPaidTotals(
   return totals;
 }
 
-/// Groups a solo space's expenses by calendar month, newest first, for the
+/// Groups a personal space's expenses by calendar month, newest first, for the
 /// monthly spending chart.
 List<({String label, Money total})> _personalMonthlyData(AppState state) {
   final byMonth = <String, Money>{};
@@ -178,7 +188,7 @@ List<({String label, Money total})> _personalMonthlyData(AppState state) {
   }).toList();
 }
 
-/// Insights layout for solo spaces: monthly spending + category breakdown +
+/// Insights layout for personal spaces: monthly spending + category breakdown +
 /// lifetime summary. No cycle picker or per-member settlement section.
 class _PersonalInsights extends StatelessWidget {
   final List<({String label, Money total})> monthlyData;
@@ -255,10 +265,12 @@ class _MonthlyBarChart extends StatelessWidget {
                 ),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  topTitles:
-                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles:
-                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -326,17 +338,22 @@ class _MonthlyBarChart extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
-                  Text(d.label,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary)),
+                  Text(
+                    d.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondary,
+                    ),
+                  ),
                   const Spacer(),
                   Text(
                     formatMoneyCompact(d.total),
                     style: const TextStyle(
-                        fontSize: 12.5, fontWeight: FontWeight.w700),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -351,16 +368,16 @@ class _CategoryPie extends StatelessWidget {
   final List<Category> categories;
   final Map<String, Money> categoryData;
 
-  const _CategoryPie({
-    required this.categories,
-    required this.categoryData,
-  });
+  const _CategoryPie({required this.categories, required this.categoryData});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
-    final total = categoryData.values.fold<Money>(Money.zero(), (a, b) => a + b);
+    final total = categoryData.values.fold<Money>(
+      Money.zero(),
+      (a, b) => a + b,
+    );
 
     final entries = categoryData.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -374,8 +391,7 @@ class _CategoryPie extends StatelessWidget {
     }
 
     final sections = entries.map((e) {
-      final category =
-          categories.where((c) => c.id == e.key).firstOrNull;
+      final category = categories.where((c) => c.id == e.key).firstOrNull;
       final color = category?.colorValue == null
           ? AppColors.primary
           : Color(category!.colorValue!);
@@ -423,25 +439,34 @@ class _CategoryPie extends StatelessWidget {
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
-                      color: categories
-                          .where((c) => c.id == e.key)
-                          .firstOrNull
-                          ?.colorValue == null
+                      color:
+                          categories
+                                  .where((c) => c.id == e.key)
+                                  .firstOrNull
+                                  ?.colorValue ==
+                              null
                           ? AppColors.primary
-                          : Color(categories
-                              .where((c) => c.id == e.key)
-                              .firstOrNull!
-                              .colorValue!),
+                          : Color(
+                              categories
+                                  .where((c) => c.id == e.key)
+                                  .firstOrNull!
+                                  .colorValue!,
+                            ),
                       shape: BoxShape.circle,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      categories.where((c) => c.id == e.key).firstOrNull?.name ??
+                      categories
+                              .where((c) => c.id == e.key)
+                              .firstOrNull
+                              ?.name ??
                           l10n.other,
                       style: const TextStyle(
-                          fontSize: 13.5, fontWeight: FontWeight.w600),
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   Text(
@@ -488,14 +513,20 @@ class _MemberPaidRow extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(name,
-                      style: const TextStyle(
-                          fontSize: 13.5, fontWeight: FontWeight.w600)),
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const Spacer(),
                   Text(
                     formatMoneyCompact(paid),
                     style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w800),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ],
               ),
@@ -530,7 +561,9 @@ class _SummaryRow extends StatelessWidget {
     final l10n = context.l10n;
     final allExpenses = state.repo.expenses;
     final totalAllTime = allExpenses.fold<Money>(
-        Money.zero(), (sum, e) => sum + e.amount);
+      Money.zero(),
+      (sum, e) => sum + e.amount,
+    );
     final totalExpenses = allExpenses.length;
     final avg = totalExpenses == 0
         ? Money.zero()
@@ -546,8 +579,10 @@ class _SummaryRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.lifetimeSummary,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          Text(
+            l10n.lifetimeSummary,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -593,7 +628,9 @@ class _SummaryCell extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 11.5,
-            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 4),

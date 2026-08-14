@@ -14,7 +14,7 @@ import '../widgets/misc.dart';
 import 'expense_detail_screen.dart';
 import 'expense_form_screen.dart';
 
-/// Home screen for Personal (solo) spaces: month-based total spending and
+/// Home screen for Personal (personal) spaces: month-based total spending and
 /// recent personal expenses. Never shows owed/received balances or
 /// settlement actions.
 class PersonalDashboardScreen extends StatefulWidget {
@@ -28,8 +28,7 @@ class PersonalDashboardScreen extends StatefulWidget {
 class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
   DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
 
-  DateTime get _previousMonth =>
-      DateTime(_month.year, _month.month - 1, 1);
+  DateTime get _previousMonth => DateTime(_month.year, _month.month - 1, 1);
 
   @override
   Widget build(BuildContext context) {
@@ -92,9 +91,11 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                 const SizedBox(height: 16),
                 _AddExpenseButton(
                   onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const ExpenseFormScreen(),
-                    ));
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ExpenseFormScreen(),
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: 24),
@@ -111,10 +112,14 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                     message: l10n.noExpensesMessage,
                   )
                 else
-                  ...expenses.take(8).map((e) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _PersonalExpenseTile(expense: e),
-                      )),
+                  ...expenses
+                      .take(8)
+                      .map(
+                        (e) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _PersonalExpenseTile(expense: e),
+                        ),
+                      ),
                 const SizedBox(height: 24),
               ],
             ),
@@ -147,8 +152,9 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final canGoNext = !(month.year == DateTime.now().year &&
-        month.month == DateTime.now().month);
+    final canGoNext =
+        !(month.year == DateTime.now().year &&
+            month.month == DateTime.now().month);
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.shimmerGradient,
@@ -163,8 +169,11 @@ class _Header extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.person_outline_rounded,
-                      color: Colors.white, size: 20),
+                  const Icon(
+                    Icons.person_outline_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Row(
@@ -196,9 +205,10 @@ class _Header extends StatelessWidget {
               Text(
                 l10n.totalSpending,
                 style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500),
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 4),
               FittedBox(
@@ -356,7 +366,10 @@ class _MonthSpendingCard extends StatelessWidget {
               children: [
                 Text(
                   l10n.vsMonth(formatMonthShort(previousMonth)),
-                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -435,9 +448,11 @@ class _PersonalExpenseTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => ExpenseDetailScreen(expense: expense),
-        ));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ExpenseDetailScreen(expense: expense),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -459,7 +474,9 @@ class _PersonalExpenseTile extends StatelessWidget {
                   Text(
                     expense.description ?? l10n.expense,
                     style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -476,10 +493,7 @@ class _PersonalExpenseTile extends StatelessWidget {
             ),
             Text(
               formatMoney(expense.amount),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
           ],
         ),
