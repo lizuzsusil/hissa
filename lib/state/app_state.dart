@@ -42,6 +42,7 @@ class AppState extends ChangeNotifier {
   bool _introSeen = false;
   bool _loaded = false;
   List<Space> _spaces = [];
+  bool _switchingSpace = false;
 
   ExpenseRepository get repo => _repo;
   bool get isLoaded => _loaded;
@@ -50,6 +51,10 @@ class AppState extends ChangeNotifier {
   bool get isLoggedIn => _currentUserId != null;
   bool get hasSpace => _spaceId != null;
   bool get introSeen => _introSeen;
+
+  /// True while a Space switch is loading its data, so the shell can show a
+  /// loading screen instead of the previous Space's content.
+  bool get isSwitchingSpace => _switchingSpace;
 
   /// The Spaces the current user belongs to (all of them, not just the one
   /// currently selected), used by the post-login Spaces dashboard.
@@ -468,10 +473,15 @@ class AppState extends ChangeNotifier {
       return;
     }
     _cycleId = null;
-    // The Space list is already loaded and the previous Space stays visible
-    // while the new scope loads, so switching is fast and never flashes a
-    // blank loading screen.
-    await _attachRepository(targetSpaceId: spaceId, knownSpaces: _spaces);
+    // Signal the shell to show a loading screen while the new Space's data is
+    // fetched, then swap the repository once it is fully loaded.
+    _switchingSpace = true;
+    notifyListeners();
+    try {
+      await _attachRepository(targetSpaceId: spaceId, knownSpaces: _spaces);
+    } finally {
+      _switchingSpace = false;
+    }
     await _commit();
   }
 

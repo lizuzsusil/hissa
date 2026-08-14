@@ -33,6 +33,9 @@ class AppLocalizationsNe extends AppLocalizations {
   String get add => 'थप्नुहोस्';
 
   @override
+  String get loadingSpace => 'स्पेस बदलिँदै…';
+
+  @override
   String get cancel => 'रद्द गर्नुहोस्';
 
   @override

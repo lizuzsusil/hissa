@@ -146,6 +146,12 @@ abstract class AppLocalizations {
   /// **'Add'**
   String get add;
 
+  /// No description provided for @loadingSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Switching space…'**
+  String get loadingSpace;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:

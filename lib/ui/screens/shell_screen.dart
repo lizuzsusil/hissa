@@ -36,7 +36,8 @@ class _ShellScreenState extends State<ShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isPersonal = context.watch<AppState>().isPersonalMode;
+    final state = context.watch<AppState>();
+    final isPersonal = state.isPersonalMode;
     final settings = SettingsScreen(onOpenSpaces: widget.onBackToSpaces);
     final screens = isPersonal
         ? <Widget>[
@@ -64,7 +65,9 @@ class _ShellScreenState extends State<ShellScreen> {
             }
           },
           child: Scaffold(
-            body: IndexedStack(index: _tabController.index, children: screens),
+            body: state.isSwitchingSpace
+                ? const _SpaceSwitchingScreen()
+                : IndexedStack(index: _tabController.index, children: screens),
             floatingActionButton: _tabController.index == screens.length - 1
                 ? null
                 : _FloatingAddButton(),
@@ -80,30 +83,59 @@ class _ShellScreenState extends State<ShellScreen> {
   }
 }
 
+class _SpaceSwitchingScreen extends StatelessWidget {
+  const _SpaceSwitchingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 44,
+            height: 44,
+            child: CircularProgressIndicator(strokeWidth: 4),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            l10n.loadingSpace,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FloatingAddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final l10n = context.l10n;
     final cycle = state.selectedCycle;
     if (!state.isPersonalMode &&
         (cycle == null || cycle.status == CycleStatus.closed)) {
       return const SizedBox.shrink();
     }
-    return FloatingActionButton.extended(
+    return FloatingActionButton(
       onPressed: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => const ExpenseFormScreen(),
-        ));
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ExpenseFormScreen()));
       },
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       elevation: 6,
-      icon: const Icon(Icons.add_rounded),
-      label: Text(
-        l10n.add,
-        style: const TextStyle(fontWeight: FontWeight.w700),
-      ),
+      shape: const CircleBorder(),
+      child: const Icon(Icons.add_rounded, size: 30),
     );
   }
 }
@@ -126,15 +158,35 @@ class _NavBar extends StatelessWidget {
     final items = isPersonal
         ? [
             (Icons.home_rounded, Icons.home_outlined, l10n.home),
-            (Icons.receipt_long_rounded, Icons.receipt_long_outlined, l10n.expenses),
-            (Icons.donut_small_rounded, Icons.donut_small_outlined, l10n.insights),
+            (
+              Icons.receipt_long_rounded,
+              Icons.receipt_long_outlined,
+              l10n.expenses,
+            ),
+            (
+              Icons.donut_small_rounded,
+              Icons.donut_small_outlined,
+              l10n.insights,
+            ),
             (Icons.settings_rounded, Icons.settings_outlined, l10n.settings),
           ]
         : [
             (Icons.home_rounded, Icons.home_outlined, l10n.home),
-            (Icons.receipt_long_rounded, Icons.receipt_long_outlined, l10n.expenses),
-            (Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, l10n.settle),
-            (Icons.donut_small_rounded, Icons.donut_small_outlined, l10n.insights),
+            (
+              Icons.receipt_long_rounded,
+              Icons.receipt_long_outlined,
+              l10n.expenses,
+            ),
+            (
+              Icons.account_balance_wallet_rounded,
+              Icons.account_balance_wallet_outlined,
+              l10n.settle,
+            ),
+            (
+              Icons.donut_small_rounded,
+              Icons.donut_small_outlined,
+              l10n.insights,
+            ),
             (Icons.settings_rounded, Icons.settings_outlined, l10n.settings),
           ];
 
@@ -196,7 +248,9 @@ class _NavItem extends StatelessWidget {
             width: 40,
             height: 28,
             decoration: BoxDecoration(
-              color: selected ? AppColors.primary.withValues(alpha: 0.14) : Colors.transparent,
+              color: selected
+                  ? AppColors.primary.withValues(alpha: 0.14)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(

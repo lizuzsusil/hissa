@@ -10,6 +10,7 @@
   "insights": "Insights",
   "settings": "Settings",
   "add": "Add",
+  "loadingSpace": "Switching space…",
   "cancel": "Cancel",
   "delete": "Delete",
   "save": "Save",

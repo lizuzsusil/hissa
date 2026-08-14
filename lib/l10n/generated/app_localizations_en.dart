@@ -33,6 +33,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get add => 'Add';
 
   @override
+  String get loadingSpace => 'Switching space…';
+
+  @override
   String get cancel => 'Cancel';
 
   @override
