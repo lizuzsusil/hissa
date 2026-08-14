@@ -573,6 +573,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeBack => 'Welcome back';
 
   @override
+  String welcomeUser(String name) {
+    return 'Welcome, $name';
+  }
+
+  @override
   String get authSignupSubtitle => 'Start tracking shared expenses in seconds.';
 
   @override

@@ -266,6 +266,14 @@
   "logIn": "Log in",
   "createYourAccount": "Create your account",
   "welcomeBack": "Welcome back",
+
+  "@welcomeUser": {
+    "description": "Greeting shown in the dashboard header",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "welcomeUser": "Welcome, {name}",
   "authSignupSubtitle": "Start tracking shared expenses in seconds.",
   "authLoginSubtitle": "Log in to keep your spaces in sync.",
   "yourName": "Your name",

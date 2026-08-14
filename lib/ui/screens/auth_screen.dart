@@ -31,11 +31,15 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController();
   bool _isSignUp = false;
   bool _loading = false;
+  bool _googleLoading = false;
+  bool _biometricLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = false;
   String? _nameError;
   String? _emailError;
   String? _passwordError;
+
+  bool get _busy => _loading || _googleLoading || _biometricLoading;
 
   @override
   void initState() {
@@ -90,6 +94,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final state = context.read<AppState>();
     final l10n = context.l10n;
     if (!await _ensureOnline()) return;
+    if (_busy) return;
     final vm = ValidatorMessages.fromL10n(l10n);
     final nameError = _isSignUp
         ? validateName(_nameController.text, label: l10n.yourName, messages: vm)
@@ -154,27 +159,28 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _google() async {
     final state = context.read<AppState>();
     if (!await _ensureOnline()) return;
-    setState(() => _loading = true);
+    if (_googleLoading) return;
+    setState(() => _googleLoading = true);
     try {
       final ok = await state.signInWithGoogle();
       if (!mounted) return;
       if (!ok) {
         // The Google account picker was dismissed.
-        setState(() => _loading = false);
+        setState(() => _googleLoading = false);
         return;
       }
-      setState(() => _loading = false);
+      setState(() => _googleLoading = false);
       widget.onAuthenticated();
     } catch (e) {
       if (mounted) {
-        setState(() => _loading = false);
+        setState(() => _googleLoading = false);
         showToast(context, _friendlyAuthMessage(e), type: ToastType.danger);
       }
     }
   }
 
   Future<void> _biometric() async {
-    if (_loading) return;
+    if (_biometricLoading) return;
     final biometrics = context.read<BiometricAuthController>();
     final l10n = context.l10n;
     if (await biometrics.availabilityIssue() != null) {
@@ -182,10 +188,10 @@ class _AuthScreenState extends State<AuthScreen> {
       showToast(context, l10n.biometricUnavailable, type: ToastType.danger);
       return;
     }
-    setState(() => _loading = true);
+    setState(() => _biometricLoading = true);
     final ok = await biometrics.authenticate(l10n.biometricLogin);
     if (!mounted) return;
-    setState(() => _loading = false);
+    setState(() => _biometricLoading = false);
     if (ok) {
       widget.onAuthenticated();
     } else {
@@ -309,7 +315,7 @@ class _AuthScreenState extends State<AuthScreen> {
               if (_isSignUp) ...[
                 TextField(
                   controller: _nameController,
-                  enabled: !_loading,
+                  enabled: !_busy,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: l10n.yourName,
@@ -324,7 +330,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ],
               TextField(
                 controller: _emailController,
-                enabled: !_loading,
+                enabled: !_busy,
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
                 decoration: InputDecoration(
@@ -342,14 +348,14 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 14),
               TextField(
                 controller: _passwordController,
-                enabled: !_loading,
+                enabled: !_busy,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: l10n.password,
                   prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18),
                   errorText: _passwordError,
                   suffixIcon: IconButton(
-                    onPressed: _loading
+                    onPressed: _busy
                         ? null
                         : () =>
                             setState(() => _obscurePassword = !_obscurePassword),
@@ -372,7 +378,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     Checkbox(
                       value: _rememberMe,
-                      onChanged: _loading
+                      onChanged: _busy
                           ? null
                           : (value) =>
                               setState(() => _rememberMe = value ?? false),
@@ -400,8 +406,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     const SizedBox(width: 6),
                     TextButton(
-                      onPressed: _loading ? null : _biometric,
-                      child: Text(l10n.biometricLogin),
+                      onPressed: _busy ? null : _biometric,
+                      child: _biometricLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(l10n.biometricLogin),
                     ),
                   ],
                 ),
@@ -411,7 +423,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 label: _isSignUp ? l10n.createAccount : l10n.logIn,
                 icon: _isSignUp ? Icons.person_add_alt : Icons.login_rounded,
                 loading: _loading,
-                onPressed: _loading ? null : _submit,
+                onPressed: _busy ? null : _submit,
               ),
               const SizedBox(height: 14),
               Row(
@@ -444,13 +456,13 @@ class _AuthScreenState extends State<AuthScreen> {
               SecondaryButton(
                 label: l10n.continueWithGoogle,
                 leading: const GoogleLogo(size: 18),
-                loading: _loading,
-                onPressed: _loading ? null : _google,
+                loading: _googleLoading,
+                onPressed: _busy ? null : _google,
               ),
               const SizedBox(height: 24),
               Center(
                 child: GestureDetector(
-                  onTap: _loading
+                  onTap: _busy
                       ? null
                       : () => setState(() {
                             _isSignUp = !_isSignUp;

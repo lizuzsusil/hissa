@@ -67,7 +67,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
           Center(
-            child: MemberAvatar(name: name, size: 96, outline: true),
+            child: MemberAvatar(
+              name: name,
+              avatarUrl: user?.avatarUrl,
+              size: 96,
+              outline: true,
+            ),
           ),
           const SizedBox(height: 16),
           Center(

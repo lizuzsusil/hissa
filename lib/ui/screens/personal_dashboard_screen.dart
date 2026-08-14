@@ -9,6 +9,7 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../state/shell_tab_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/avatars.dart';
 import '../widgets/category_icon.dart';
 import '../widgets/misc.dart';
 import 'expense_detail_screen.dart';
@@ -58,7 +59,7 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
       slivers: [
         SliverAppBar(
           pinned: true,
-          expandedHeight: 244,
+          expandedHeight: 248,
           backgroundColor: isDark ? AppColors.bgDark : AppColors.bg,
           flexibleSpace: FlexibleSpaceBar(
             collapseMode: CollapseMode.pin,
@@ -152,6 +153,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final user = context.watch<AppState>().currentUser;
     final canGoNext =
         !(month.year == DateTime.now().year &&
             month.month == DateTime.now().month);
@@ -202,6 +204,30 @@ class _Header extends StatelessWidget {
                 ],
               ),
               const Spacer(),
+              if (user != null) ...[
+                Row(
+                  children: [
+                    MemberAvatar(
+                      name: user.name,
+                      avatarUrl: user.avatarUrl,
+                      size: 32,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        l10n.welcomeUser(user.name),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+              ],
               Text(
                 l10n.totalSpending,
                 style: const TextStyle(

@@ -54,16 +54,14 @@ class _ShellScreenState extends State<ShellScreen> {
           ];
     return ChangeNotifierProvider<ShellTabController>.value(
       value: _tabController,
-      child: Scaffold(
-        body: ListenableBuilder(
-          listenable: _tabController,
-          builder: (context, _) =>
-              IndexedStack(index: _tabController.index, children: screens),
-        ),
-        floatingActionButton: _FloatingAddButton(),
-        bottomNavigationBar: ListenableBuilder(
-          listenable: _tabController,
-          builder: (context, _) => _NavBar(
+      child: ListenableBuilder(
+        listenable: _tabController,
+        builder: (context, _) => Scaffold(
+          body: IndexedStack(index: _tabController.index, children: screens),
+          floatingActionButton: _tabController.index == screens.length - 1
+              ? null
+              : _FloatingAddButton(),
+          bottomNavigationBar: _NavBar(
             index: _tabController.index,
             isPersonal: isPersonal,
             onChanged: _tabController.switchTo,

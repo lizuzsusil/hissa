@@ -333,6 +333,15 @@ class AppState extends ChangeNotifier {
           createdAt: DateTime.now(),
         ),
       );
+    } else if (photoUrl != null && photoUrl != currentUser!.avatarUrl) {
+      await _repo.saveUser(currentUser!.copyWith(avatarUrl: photoUrl));
+      final member = members.where((m) => m.userId == uid).firstOrNull;
+      if (member != null && _spaceId != null) {
+        await _repo.saveMember(
+          member.copyWith(avatarUrl: photoUrl),
+          _spaceId,
+        );
+      }
     }
     await _commit();
     return true;
@@ -510,6 +519,7 @@ class AppState extends ChangeNotifier {
         name: user.name,
         role: MemberRole.owner,
         joinedAt: DateTime.now(),
+        avatarUrl: user.avatarUrl,
       ),
       spaceId,
     );
@@ -564,6 +574,7 @@ class AppState extends ChangeNotifier {
           name: user.name,
           role: MemberRole.member,
           joinedAt: DateTime.now(),
+          avatarUrl: user.avatarUrl,
         ),
         space.id,
       );

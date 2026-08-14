@@ -1082,6 +1082,12 @@ abstract class AppLocalizations {
   /// **'Welcome back'**
   String get welcomeBack;
 
+  /// Greeting shown in the dashboard header
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome, {name}'**
+  String welcomeUser(String name);
+
   /// No description provided for @authSignupSubtitle.
   ///
   /// In en, this message translates to:

@@ -36,11 +36,12 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         children: [
           _ProfileCard(
             name: user?.name ?? 'User',
             email: user?.email ?? '',
+            avatarUrl: user?.avatarUrl,
             onTap: () => _push(context, ProfileScreen()),
           ),
           const SizedBox(height: 24),
@@ -190,7 +191,7 @@ class SettingsScreen extends StatelessWidget {
     final l10n = context.l10n;
     if (value) {
       final issue = await biometrics.availabilityIssue();
-      
+
       if (!context.mounted) return;
       if (issue != null) {
         showToast(
@@ -504,11 +505,13 @@ String _cycleStatusLabel(AppLocalizations l10n, CycleStatus status) {
 class _ProfileCard extends StatelessWidget {
   final String name;
   final String email;
+  final String? avatarUrl;
   final VoidCallback onTap;
 
   const _ProfileCard({
     required this.name,
     required this.email,
+    this.avatarUrl,
     required this.onTap,
   });
 
@@ -529,7 +532,12 @@ class _ProfileCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          MemberAvatar(name: name, size: 58, outline: true),
+          MemberAvatar(
+            name: name,
+            avatarUrl: avatarUrl,
+            size: 58,
+            outline: true,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -553,11 +561,6 @@ class _ProfileCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: Colors.white,
-            size: 28,
           ),
         ],
       ),

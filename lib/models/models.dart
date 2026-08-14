@@ -165,13 +165,14 @@ class SpaceMember {
     String? name,
     MemberRole? role,
     MembershipStatus? status,
+    String? avatarUrl,
   }) {
     return SpaceMember(
       userId: userId,
       name: name ?? this.name,
       role: role ?? this.role,
       joinedAt: joinedAt,
-      avatarUrl: avatarUrl,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
       spaceId: spaceId,
       status: status ?? this.status,
     );

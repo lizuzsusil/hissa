@@ -174,6 +174,7 @@
   "logIn": "लग इन गर्नुहोस्",
   "createYourAccount": "आफ्नो खाता बनाउनुहोस्",
   "welcomeBack": "फेरि स्वागत छ",
+  "welcomeUser": "स्वागत छ, {name}",
   "authSignupSubtitle": "केही सेकेन्डमै साझा खर्च ट्र्याक गर्न सुरु गर्नुहोस्।",
   "authLoginSubtitle": "आफ्नो स्पेसहरू सेन्क्रोन राख्न लग इन गर्नुहोस्।",
   "yourName": "तपाईंको नाम",

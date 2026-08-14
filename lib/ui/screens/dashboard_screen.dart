@@ -45,9 +45,8 @@ class DashboardScreen extends StatelessWidget {
       slivers: [
         SliverAppBar(
           pinned: true,
-          expandedHeight: 236,
-          backgroundColor:
-              isDark ? AppColors.bgDark : AppColors.bg,
+          expandedHeight: 248,
+          backgroundColor: isDark ? AppColors.bgDark : AppColors.bg,
           flexibleSpace: FlexibleSpaceBar(
             collapseMode: CollapseMode.pin,
             background: _Header(
@@ -69,23 +68,24 @@ class DashboardScreen extends StatelessWidget {
                 _QuickActions(proposals: proposals),
                 const SizedBox(height: 24),
                 SectionHeader(title: l10n.spaceBalances),
-                ...members.map((m) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _MemberBalanceCard(
-                        member: m,
-                        balance: balances
-                            .where((b) => b.userId == m.userId)
-                            .firstOrNull,
-                        isYou: m.userId == state.currentUser?.id,
-                      ),
-                    )),
+                ...members.map(
+                  (m) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _MemberBalanceCard(
+                      member: m,
+                      balance: balances
+                          .where((b) => b.userId == m.userId)
+                          .firstOrNull,
+                      isYou: m.userId == state.currentUser?.id,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 SectionHeader(
                   title: l10n.recentExpenses,
                   actionLabel: l10n.viewAll,
-                  onAction: () => context
-                      .read<ShellTabController>()
-                      .switchTo(1),
+                  onAction: () =>
+                      context.read<ShellTabController>().switchTo(1),
                 ),
                 if (expenses.isEmpty)
                   EmptyState(
@@ -94,10 +94,14 @@ class DashboardScreen extends StatelessWidget {
                     message: l10n.noExpensesMessage,
                   )
                 else
-                  ...expenses.take(5).map((e) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _ExpenseTile(expense: e),
-                      )),
+                  ...expenses
+                      .take(5)
+                      .map(
+                        (e) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _ExpenseTile(expense: e),
+                        ),
+                      ),
                 const SizedBox(height: 24),
               ],
             ),
@@ -124,6 +128,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final user = context.watch<AppState>().currentUser;
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.shimmerGradient,
@@ -141,8 +146,11 @@ class _Header extends StatelessWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.home_work_rounded,
-                            color: Colors.white, size: 20),
+                        const Icon(
+                          Icons.home_work_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -164,9 +172,37 @@ class _Header extends StatelessWidget {
                 ],
               ),
               const Spacer(),
+              if (user != null) ...[
+                Row(
+                  children: [
+                    MemberAvatar(
+                      name: user.name,
+                      avatarUrl: user.avatarUrl,
+                      size: 32,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        l10n.welcomeUser(user.name),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+              ],
               Text(
                 l10n.totalSpending,
-                style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 4),
               FittedBox(
@@ -244,8 +280,11 @@ class _CycleSelector extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.expand_more_rounded,
-                color: Colors.white, size: 18),
+            const Icon(
+              Icons.expand_more_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
           ],
         ),
       ),
@@ -283,8 +322,13 @@ class _YourBalanceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(l10n.yourBalance,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              Text(
+                l10n.yourBalance,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const Spacer(),
               _BalanceChip(balance: mine.balance),
             ],
@@ -332,8 +376,10 @@ class _BalanceChip extends StatelessWidget {
           color: AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(l10n.even,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+        child: Text(
+          l10n.even,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        ),
       );
     }
     final positive = balance.isPositive;
@@ -356,13 +402,20 @@ class _BalanceChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             positive ? l10n.youReceive : l10n.youOwe,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
           const SizedBox(width: 6),
           Text(
             formatMoney(balance.abs()),
             style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w800, color: color),
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
           ),
         ],
       ),
@@ -408,18 +461,25 @@ class _MiniStat extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(value,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w800)),
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -448,9 +508,11 @@ class _QuickActions extends StatelessWidget {
                 label: l10n.addExpense,
                 gradient: true,
                 onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const ExpenseFormScreen(),
-                  ));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ExpenseFormScreen(),
+                    ),
+                  );
                 },
               ),
             ),
@@ -484,14 +546,17 @@ class _QuickActions extends StatelessWidget {
                     child: Text(
                       l10n.settlementsWaiting(proposals.length),
                       style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w700),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   Text(
                     l10n.review,
                     style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w600),
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -535,7 +600,8 @@ class _ActionButton extends StatelessWidget {
             border: gradient
                 ? null
                 : Border.all(
-                    color: isDark ? AppColors.borderDark : AppColors.border),
+                    color: isDark ? AppColors.borderDark : AppColors.border,
+                  ),
           ),
           child: Column(
             children: [
@@ -577,8 +643,8 @@ class _MemberBalanceCard extends StatelessWidget {
     final statusColor = balanceValue.isZero
         ? AppColors.textMuted
         : balanceValue.isPositive
-            ? AppColors.positive
-            : AppColors.negative;
+        ? AppColors.positive
+        : AppColors.negative;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -590,7 +656,11 @@ class _MemberBalanceCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          MemberAvatar(name: member.name, size: 46),
+          MemberAvatar(
+            name: member.name,
+            avatarUrl: member.avatarUrl,
+            size: 46,
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -601,13 +671,17 @@ class _MemberBalanceCard extends StatelessWidget {
                     Text(
                       member.name,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     if (isYou) ...[
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
@@ -615,9 +689,10 @@ class _MemberBalanceCard extends StatelessWidget {
                         child: Text(
                           l10n.you,
                           style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                     ],
@@ -626,8 +701,14 @@ class _MemberBalanceCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   l10n.memberPaidShare(
-                    formatMoneyCompact(b?.paid ?? Money.zero(), showSymbol: false),
-                    formatMoneyCompact(b?.share ?? Money.zero(), showSymbol: false),
+                    formatMoneyCompact(
+                      b?.paid ?? Money.zero(),
+                      showSymbol: false,
+                    ),
+                    formatMoneyCompact(
+                      b?.share ?? Money.zero(),
+                      showSymbol: false,
+                    ),
                   ),
                   style: TextStyle(
                     fontSize: 12.5,
@@ -675,9 +756,11 @@ class _ExpenseTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => ExpenseDetailScreen(expense: expense),
-        ));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ExpenseDetailScreen(expense: expense),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -699,7 +782,9 @@ class _ExpenseTile extends StatelessWidget {
                   Text(
                     expense.description ?? l10n.expense,
                     style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -716,10 +801,7 @@ class _ExpenseTile extends StatelessWidget {
             ),
             Text(
               formatMoney(expense.amount),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
           ],
         ),

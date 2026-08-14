@@ -572,6 +572,11 @@ class AppLocalizationsNe extends AppLocalizations {
   String get welcomeBack => 'फेरि स्वागत छ';
 
   @override
+  String welcomeUser(String name) {
+    return 'स्वागत छ, $name';
+  }
+
+  @override
   String get authSignupSubtitle =>
       'केही सेकेन्डमै साझा खर्च ट्र्याक गर्न सुरु गर्नुहोस्।';
 

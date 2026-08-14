@@ -21,22 +21,44 @@ Color avatarColorFor(String seed) {
   return _avatarColors[hash % _avatarColors.length];
 }
 
-/// Circular initials avatar with a stable per-person colour.
+/// Circular avatar that shows a photo when [avatarUrl] is provided and falls
+/// back to initials otherwise, with a stable per-person colour.
 class MemberAvatar extends StatelessWidget {
   final String name;
   final double size;
   final bool outline;
+  final String? avatarUrl;
 
   const MemberAvatar({
     super.key,
     required this.name,
     this.size = 40,
     this.outline = false,
+    this.avatarUrl,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = avatarColorFor(name);
+    final url = avatarUrl;
+    final Widget child;
+    if (url != null && url.isNotEmpty) {
+      child = ClipOval(
+        child: Image.network(
+          url,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => _initials(color),
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return _initials(color);
+          },
+        ),
+      );
+    } else {
+      child = _initials(color);
+    }
     return Container(
       width: size,
       height: size,
@@ -55,13 +77,18 @@ class MemberAvatar extends StatelessWidget {
             : null,
       ),
       alignment: Alignment.center,
-      child: Text(
-        initialsOf(name),
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: size * 0.36,
-          fontWeight: FontWeight.w700,
-        ),
+      clipBehavior: Clip.antiAlias,
+      child: child,
+    );
+  }
+
+  Widget _initials(Color color) {
+    return Text(
+      initialsOf(name),
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: size * 0.36,
+        fontWeight: FontWeight.w700,
       ),
     );
   }

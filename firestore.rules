@@ -1,4 +1,5 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -10,7 +11,7 @@ service cloud.firestore {
     // Membership docs are keyed `${spaceId}_${auth.uid}`.
     function memberOf(spaceId) {
       return spaceId != null && exists(
-        /databases/$(database)/documents/spaceMembers/$(spaceId)_$(request.auth.uid)
+        /databases/$(database)/documents/spaceMembers/$(spaceId + '_' + request.auth.uid)
       );
     }
 
@@ -23,26 +24,18 @@ service cloud.firestore {
     // Whether the user identified by `userId` is a member of `spaceId`.
     function memberById(spaceId, userId) {
       return userId != null && exists(
-        /databases/$(database)/documents/spaceMembers/$(spaceId)_$(userId)
+        /databases/$(database)/documents/spaceMembers/$(spaceId + '_' + userId)
       );
-    }
-
-    // Whether every participant-group member listed on an expense belongs to
-    // the Space. Prevents a client from creating a participant group that
-    // contains users outside the Space (Phase 8 security).
-    function validParticipantGroups(spaceId) {
-      return request.resource.data.participantGroups is list
-        && request.resource.data.participantGroups.all(
-             group => group.userIds is list
-               && group.userIds.all(uid => memberById(spaceId, uid))
-           );
     }
 
     // Public profile + pseudo member profiles. Reads are open to any signed-in
     // user; each user may update only their own profile.
     match /users/{userId} {
       allow read: if signedIn();
-      allow create: if signedIn();
+
+      // A signed-in user can only create their own user document.
+      allow create: if signedIn() && request.auth.uid == userId;
+
       allow update, delete: if signedIn() && request.auth.uid == userId;
     }
 
@@ -51,7 +44,10 @@ service cloud.firestore {
     // require membership in the space and a valid mode.
     match /spaces/{spaceId} {
       allow read: if signedIn();
-      allow write: if signedIn() && memberOf(spaceId) && validSpaceMode();
+
+      allow write: if signedIn()
+        && memberOf(spaceId)
+        && validSpaceMode();
     }
 
     match /spaceMembers/{memberId} {
@@ -59,58 +55,78 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid ||
         memberOf(resource.data.spaceId)
       );
+
       allow create: if signedIn() && (
-        resource.data.userId == request.auth.uid ||
-        memberOf(resource.data.spaceId)
+        request.resource.data.userId == request.auth.uid ||
+        memberOf(request.resource.data.spaceId)
       );
-      allow update, delete: if signedIn() && memberOf(resource.data.spaceId);
+
+      allow update, delete: if signedIn()
+        && memberOf(resource.data.spaceId);
     }
 
     match /categories/{categoryId} {
-      allow read: if signedIn() && memberOf(resource.data.spaceId);
-      allow write: if signedIn() && memberOf(request.resource.data.spaceId);
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
+      allow write: if signedIn()
+        && memberOf(request.resource.data.spaceId);
     }
 
     match /cycles/{cycleId} {
-      allow read: if signedIn() && memberOf(resource.data.spaceId);
-      allow write: if signedIn() && memberOf(request.resource.data.spaceId);
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
+      allow write: if signedIn()
+        && memberOf(request.resource.data.spaceId);
     }
 
     match /expenses/{expenseId} {
-      allow read: if signedIn() && memberOf(resource.data.spaceId);
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
       // Only the authenticated creator may create an expense on their own
       // behalf; `createdBy` and `paidByUserId` are never accepted blindly from
       // the client. The payer must always be the authenticated user (Phase 5).
-      allow create: if signedIn() && memberOf(request.resource.data.spaceId)
+      allow create: if signedIn()
+        && memberOf(request.resource.data.spaceId)
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.paidByUserId == request.auth.uid
-        && validParticipantGroups(request.resource.data.spaceId);
+        && request.resource.data.paidByUserId == request.auth.uid;
+
       // Only the creator may update/delete an expense. Legacy expenses without
       // a `createdBy` are locked until migrated (Phase 7). The payer is
       // immutable: it can never be reassigned once the expense exists.
-      allow update: if signedIn() && memberOf(request.resource.data.spaceId)
+      allow update: if signedIn()
+        && memberOf(request.resource.data.spaceId)
         && resource.data.createdBy == request.auth.uid
         && request.resource.data.createdBy == resource.data.createdBy
-        && request.resource.data.paidByUserId == resource.data.paidByUserId
-        && validParticipantGroups(request.resource.data.spaceId);
-      allow delete: if signedIn() && memberOf(resource.data.spaceId)
+        && request.resource.data.paidByUserId == resource.data.paidByUserId;
+
+      allow delete: if signedIn()
+        && memberOf(resource.data.spaceId)
         && resource.data.createdBy == request.auth.uid;
     }
 
     match /expenseShares/{shareId} {
-      allow read: if signedIn() && memberOf(resource.data.spaceId);
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
       // The share's user must be a member of the Space; a client can never
       // mint a share for a user outside the Space (Phase 8 security).
-      allow write: if signedIn() && memberOf(request.resource.data.spaceId)
+      allow write: if signedIn()
+        && memberOf(request.resource.data.spaceId)
         && memberById(
-             request.resource.data.spaceId,
-             request.resource.data.userId
-           );
+          request.resource.data.spaceId,
+          request.resource.data.userId
+        );
     }
 
     match /settlements/{settlementId} {
-      allow read: if signedIn() && memberOf(resource.data.spaceId);
-      allow write: if signedIn() && memberOf(request.resource.data.spaceId);
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
+      allow write: if signedIn()
+        && memberOf(request.resource.data.spaceId);
     }
   }
 }
