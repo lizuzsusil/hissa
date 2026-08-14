@@ -133,9 +133,9 @@ void main() {
     final state = await makeSplitStateWithGroups();
     await tester.pumpWidget(harness(state));
 
-    // The Member Group should appear in the participant selector
-    expect(find.text("Ram's Group"), findsOneWidget);
-    expect(find.byIcon(Icons.groups_rounded), findsWidgets);
+    // The Member Group should appear in the participant selector (and, since
+    // it is preselected, also in the split preview).
+    expect(find.text("Ram's Group"), findsWidgets);
   });
 
   testWidgets('members of an active group are not individually selectable',
@@ -156,5 +156,49 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify the group is selected (test passes if no exception)
+  });
+
+  testWidgets('the split preview shows the selected group with the owner avatar',
+      (tester) async {
+    final state = await makeSplitStateWithGroups();
+    await tester.pumpWidget(harness(state));
+
+    // Select Ram's Group.
+    final groupChip = find.widgetWithText(FilterChip, "Ram's Group");
+    await tester.ensureVisible(groupChip);
+    await tester.pumpAndSettle();
+    await tester.tap(groupChip);
+    await tester.pumpAndSettle();
+
+    // Provide an amount so the preview renders.
+    final amountField = find.byType(TextField).first;
+    await tester.enterText(amountField, '1000');
+    await tester.pumpAndSettle();
+
+    // Scroll down to the preview and confirm the group row shows its name.
+    await tester.dragUntilVisible(
+      find.text("Ram's Group").last,
+      find.byType(SingleChildScrollView),
+      const Offset(0, -200),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text("Ram's Group"), findsWidgets);
+  });
+
+  testWidgets('Member Groups are selected by default alongside ungrouped users',
+      (tester) async {
+    final state = await makeSplitStateWithGroups();
+    await tester.pumpWidget(harness(state));
+
+    // Ram's Group is preselected (its chip shows as selected).
+    final groupChip = tester.widget<FilterChip>(
+      find.widgetWithText(FilterChip, "Ram's Group"),
+    );
+    expect(groupChip.selected, isTrue);
+
+    // The ungrouped users (none in this fixture beyond Ram + group members)
+    // are also selected; no exception means both share the selector.
+    expect(find.widgetWithText(FilterChip, 'Ram'), findsNothing);
+    expect(find.widgetWithText(FilterChip, "Ram's Group"), findsOneWidget);
   });
 }

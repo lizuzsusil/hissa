@@ -156,6 +156,29 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     return state.memberName(party.id) ?? '?';
   }
 
+  /// The user id of the owner of the group behind [share], when the share is a
+  /// Member Group participant. Used to show the group owner's avatar.
+  String? _ownerIdOf(ExpenseShare share, AppState state) {
+    final gid = share.memberGroupId;
+    if (gid == null) return null;
+    for (final g in state.activeMemberGroups) {
+      if (g.id == gid) return g.ownerUserId;
+    }
+    return share.groupSnapshot?.ownerUserId;
+  }
+
+  /// The display name of the group behind [share].
+  String _groupNameOf(ExpenseShare share, AppState state) {
+    final gid = share.memberGroupId;
+    for (final g in _selectedGroups) {
+      if (g.id == gid) return g.name;
+    }
+    for (final g in state.activeMemberGroups) {
+      if (g.id == gid) return g.name;
+    }
+    return gid ?? '?';
+  }
+
   @override
   void dispose() {
     _descriptionController.dispose();
@@ -168,12 +191,17 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final state = context.watch<AppState>();
     final isPersonal = state.isPersonalMode;
     if (!isPersonal && _participants.isEmpty && state.members.isNotEmpty) {
-      // Default to every member NOT represented by an active group (Rule 8).
+      // Default to every member NOT represented by an active group (Rule 8),
+      // and every active Member Group, so all participants are preselected.
       final grouped = state.groupedUserIds;
       _participants = state.members
           .where((m) => !grouped.contains(m.userId))
           .map((m) => m.userId)
           .toSet();
+      final activeGroups = state.activeMemberGroups;
+      if (_selectedGroups.isEmpty && activeGroups.isNotEmpty) {
+        _selectedGroups.addAll(activeGroups);
+      }
       if (_splitType == SplitType.equal) {
         _percentages = {};
         _customAmounts = {};
@@ -510,7 +538,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Individual members
+        // Unified participant chips: individual members (not in any group) and
+        // persistent Member Groups are shown together and both are selectable.
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -537,63 +566,45 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   selectedColor: AppColors.primary.withValues(alpha: 0.15),
                   checkmarkColor: AppColors.primary,
                 ),
+            for (final g in memberGroups)
+              FilterChip(
+                avatar: MemberAvatar(
+                  name: state.memberName(g.ownerUserId) ?? '?',
+                  size: 22,
+                ),
+                label: Text(g.name),
+                labelStyle: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
+                selected: _selectedGroups.any((sg) => sg.id == g.id),
+                onSelected: isGroupSelectable(g) && !_saving
+                    ? (selected) => setState(() {
+                          if (selected) {
+                            _selectedGroups.add(g);
+                            // Auto-remove any individual users (owner + members)
+                            // that are represented by this group
+                            for (final id in g.allUserIds) {
+                              _participants.remove(id);
+                              _percentages.remove(id);
+                              _customAmounts.remove(id);
+                              _shareUnits.remove(id);
+                            }
+                          } else {
+                            _selectedGroups.removeWhere((sg) => sg.id == g.id);
+                          }
+                        })
+                    : null,
+                showCheckmark: false,
+                selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                checkmarkColor: AppColors.primary,
+                tooltip: g.memberIds.isNotEmpty
+                    ? '${context.l10n.groupMembers}: ${g.memberIds.map((id) => state.memberName(id) ?? id).join(', ')}'
+                    : null,
+              ),
           ],
         ),
-        const SizedBox(height: 16),
-        // Member Groups (persistent)
         if (memberGroups.isNotEmpty) ...[
-          Text(
-            context.l10n.memberGroups,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final g in memberGroups)
-                FilterChip(
-                  avatar: const Icon(
-                    Icons.groups_rounded,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
-                  label: Text(g.name),
-                  labelStyle: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  selected: _selectedGroups.any((sg) => sg.id == g.id),
-                  onSelected: isGroupSelectable(g) && !_saving
-                      ? (selected) => setState(() {
-                            if (selected) {
-                              _selectedGroups.add(g);
-                              // Auto-remove any individual users (owner + members)
-                              // that are represented by this group
-                              for (final id in g.allUserIds) {
-                                _participants.remove(id);
-                                _percentages.remove(id);
-                                _customAmounts.remove(id);
-                                _shareUnits.remove(id);
-                              }
-                            } else {
-                              _selectedGroups.removeWhere((sg) => sg.id == g.id);
-                            }
-                          })
-                      : null,
-                  showCheckmark: false,
-                  selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                  checkmarkColor: AppColors.primary,
-                  tooltip: g.memberIds.isNotEmpty
-                      ? '${context.l10n.groupMembers}: ${g.memberIds.map((id) => state.memberName(id) ?? id).join(', ')}'
-                      : null,
-                ),
-            ],
-          ),
           const SizedBox(height: 8),
           Text(
             context.l10n.groupCountsAsOneParticipant,
@@ -714,6 +725,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 party: parties[i],
                 label: _partyLabel(parties[i], state),
                 share: shares[i].amount,
+                state: state,
               ),
           ],
         );
@@ -768,6 +780,35 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     Expanded(
                       child: Text(
                         state.memberName(share.userId!) ?? '?',
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      formatMoney(share.amount),
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (share.isGroup)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    MemberAvatar(
+                      name: state.memberName(_ownerIdOf(share, state) ?? '') ?? '?',
+                      size: 26,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _groupNameOf(share, state),
                         style: const TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600,
@@ -1207,11 +1248,13 @@ class _PartyPreviewRow extends StatelessWidget {
   final SplitParty party;
   final String label;
   final Money share;
+  final AppState state;
 
   const _PartyPreviewRow({
     required this.party,
     required this.label,
     required this.share,
+    required this.state,
   });
 
   @override
@@ -1220,22 +1263,7 @@ class _PartyPreviewRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          if (party.isGroup)
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.group_outlined,
-                size: 16,
-                color: AppColors.primary,
-              ),
-            )
-          else
-            MemberAvatar(name: label, size: 28),
+          _PartyAvatar(party: party, state: state, size: 28),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -1272,18 +1300,17 @@ class _PartyAvatar extends StatelessWidget {
         size: size,
       );
     }
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.12),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        Icons.group_outlined,
-        size: size * 0.55,
-        color: AppColors.primary,
-      ),
-    );
+    // Group participant: show the group owner's avatar.
+    final ownerName =
+        state.memberName(_ownerIdForGroup(party) ?? '') ?? '?';
+    return MemberAvatar(name: ownerName, size: size);
+  }
+
+  String? _ownerIdForGroup(SplitParty party) {
+    for (final g in state.activeMemberGroups) {
+      if (g.id == party.id) return g.ownerUserId;
+    }
+    // Fall back to the first member if the group can't be resolved.
+    return party.userIds.isNotEmpty ? party.userIds.first : null;
   }
 }
