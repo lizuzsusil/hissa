@@ -128,6 +128,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
   final _nameController = TextEditingController();
   final _nameFocus = FocusNode();
   String? _nameError;
+  bool _saving = false;
   int _iconIndex = 0;
   int _colorIndex = 0;
 
@@ -180,6 +181,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
   }
 
   void _addCategory() {
+    if (_saving) return;
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       setState(() => _nameError = context.l10n.enterCategoryNameError);
@@ -196,6 +198,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
       setState(() => _nameError = context.l10n.duplicateCategoryError);
       return;
     }
+    setState(() => _saving = true);
     context.read<AppState>().addCategory(
           name,
           _icons[_iconIndex],
@@ -224,6 +227,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
           TextField(
             controller: _nameController,
             focusNode: _nameFocus,
+            enabled: !_saving,
             textCapitalization: TextCapitalization.words,
             autofocus: true,
             decoration: InputDecoration(
@@ -252,7 +256,9 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: GestureDetector(
-                      onTap: () => setState(() => _iconIndex = i),
+                      onTap: _saving
+                          ? null
+                          : () => setState(() => _iconIndex = i),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         width: 46,
@@ -291,7 +297,9 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
             children: [
               for (var i = 0; i < _colors.length; i++)
                 GestureDetector(
-                  onTap: () => setState(() => _colorIndex = i),
+                  onTap: _saving
+                      ? null
+                      : () => setState(() => _colorIndex = i),
                   child: ColorDot(
                     color: _colors[i],
                     selected: _colorIndex == i,
@@ -303,7 +311,10 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
           PrimaryButton(
             label: l10n.addCategory,
             icon: Icons.add_rounded,
-            onPressed: _nameController.text.trim().isEmpty ? null : _addCategory,
+            loading: _saving,
+            onPressed: _nameController.text.trim().isEmpty || _saving
+                ? null
+                : _addCategory,
           ),
         ],
       ),

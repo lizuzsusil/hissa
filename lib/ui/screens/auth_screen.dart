@@ -309,6 +309,7 @@ class _AuthScreenState extends State<AuthScreen> {
               if (_isSignUp) ...[
                 TextField(
                   controller: _nameController,
+                  enabled: !_loading,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: l10n.yourName,
@@ -323,6 +324,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ],
               TextField(
                 controller: _emailController,
+                enabled: !_loading,
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
                 decoration: InputDecoration(
@@ -340,14 +342,17 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 14),
               TextField(
                 controller: _passwordController,
+                enabled: !_loading,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: l10n.password,
                   prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18),
                   errorText: _passwordError,
                   suffixIcon: IconButton(
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: _loading
+                        ? null
+                        : () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
                     icon: Icon(
                       _obscurePassword
                           ? Icons.visibility_outlined
@@ -367,8 +372,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   children: [
                     Checkbox(
                       value: _rememberMe,
-                      onChanged: (value) =>
-                          setState(() => _rememberMe = value ?? false),
+                      onChanged: _loading
+                          ? null
+                          : (value) =>
+                              setState(() => _rememberMe = value ?? false),
                     ),
                     Text(
                       l10n.rememberMe,
@@ -437,17 +444,20 @@ class _AuthScreenState extends State<AuthScreen> {
               SecondaryButton(
                 label: l10n.continueWithGoogle,
                 leading: const GoogleLogo(size: 18),
+                loading: _loading,
                 onPressed: _loading ? null : _google,
               ),
               const SizedBox(height: 24),
               Center(
                 child: GestureDetector(
-                  onTap: () => setState(() {
-                    _isSignUp = !_isSignUp;
-                    _nameError = null;
-                    _emailError = null;
-                    _passwordError = null;
-                  }),
+                  onTap: _loading
+                      ? null
+                      : () => setState(() {
+                            _isSignUp = !_isSignUp;
+                            _nameError = null;
+                            _emailError = null;
+                            _passwordError = null;
+                          }),
                   child: RichText(
                     text: TextSpan(
                       style: TextStyle(

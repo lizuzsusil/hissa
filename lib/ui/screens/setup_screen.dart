@@ -191,7 +191,9 @@ class _SetupScreenState extends State<SetupScreen> {
               _Segmented(
                 options: [l10n.create, l10n.join],
                 index: _createMode ? 0 : 1,
-                onChanged: (i) => setState(() => _createMode = i == 0),
+                onChanged: _loading
+                    ? null
+                    : (i) => setState(() => _createMode = i == 0),
               ),
               const SizedBox(height: 28),
               if (_createMode) _buildCreate(isDark) else _buildJoin(isDark),
@@ -210,6 +212,7 @@ class _SetupScreenState extends State<SetupScreen> {
         TextField(
           controller: _nameController,
           focusNode: _nameFocus,
+          enabled: !_loading,
           textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
             labelText: l10n.spaceName,
@@ -241,7 +244,9 @@ class _SetupScreenState extends State<SetupScreen> {
                 title: l10n.splitMode,
                 subtitle: l10n.splitModeDescription,
                 selected: _mode == SpaceMode.split,
-                onTap: () => setState(() => _mode = SpaceMode.split),
+                onTap: _loading
+                    ? null
+                    : () => setState(() => _mode = SpaceMode.split),
               ),
             ),
             const SizedBox(width: 10),
@@ -251,7 +256,9 @@ class _SetupScreenState extends State<SetupScreen> {
                 title: l10n.personalMode,
                 subtitle: l10n.personalModeDescription,
                 selected: _mode == SpaceMode.solo,
-                onTap: () => setState(() => _mode = SpaceMode.solo),
+                onTap: _loading
+                    ? null
+                    : () => setState(() => _mode = SpaceMode.solo),
               ),
             ),
           ],
@@ -279,7 +286,9 @@ class _SetupScreenState extends State<SetupScreen> {
                     avatar: MemberAvatar(name: name, size: 24),
                     label: Text(name),
                     deleteIcon: const Icon(Icons.close, size: 16),
-                    onDeleted: () => setState(() => _members.remove(name)),
+                    onDeleted: _loading
+                        ? null
+                        : () => setState(() => _members.remove(name)),
                   ),
               ],
             ),
@@ -290,6 +299,7 @@ class _SetupScreenState extends State<SetupScreen> {
               Expanded(
                 child: TextField(
                   controller: _memberController,
+                  enabled: !_loading,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: l10n.addMember,
@@ -312,7 +322,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 background: AppColors.primary,
                 foreground: Colors.white,
                 size: 50,
-                onPressed: _addMember,
+                onPressed: _loading ? null : _addMember,
               ),
             ],
           ),
@@ -340,7 +350,9 @@ class _SetupScreenState extends State<SetupScreen> {
             DropdownMenuItem(value: 'INR', child: Text('INR - Indian Rupee')),
             DropdownMenuItem(value: 'EUR', child: Text('EUR - Euro')),
           ],
-          onChanged: (v) => setState(() => _currency = v ?? kDefaultCurrency),
+          onChanged: _loading
+              ? null
+              : (v) => setState(() => _currency = v ?? kDefaultCurrency),
         ),
         const SizedBox(height: 28),
         PrimaryButton(
@@ -370,6 +382,7 @@ class _SetupScreenState extends State<SetupScreen> {
       children: [
         TextField(
           controller: _codeController,
+          enabled: !_loading,
           textCapitalization: TextCapitalization.characters,
           textAlign: TextAlign.center,
           style: const TextStyle(
@@ -415,14 +428,14 @@ class _ModeCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _ModeCard({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.selected,
-    required this.onTap,
+    this.onTap,
   });
 
   @override
@@ -498,12 +511,12 @@ class _ModeCard extends StatelessWidget {
 class _Segmented extends StatelessWidget {
   final List<String> options;
   final int index;
-  final ValueChanged<int> onChanged;
+  final ValueChanged<int>? onChanged;
 
   const _Segmented({
     required this.options,
     required this.index,
-    required this.onChanged,
+    this.onChanged,
   });
 
   @override
@@ -520,7 +533,7 @@ class _Segmented extends StatelessWidget {
           for (var i = 0; i < options.length; i++)
             Expanded(
               child: GestureDetector(
-                onTap: () => onChanged(i),
+                onTap: onChanged == null ? null : () => onChanged!(i),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(vertical: 11),

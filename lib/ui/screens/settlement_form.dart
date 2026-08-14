@@ -159,21 +159,25 @@ class _SettlementFormState extends State<SettlementForm> {
               ChoiceChip(
                 label: Text(method),
                 selected: _method == method,
-                onSelected: (_) => setState(() => _method = method),
+                onSelected: _saving
+                    ? null
+                    : (_) => setState(() => _method = method),
               ),
           ],
         ),
         const SizedBox(height: 16),
         GestureDetector(
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: _date,
-              firstDate: DateTime(2020),
-              lastDate: DateTime(2030),
-            );
-            if (picked != null) setState(() => _date = picked);
-          },
+          onTap: _saving
+              ? null
+              : () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _date,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                  );
+                  if (picked != null) setState(() => _date = picked);
+                },
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -199,6 +203,7 @@ class _SettlementFormState extends State<SettlementForm> {
         const SizedBox(height: 16),
         TextField(
           controller: _noteController,
+          enabled: !_saving,
           decoration: InputDecoration(
             hintText: l10n.noteOptionalHint,
             suffixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),

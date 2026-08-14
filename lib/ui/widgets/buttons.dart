@@ -97,17 +97,21 @@ class SecondaryButton extends StatelessWidget {
   /// over [icon] when both are provided.
   final Widget? leading;
 
+  final bool loading;
+
   const SecondaryButton({
     super.key,
     required this.label,
     this.onPressed,
     this.icon,
     this.leading,
+    this.loading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final disabled = onPressed == null || loading;
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -122,36 +126,42 @@ class SecondaryButton extends StatelessWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(13),
-          onTap: onPressed,
+          onTap: disabled ? null : onPressed,
           child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (leading != null) ...[
-                  leading!,
-                  const SizedBox(width: 9),
-                ] else if (icon != null) ...[
-                  Icon(
-                    icon,
-                    size: 19,
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimary,
+            child: loading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2.4),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (leading != null) ...[
+                        leading!,
+                        const SizedBox(width: 9),
+                      ] else if (icon != null) ...[
+                        Icon(
+                          icon,
+                          size: 19,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimary,
+                        ),
+                        const SizedBox(width: 9),
+                      ],
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15.5,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 9),
-                ],
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15.5,
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

@@ -88,6 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextField(
             controller: _nameController,
             focusNode: _nameFocus,
+            enabled: !_saving,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
               suffixIcon: const Icon(Icons.badge_outlined, size: 18),

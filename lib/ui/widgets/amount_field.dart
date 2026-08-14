@@ -13,6 +13,7 @@ class AmountField extends StatefulWidget {
   final String? hint;
   final String? errorText;
   final bool autofocus;
+  final bool enabled;
 
   const AmountField({
     super.key,
@@ -22,6 +23,7 @@ class AmountField extends StatefulWidget {
     this.hint,
     this.errorText,
     this.autofocus = false,
+    this.enabled = true,
   });
 
   @override
@@ -103,6 +105,7 @@ class _AmountFieldState extends State<AmountField> {
         TextField(
           controller: _controller,
           autofocus: widget.autofocus,
+          enabled: widget.enabled,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),

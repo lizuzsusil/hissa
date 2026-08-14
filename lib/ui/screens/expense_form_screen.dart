@@ -40,6 +40,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   Map<String, Money> _customAmounts = {};
   Map<String, int> _shareUnits = {};
   bool _attemptedSave = false;
+  bool _saving = false;
   String? _descriptionError;
 
   bool get _isEdit => widget.expense != null;
@@ -163,6 +164,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               value: _amount,
               label: l10n.amount,
               autofocus: !_isEdit,
+              enabled: !_saving,
               errorText: _attemptedSave && _amount.isZero
                   ? l10n.expenseAmountError
                   : null,
@@ -171,6 +173,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
+              enabled: !_saving,
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 labelText: l10n.description,
@@ -209,6 +212,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             const SizedBox(height: 10),
             TextField(
               controller: _noteController,
+              enabled: !_saving,
               maxLines: 2,
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
@@ -258,7 +262,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             PrimaryButton(
               label: _isEdit ? l10n.saveChanges : l10n.addExpense,
               icon: _isEdit ? Icons.save_rounded : Icons.add_rounded,
-              onPressed: _save,
+              loading: _saving,
+              onPressed: _saving ? null : _save,
             ),
           ],
         ),
@@ -275,7 +280,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       final selected = _categoryId == c.id;
 
       return GestureDetector(
-        onTap: () => setState(() => _categoryId = c.id),
+        onTap: _saving ? null : () => setState(() => _categoryId = c.id),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -397,15 +402,17 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 
   Widget _buildDatePicker(bool isDark) {
     return GestureDetector(
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: _date,
-          firstDate: DateTime(2020),
-          lastDate: DateTime(2030),
-        );
-        if (picked != null) setState(() => _date = picked);
-      },
+      onTap: _saving
+          ? null
+          : () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _date,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+              );
+              if (picked != null) setState(() => _date = picked);
+            },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
@@ -442,17 +449,19 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             avatar: MemberAvatar(name: m.name, size: 22),
             label: Text(m.name),
             selected: _participants.contains(m.userId),
-            onSelected: (selected) => setState(() {
-              if (selected) {
-                _participants.add(m.userId);
-              } else {
-                _participants.remove(m.userId);
-                _percentages.remove(m.userId);
-                _customAmounts.remove(m.userId);
-                _shareUnits.remove(m.userId);
-                _removeUserFromGroups(m.userId);
-              }
-            }),
+            onSelected: _saving
+                ? null
+                : (selected) => setState(() {
+                      if (selected) {
+                        _participants.add(m.userId);
+                      } else {
+                        _participants.remove(m.userId);
+                        _percentages.remove(m.userId);
+                        _customAmounts.remove(m.userId);
+                        _shareUnits.remove(m.userId);
+                        _removeUserFromGroups(m.userId);
+                      }
+                    }),
           ),
       ],
     );
@@ -507,9 +516,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     color: AppColors.primary,
                   ),
                   label: Text(_groups[i].name),
-                  onDeleted: () => setState(() {
-                    _groups.removeAt(i);
-                  }),
+                  onDeleted: _saving
+                      ? null
+                      : () => setState(() {
+                            _groups.removeAt(i);
+                          }),
                   deleteButtonTooltipMessage: l10n.ungroup,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.08),
                   side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
@@ -519,7 +530,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           const SizedBox(height: 10),
         ],
         TextButton.icon(
-          onPressed: selectable.length >= 2
+          onPressed: !_saving && selectable.length >= 2
               ? () => _openGroupPicker(state, selectable)
               : null,
           icon: const Icon(Icons.group_add_outlined, size: 18),
@@ -616,7 +627,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           for (final type in SplitType.values)
             Expanded(
               child: GestureDetector(
-                onTap: () => setState(() => _splitType = type),
+                onTap: _saving ? null : () => setState(() => _splitType = type),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
                   padding: const EdgeInsets.symmetric(vertical: 10),
@@ -813,6 +824,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     final l10n = context.l10n;
     setState(() {
       _attemptedSave = true;
@@ -822,81 +834,86 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     });
     final state = context.read<AppState>();
     if (!_canSave(state, l10n)) return;
+    setState(() => _saving = true);
     final expense = widget.expense;
-    if (state.isPersonalMode) {
+    try {
+      if (state.isPersonalMode) {
+        if (expense == null) {
+          await state.addPersonalExpense(
+            description: _descriptionController.text,
+            amount: _amount,
+            date: _date,
+            categoryId: _categoryId,
+            note: _noteController.text,
+          );
+        } else {
+          await state.updatePersonalExpense(
+            expense,
+            description: _descriptionController.text,
+            amount: _amount,
+            date: _date,
+            categoryId: _categoryId,
+            note: _noteController.text,
+          );
+        }
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+      final participants = _participants.toList();
+      final groups = _groups.map((g) {
+        // The party-level config is restored on edit from the expense; for a new
+        // expense the id is assigned by the repository.
+        final percentage = _splitType == SplitType.percentage
+            ? _percentages[g.id]
+            : null;
+        final shares = _splitType == SplitType.shares ? _shareUnits[g.id] : null;
+        final custom = _splitType == SplitType.custom
+            ? _customAmounts[g.id]?.paisa
+            : null;
+        return ParticipantGroup(
+          id: g.id,
+          expenseId: g.expenseId,
+          name: g.name,
+          userIds: g.userIds,
+          percentage: percentage,
+          shares: shares,
+          customAmountPaisa: custom,
+        );
+      }).toList();
       if (expense == null) {
-        await state.addPersonalExpense(
+        await state.addExpense(
           description: _descriptionController.text,
           amount: _amount,
           date: _date,
           categoryId: _categoryId,
           note: _noteController.text,
+          participantIds: participants,
+          groups: groups,
+          splitType: _splitType,
+          percentages: _percentages,
+          customAmounts: _customAmounts,
+          shareUnits: _shareUnits,
         );
       } else {
-        await state.updatePersonalExpense(
+        await state.updateExpense(
           expense,
           description: _descriptionController.text,
           amount: _amount,
           date: _date,
           categoryId: _categoryId,
           note: _noteController.text,
+          participantIds: participants,
+          groups: groups,
+          splitType: _splitType,
+          percentages: _percentages,
+          customAmounts: _customAmounts,
+          shareUnits: _shareUnits,
         );
       }
       if (mounted) Navigator.of(context).pop();
-      return;
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    final participants = _participants.toList();
-    final groups = _groups.map((g) {
-      // The party-level config is restored on edit from the expense; for a new
-      // expense the id is assigned by the repository.
-      final percentage = _splitType == SplitType.percentage
-          ? _percentages[g.id]
-          : null;
-      final shares = _splitType == SplitType.shares ? _shareUnits[g.id] : null;
-      final custom = _splitType == SplitType.custom
-          ? _customAmounts[g.id]?.paisa
-          : null;
-      return ParticipantGroup(
-        id: g.id,
-        expenseId: g.expenseId,
-        name: g.name,
-        userIds: g.userIds,
-        percentage: percentage,
-        shares: shares,
-        customAmountPaisa: custom,
-      );
-    }).toList();
-    if (expense == null) {
-      await state.addExpense(
-        description: _descriptionController.text,
-        amount: _amount,
-        date: _date,
-        categoryId: _categoryId,
-        note: _noteController.text,
-        participantIds: participants,
-        groups: groups,
-        splitType: _splitType,
-        percentages: _percentages,
-        customAmounts: _customAmounts,
-        shareUnits: _shareUnits,
-      );
-    } else {
-      await state.updateExpense(
-        expense,
-        description: _descriptionController.text,
-        amount: _amount,
-        date: _date,
-        categoryId: _categoryId,
-        note: _noteController.text,
-        participantIds: participants,
-        groups: groups,
-        splitType: _splitType,
-        percentages: _percentages,
-        customAmounts: _customAmounts,
-        shareUnits: _shareUnits,
-      );
-    }
-    if (mounted) Navigator.of(context).pop();
   }
 
   // ---- split type inputs ----
@@ -925,6 +942,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   width: 78,
                   child: TextField(
                     key: ValueKey('pct_${p.id}'),
+                    enabled: !_saving,
                     keyboardType: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
@@ -1000,6 +1018,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   width: 120,
                   child: TextField(
                     key: ValueKey('amt_${p.id}'),
+                    enabled: !_saving,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -1088,12 +1107,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 ),
                 const SizedBox(width: 12),
                 IconButton(
-                  onPressed: () {
-                    setState(() {
-                      final current = _shareUnits[p.id] ?? 1;
-                      _shareUnits[p.id] = current > 1 ? current - 1 : 1;
-                    });
-                  },
+                  onPressed: _saving
+                      ? null
+                      : () {
+                          setState(() {
+                            final current = _shareUnits[p.id] ?? 1;
+                            _shareUnits[p.id] = current > 1 ? current - 1 : 1;
+                          });
+                        },
                   icon: const Icon(Icons.remove_circle_outline_rounded),
                 ),
                 Text(
@@ -1104,11 +1125,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   ),
                 ),
                 IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _shareUnits[p.id] = (_shareUnits[p.id] ?? 1) + 1;
-                    });
-                  },
+                  onPressed: _saving
+                      ? null
+                      : () {
+                          setState(() {
+                            _shareUnits[p.id] = (_shareUnits[p.id] ?? 1) + 1;
+                          });
+                        },
                   icon: const Icon(Icons.add_circle_outline_rounded),
                 ),
               ],
