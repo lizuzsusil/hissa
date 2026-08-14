@@ -17,6 +17,7 @@ class InMemoryRepository implements ExpenseRepository {
   final List<Category> _categories = [];
   final List<MemberGroup> _memberGroups = [];
   final List<MemberGroupMember> _memberGroupMembers = [];
+  final List<GroupRequest> _groupRequests = [];
 
   @override
   List<User> get users => List.unmodifiable(_users);
@@ -48,6 +49,9 @@ class InMemoryRepository implements ExpenseRepository {
   @override
   List<MemberGroupMember> get memberGroupMembers =>
       List.unmodifiable(_memberGroupMembers);
+
+  @override
+  List<GroupRequest> get groupRequests => List.unmodifiable(_groupRequests);
 
   @override
   Future<void> saveUser(User user) async {
@@ -165,6 +169,23 @@ class InMemoryRepository implements ExpenseRepository {
   Future<void> deleteMemberGroup(String groupId) async {
     _memberGroups.removeWhere((g) => g.id == groupId);
     _memberGroupMembers.removeWhere((m) => m.groupId == groupId);
+  }
+
+  @override
+  Future<void> saveGroupRequest(GroupRequest request) async {
+    _groupRequests.removeWhere((r) => r.id == request.id);
+    _groupRequests.add(request);
+  }
+
+  @override
+  Future<void> updateGroupRequestStatus(
+    String requestId,
+    GroupRequestStatus status,
+  ) async {
+    final i = _groupRequests.indexWhere((r) => r.id == requestId);
+    if (i >= 0) {
+      _groupRequests[i] = _groupRequests[i].copyWith(status: status);
+    }
   }
 
   @override

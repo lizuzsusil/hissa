@@ -1544,6 +1544,138 @@ abstract class AppLocalizations {
   /// **'Create a group to combine members into a single participant when splitting expenses.'**
   String get noMemberGroupsDescription;
 
+  /// No description provided for @onlyOwnerCanCreateGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the space owner can create member groups.'**
+  String get onlyOwnerCanCreateGroups;
+
+  /// No description provided for @requestGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Request a group'**
+  String get requestGroup;
+
+  /// No description provided for @requestGroupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the space owner to create a group containing you and the members you choose. Only the owner can create groups.'**
+  String get requestGroupDescription;
+
+  /// No description provided for @requestGroupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Member Group'**
+  String get requestGroupTitle;
+
+  /// No description provided for @requestGroupMembersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose members to group with you. The group will be owned by you.'**
+  String get requestGroupMembersHint;
+
+  /// No description provided for @groupRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Group request sent to the owner'**
+  String get groupRequested;
+
+  /// No description provided for @groupRequestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send group request'**
+  String get groupRequestFailed;
+
+  /// No description provided for @groupRequestAlreadyPending.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have a pending group request.'**
+  String get groupRequestAlreadyPending;
+
+  /// No description provided for @noMembersToRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'No other members are available to group with'**
+  String get noMembersToRequest;
+
+  /// No description provided for @requestGroupUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Member groups need at least three members in this space.'**
+  String get requestGroupUnavailable;
+
+  /// No description provided for @pendingGroupRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending group requests'**
+  String get pendingGroupRequests;
+
+  /// No description provided for @pendingGroupRequestsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Members have asked you to create a group for them. Approving creates the group owned by the requester.'**
+  String get pendingGroupRequestsDescription;
+
+  /// No description provided for @noPendingGroupRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending group requests'**
+  String get noPendingGroupRequests;
+
+  /// No description provided for @requestedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested by'**
+  String get requestedBy;
+
+  /// No description provided for @groupRequestApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Group created'**
+  String get groupRequestApproved;
+
+  /// No description provided for @groupRequestApprovedFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to approve request'**
+  String get groupRequestApprovedFail;
+
+  /// No description provided for @groupRequestRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Request rejected'**
+  String get groupRequestRejected;
+
+  /// No description provided for @groupRequestRejectFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to reject request'**
+  String get groupRequestRejectFail;
+
+  /// No description provided for @approve.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approve;
+
+  /// No description provided for @reject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// No description provided for @groupCreationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Member groups need at least three members in this space.'**
+  String get groupCreationUnavailable;
+
+  /// No description provided for @alreadyInGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'You already belong to a member group.'**
+  String get alreadyInGroup;
+
   /// No description provided for @createMemberGroup.
   ///
   /// In en, this message translates to:
@@ -1687,6 +1819,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No members available to add'**
   String get noMembersAvailableToAdd;
+
+  /// No description provided for @groupFull.
+  ///
+  /// In en, this message translates to:
+  /// **'This group has reached its maximum size. Remove a member before adding another.'**
+  String get groupFull;
 
   /// No description provided for @groupMembers.
   ///

@@ -28,6 +28,15 @@ service cloud.firestore {
       );
     }
 
+    // Whether the signed-in user is the owner (highest role) of `spaceId`.
+    function spaceOwner(spaceId) {
+      return spaceId != null && exists(
+        /databases/$(database)/documents/spaceMembers/$(spaceId + '_' + request.auth.uid)
+      ) && get(
+        /databases/$(database)/documents/spaceMembers/$(spaceId + '_' + request.auth.uid)
+      ).data.role == 'owner';
+    }
+
     // Whether `groupId` belongs to `spaceId`.
     function groupInSpace(spaceId, groupId) {
       return groupId != null && exists(
@@ -164,7 +173,13 @@ service cloud.firestore {
 
       allow create: if signedIn()
         && memberOf(request.resource.data.spaceId)
-        && request.resource.data.ownerUserId == request.auth.uid;
+        && spaceOwner(request.resource.data.spaceId)
+        // The Space owner creates a group, either owned by themselves or by
+        // another member when approving that member's group request (Rule 5).
+        && memberById(
+          request.resource.data.spaceId,
+          request.resource.data.ownerUserId
+        );
 
       // Only the owner may modify a group, and the owner/Space are immutable so
       // ownership can never be silently transferred (Phase 1, §52).
@@ -202,6 +217,33 @@ service cloud.firestore {
       allow delete: if signedIn()
         && memberOf(resource.data.spaceId)
         && groupOwner(resource.data.groupId);
+    }
+
+    match /groupRequests/{requestId} {
+      // Only the requester, the Space owner, and other members of the Space may
+      // read a request.
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
+      // A non-owner member may submit a request on their own behalf. It must be
+      // created as pending, and the requester must not be the Space owner.
+      allow create: if signedIn()
+        && memberOf(request.resource.data.spaceId)
+        && request.resource.data.requesterUserId == request.auth.uid
+        && !spaceOwner(request.resource.data.spaceId)
+        && request.resource.data.status == 'pending';
+
+      // Only the Space owner may approve or reject a request (Rule 5). A
+      // request can only change its status, never its requester.
+      allow update: if signedIn()
+        && memberOf(resource.data.spaceId)
+        && spaceOwner(resource.data.spaceId)
+        && request.resource.data.requesterUserId == resource.data.requesterUserId
+        && request.resource.data.status in ['approved', 'rejected'];
+
+      allow delete: if signedIn()
+        && memberOf(resource.data.spaceId)
+        && spaceOwner(resource.data.spaceId);
     }
   }
 }

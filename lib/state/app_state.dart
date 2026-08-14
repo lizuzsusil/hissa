@@ -1139,6 +1139,161 @@ class AppState extends ChangeNotifier {
     return _repo.memberGroups.where((g) => g.id == id).firstOrNull?.name;
   }
 
+  /// Active Member Groups in the currently selected Space.
+  List<MemberGroup> get activeMemberGroups {
+    final sid = _spaceId;
+    return _repo.memberGroups
+        .where((g) => g.spaceId == sid && g.isActive)
+        .toList();
+  }
+
+  /// Every user ID (owner + members) represented by any active Member Group in
+  /// the current Space. Used to prevent double counting and to exclude grouped
+  /// users from being treated as individual split participants (Rule 8).
+  Set<String> get groupedUserIds {
+    final ids = <String>{};
+    for (final g in activeMemberGroups) {
+      ids.addAll(g.allUserIds);
+    }
+    return ids;
+  }
+
+  /// Whether Member Group functionality applies to the current Space. Groups
+  /// require at least three members; a two-member Space cannot form a
+  /// meaningful group, so group creation is disabled (Rule 3 / Rule 11).
+  bool get memberGroupsApplicable => members.length >= 3;
+
+  /// The maximum number of users a single Member Group may contain, including
+  /// the group owner. A group can hold at most (space members - 1) users so at
+  /// least one member always remains ungrouped (e.g. a 4-user space allows
+  /// groups of up to 3, a 5-user space up to 4). Groups need at least 2 users
+  /// (owner + 1), which is guaranteed whenever the space has >= 3 members.
+  int get maxGroupMembers => members.length - 1;
+
+  /// The number of users (excluding the group owner) that may still be added to
+  /// a group that currently has [currentMemberCount] member rows.
+  int groupMemberSlotsRemaining(int currentMemberCount) =>
+      maxGroupMembers - 1 - currentMemberCount;
+
+  /// Pending (unresolved) Member Group creation requests in the current Space.
+  List<GroupRequest> get pendingGroupRequests {
+    final sid = _spaceId;
+    return _repo.groupRequests
+        .where((r) => r.spaceId == sid && r.status == GroupRequestStatus.pending)
+        .toList();
+  }
+
+  /// All Member Group creation requests in the current Space.
+  List<GroupRequest> get groupRequests {
+    final sid = _spaceId;
+    return _repo.groupRequests.where((r) => r.spaceId == sid).toList();
+  }
+
+  /// Whether [userId] has a pending group creation request already. Prevents a
+  /// non-owner from spamming duplicate requests.
+  bool hasPendingGroupRequest(String userId) => pendingGroupRequests
+      .any((r) => r.requesterUserId == userId);
+
+  /// Whether the current user is eligible to submit a group creation request:
+  /// they must be a non-owner in a Space with at least three members, must not
+  /// already belong to an active group, and must have at least one other
+  /// ungrouped member they can group with.
+  bool get canRequestGroup =>
+      !isOwner &&
+      memberGroupsApplicable &&
+      !groupedUserIds.contains(currentUser?.id) &&
+      requestableGroupMembers.isNotEmpty;
+
+  /// Members the current user could still add to a requested group. Excludes
+  /// the current user, the Space owner, and anyone already in an active group.
+  List<SpaceMember> get requestableGroupMembers {
+    final me = currentUser?.id;
+    final grouped = groupedUserIds;
+    return members
+        .where((m) => m.userId != me)
+        .where((m) => m.role != MemberRole.owner)
+        .where((m) => !grouped.contains(m.userId))
+        .toList();
+  }
+
+  /// Submits a pending request to create a Member Group containing the current
+  /// user plus [memberUserIds]. Returns the created request, or null if the
+  /// current user is not eligible.
+  Future<GroupRequest?> requestGroup(List<String> memberUserIds) async {
+    final me = currentUser;
+    final sid = _spaceId;
+    if (me == null || sid == null || !canRequestGroup) return null;
+    if (hasPendingGroupRequest(me.id)) return null;
+    // Rule: a group can hold at most (space members - 1) users including the
+    // requester, so the requested member count must fit within the cap.
+    if (memberUserIds.length > maxGroupMembers - 1) return null;
+    final request = GroupRequest(
+      id: genId(8),
+      spaceId: sid,
+      requesterUserId: me.id,
+      memberUserIds: List.of(memberUserIds),
+      status: GroupRequestStatus.pending,
+      createdAt: DateTime.now(),
+    );
+    await _repo.saveGroupRequest(request);
+    notifyListeners();
+    return request;
+  }
+
+  /// Approves [requestId] by creating a Member Group owned by the requester
+  /// with the requested members. Only the Space owner may approve. Returns the
+  /// created group, or null if the request is invalid or cannot be satisfied.
+  Future<MemberGroup?> approveGroupRequest(String requestId) async {
+    if (!isOwner) return null;
+    final request =
+        _repo.groupRequests.where((r) => r.id == requestId).firstOrNull;
+    if (request == null || request.status != GroupRequestStatus.pending) {
+      return null;
+    }
+    // Rule 2 (one group per user): reject a stale request if any of its users
+    // already belongs to an active group, so approval can never put a user
+    // (including the owner) into a second group.
+    final alreadyGrouped = groupedUserIds;
+    final involved = [request.requesterUserId, ...request.memberUserIds];
+    if (involved.any(alreadyGrouped.contains)) return null;
+    // Rule: a group can hold at most (space members - 1) users including the
+    // requester/owner; reject a request that exceeds the cap.
+    if (involved.length > maxGroupMembers) return null;
+    final now = DateTime.now();
+    final group = MemberGroup(
+      id: genId(8),
+      spaceId: request.spaceId,
+      ownerUserId: request.requesterUserId,
+      name: _groupNameForMembers(request.requesterUserId, request.memberUserIds),
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await _repo.saveMemberGroup(group);
+    for (final uid in request.memberUserIds) {
+      await _repo.addGroupMember(group.id, uid);
+    }
+    await _repo.updateGroupRequestStatus(requestId, GroupRequestStatus.approved);
+    notifyListeners();
+    return group;
+  }
+
+  /// Rejects [requestId]. Only the Space owner may reject.
+  Future<void> rejectGroupRequest(String requestId) async {
+    if (!isOwner) return;
+    await _repo.updateGroupRequestStatus(requestId, GroupRequestStatus.rejected);
+    notifyListeners();
+  }
+
+  String _groupNameForMembers(String requesterId, List<String> memberIds) {
+    final names = <String>[];
+    for (final id in [requesterId, ...memberIds]) {
+      final name = members.where((m) => m.userId == id).firstOrNull?.name;
+      if (name != null) names.add(name);
+    }
+    return names.join(', ');
+  }
+
   /// The profile photo for [userId], resolved from the user profile first and
   /// falling back to the member record (which may lag behind the profile).
   String? memberAvatarUrl(String userId) {

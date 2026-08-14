@@ -736,6 +736,64 @@ class MemberGroupMember {
       );
 }
 
+/// A non-owner's request for the Space owner to create a Member Group
+/// involving specific Space members (Rule 4 / Rule 5). The requester becomes
+/// the group's owner when the request is approved.
+///
+/// Persisted in the `groupRequests/{id}` Firestore collection.
+class GroupRequest {
+  final String id;
+  final String spaceId;
+  final String requesterUserId;
+  final List<String> memberUserIds;
+
+  /// The users the requester wants in their group. The requester is the owner
+  /// and is never listed here; these are the other members to group.
+  final GroupRequestStatus status;
+  final DateTime createdAt;
+
+  const GroupRequest({
+    required this.id,
+    required this.spaceId,
+    required this.requesterUserId,
+    required this.memberUserIds,
+    this.status = GroupRequestStatus.pending,
+    required this.createdAt,
+  });
+
+  GroupRequest copyWith({GroupRequestStatus? status}) {
+    return GroupRequest(
+      id: id,
+      spaceId: spaceId,
+      requesterUserId: requesterUserId,
+      memberUserIds: memberUserIds,
+      status: status ?? this.status,
+      createdAt: createdAt,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'spaceId': spaceId,
+        'requesterUserId': requesterUserId,
+        'memberUserIds': memberUserIds,
+        'status': status.name,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory GroupRequest.fromJson(Map<String, dynamic> json) => GroupRequest(
+        id: json['id'] as String,
+        spaceId: json['spaceId'] as String,
+        requesterUserId: json['requesterUserId'] as String,
+        memberUserIds:
+            (json['memberUserIds'] as List).cast<String>().toList(),
+        status: GroupRequestStatus.values.byName(
+          json['status'] as String? ?? GroupRequestStatus.pending.name,
+        ),
+        createdAt: DateTime.parse(json['createdAt'] as String),
+      );
+}
+
 /// Immutable snapshot of a Member Group's membership at the time an expense
 /// used it as a participant (Phase 2). Keeps historical expenses auditable and
 /// independent from the group's current configuration.

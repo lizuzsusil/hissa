@@ -15,6 +15,7 @@ abstract class ExpenseRepository {
   List<Category> get categories;
   List<MemberGroup> get memberGroups;
   List<MemberGroupMember> get memberGroupMembers;
+  List<GroupRequest> get groupRequests;
 
   Future<void> saveUser(User user);
   Future<void> saveSpace(Space space);
@@ -38,6 +39,12 @@ abstract class ExpenseRepository {
 
   /// Removes [userId] from [groupId]. Removing the owner is rejected.
   Future<void> removeGroupMember(String groupId, String userId);
+
+  /// Records a non-owner's request to create a Member Group (Rule 4).
+  Future<void> saveGroupRequest(GroupRequest request);
+
+  /// Updates a group creation request's status (owner approves/rejects).
+  Future<void> updateGroupRequestStatus(String requestId, GroupRequestStatus status);
 
   /// Marks [groupId] inactive (deleted) without touching historical expenses.
   Future<void> deleteMemberGroup(String groupId);

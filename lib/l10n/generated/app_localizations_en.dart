@@ -832,6 +832,80 @@ class AppLocalizationsEn extends AppLocalizations {
       'Create a group to combine members into a single participant when splitting expenses.';
 
   @override
+  String get onlyOwnerCanCreateGroups =>
+      'Only the space owner can create member groups.';
+
+  @override
+  String get requestGroup => 'Request a group';
+
+  @override
+  String get requestGroupDescription =>
+      'Ask the space owner to create a group containing you and the members you choose. Only the owner can create groups.';
+
+  @override
+  String get requestGroupTitle => 'Request Member Group';
+
+  @override
+  String get requestGroupMembersHint =>
+      'Choose members to group with you. The group will be owned by you.';
+
+  @override
+  String get groupRequested => 'Group request sent to the owner';
+
+  @override
+  String get groupRequestFailed => 'Failed to send group request';
+
+  @override
+  String get groupRequestAlreadyPending =>
+      'You already have a pending group request.';
+
+  @override
+  String get noMembersToRequest =>
+      'No other members are available to group with';
+
+  @override
+  String get requestGroupUnavailable =>
+      'Member groups need at least three members in this space.';
+
+  @override
+  String get pendingGroupRequests => 'Pending group requests';
+
+  @override
+  String get pendingGroupRequestsDescription =>
+      'Members have asked you to create a group for them. Approving creates the group owned by the requester.';
+
+  @override
+  String get noPendingGroupRequests => 'No pending group requests';
+
+  @override
+  String get requestedBy => 'Requested by';
+
+  @override
+  String get groupRequestApproved => 'Group created';
+
+  @override
+  String get groupRequestApprovedFail => 'Failed to approve request';
+
+  @override
+  String get groupRequestRejected => 'Request rejected';
+
+  @override
+  String get groupRequestRejectFail => 'Failed to reject request';
+
+  @override
+  String get approve => 'Approve';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get groupCreationUnavailable =>
+      'Member groups need at least three members in this space.';
+
+  @override
+  String get alreadyInGroup => 'You already belong to a member group.';
+
+  @override
   String get createMemberGroup => 'Create Member Group';
 
   @override
@@ -908,6 +982,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noMembersAvailableToAdd => 'No members available to add';
+
+  @override
+  String get groupFull =>
+      'This group has reached its maximum size. Remove a member before adding another.';
 
   @override
   String get groupMembers => 'Members';

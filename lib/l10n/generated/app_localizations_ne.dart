@@ -831,6 +831,81 @@ class AppLocalizationsNe extends AppLocalizations {
       'खर्च विभाजन गर्दा सदस्यहरूलाई एकल भागीदारको रूपमा जोड्न समूह बन्नुहोस्।';
 
   @override
+  String get onlyOwnerCanCreateGroups =>
+      'स्पेस मालिकले मात्र सदस्य समूह बनाउन सक्छन्।';
+
+  @override
+  String get requestGroup => 'समूह अनुरोध गर्नुहोस्';
+
+  @override
+  String get requestGroupDescription =>
+      'स्पेस मालिकलाई तपाई र तपाईले छान्नुभएका सदस्यहरू समावेश गर्ने समूह बनाउन अनुरोध गर्नुहोस्। समूह मालिकले मात्र बनाउन सक्छन्।';
+
+  @override
+  String get requestGroupTitle => 'सदस्य समूह अनुरोध';
+
+  @override
+  String get requestGroupMembersHint =>
+      'तपाईसँग समूहमा रहनका लागि सदस्यहरू छान्नुहोस्। समूहको स्वामी तपाई हुनेछ।';
+
+  @override
+  String get groupRequested => 'समूह अनुरोध मालिकलाई पठाइयो';
+
+  @override
+  String get groupRequestFailed => 'समूह अनुरोध पठाउन असफल';
+
+  @override
+  String get groupRequestAlreadyPending =>
+      'तपाईको एउटा अनुरोध पहिले नै पर्खाइमा छ।';
+
+  @override
+  String get noMembersToRequest =>
+      'समूहमा जोड्नका लागि अन्य सदस्यहरू उपलब्ध छैनन्';
+
+  @override
+  String get requestGroupUnavailable =>
+      'सदस्य समूहका लागि यस स्पेसमा कम्तिमा तीन सदस्य चाहिन्छ।';
+
+  @override
+  String get pendingGroupRequests => 'पर्खाइमा रहेका समूह अनुरोधहरू';
+
+  @override
+  String get pendingGroupRequestsDescription =>
+      'सदस्यहरूले तपाईलाई समूह बनाउन अनुरोध गरेका छन्। स्वीकृत गर्दा अनुरोधकर्ताको स्वामित्वमा समूह बन्छ।';
+
+  @override
+  String get noPendingGroupRequests =>
+      'कुनै पर्खाइमा रहेका समूह अनुरोधहरू छैनन्';
+
+  @override
+  String get requestedBy => 'अनुरोधकर्ता';
+
+  @override
+  String get groupRequestApproved => 'समूह बनेको';
+
+  @override
+  String get groupRequestApprovedFail => 'अनुरोध स्वीकृत गर्न असफल';
+
+  @override
+  String get groupRequestRejected => 'अनुरोध अस्वीकृत';
+
+  @override
+  String get groupRequestRejectFail => 'अनुरोध अस्वीकृत गर्न असफल';
+
+  @override
+  String get approve => 'स्वीकृत';
+
+  @override
+  String get reject => 'अस्वीकृत';
+
+  @override
+  String get groupCreationUnavailable =>
+      'सदस्य समूहका लागि यस स्पेसमा कम्तिमा तीन सदस्य चाहिन्छ।';
+
+  @override
+  String get alreadyInGroup => 'तपाई पहिले नै सदस्य समूहमा हुनुहुन्छ।';
+
+  @override
   String get createMemberGroup => 'सदस्य समूह बन्नुहोस्';
 
   @override
@@ -907,6 +982,10 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get noMembersAvailableToAdd => 'थप्नका लागि सदस्यहरू उपलब्ध छैनन्';
+
+  @override
+  String get groupFull =>
+      'यो समूह आफ्नो अधिकतम आकारमा पुगेको छ। अर्को थप्नु अघि एउटा सदस्य हटाउनुहोस्।';
 
   @override
   String get groupMembers => 'सदस्यहरू';

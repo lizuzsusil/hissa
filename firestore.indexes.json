@@ -21,6 +21,13 @@
       "fields": [
         { "fieldPath": "spaceId", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "groupRequests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "spaceId", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

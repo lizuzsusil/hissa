@@ -134,3 +134,23 @@ enum ExpenseParticipantType {
     return ExpenseParticipantType.user;
   }
 }
+
+/// The lifecycle of a non-owner's Member Group creation request. A non-owner
+/// requests a group involving specific Space members; the Space owner may then
+/// approve it (which creates the group) or reject it.
+enum GroupRequestStatus {
+  pending,
+  approved,
+  rejected;
+
+  String get label {
+    switch (this) {
+      case GroupRequestStatus.pending:
+        return 'Pending';
+      case GroupRequestStatus.approved:
+        return 'Approved';
+      case GroupRequestStatus.rejected:
+        return 'Rejected';
+    }
+  }
+}

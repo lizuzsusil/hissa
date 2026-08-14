@@ -24,6 +24,13 @@ class MemberGroupsScreen extends StatelessWidget {
     final l10n = context.l10n;
     final currentSpaceId = state.space?.id;
 
+    // Only the Space owner can create and manage member groups. Non-owners can
+    // view existing groups but cannot create new ones.
+    final isOwner = state.isOwner;
+
+    // Rule 3 / Rule 11: groups need at least three members to be meaningful.
+    final groupsApplicable = state.memberGroupsApplicable;
+
     final groups = state.repo.memberGroups
         .where((g) => g.spaceId == currentSpaceId)
         .toList()
@@ -31,22 +38,60 @@ class MemberGroupsScreen extends StatelessWidget {
 
     final activeGroups = groups.where((g) => g.isActive).toList();
 
+    // The owner can create groups only when the space is big enough, and only
+    // one group of their own: the owner cannot belong to multiple groups.
+    final ownerAlreadyGrouped =
+        state.groupedUserIds.contains(state.currentUserId);
+    final canCreate = isOwner && groupsApplicable && !ownerAlreadyGrouped;
+
+    // Non-owners can request a group for the owner to create (Rule 4).
+    final canRequest = state.canRequestGroup;
+
+    // Pending requests are shown to the owner for review (Rule 5).
+    final pendingRequests = state.pendingGroupRequests;
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.memberGroups)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         children: [
+          if (pendingRequests.isNotEmpty)
+            _PendingRequestsSection(
+              requests: pendingRequests,
+              state: state,
+            ),
           if (activeGroups.isEmpty) ...[
-            _EmptyState(onCreate: () => _openCreateGroupSheet(context, state)),
+            _EmptyState(
+              onCreate: canCreate
+                  ? () => _openCreateGroupSheet(context, state)
+                  : null,
+              canCreate: canCreate,
+              groupsUnavailable: !groupsApplicable,
+              onRequest: canRequest
+                  ? () => _openRequestGroupSheet(context, state)
+                  : null,
+              canRequest: canRequest,
+              ownerAlreadyGrouped: ownerAlreadyGrouped,
+            ),
           ] else ...[
             for (final group in activeGroups)
               _GroupCard(group: group, state: state, isDark: isDark),
-            const SizedBox(height: 20),
-            PrimaryButton(
-              label: l10n.createGroup,
-              icon: Icons.add_rounded,
-              onPressed: () => _openCreateGroupSheet(context, state),
-            ),
+            if (canCreate) ...[
+              const SizedBox(height: 20),
+              PrimaryButton(
+                label: l10n.createGroup,
+                icon: Icons.add_rounded,
+                onPressed: () => _openCreateGroupSheet(context, state),
+              ),
+            ],
+            if (canRequest) ...[
+              const SizedBox(height: 12),
+              PrimaryButton(
+                label: l10n.requestGroup,
+                icon: Icons.outbox_rounded,
+                onPressed: () => _openRequestGroupSheet(context, state),
+              ),
+            ],
           ],
         ],
       ),
@@ -66,17 +111,57 @@ class MemberGroupsScreen extends StatelessWidget {
       builder: (sheetContext) => CreateGroupSheet(spaceId: state.space?.id ?? ''),
     );
   }
+
+  void _openRequestGroupSheet(BuildContext context, AppState state) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.surfaceDark
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) => const RequestGroupSheet(),
+    );
+  }
 }
 
 class _EmptyState extends StatelessWidget {
-  final VoidCallback onCreate;
+  final VoidCallback? onCreate;
+  final bool canCreate;
+  final bool groupsUnavailable;
+  final VoidCallback? onRequest;
+  final bool canRequest;
+  final bool ownerAlreadyGrouped;
 
-  const _EmptyState({required this.onCreate});
+  const _EmptyState({
+    this.onCreate,
+    required this.canCreate,
+    this.groupsUnavailable = false,
+    this.onRequest,
+    this.canRequest = false,
+    this.ownerAlreadyGrouped = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
+
+    final String message;
+    if (groupsUnavailable) {
+      message = l10n.groupCreationUnavailable;
+    } else if (canCreate) {
+      message = l10n.noMemberGroupsDescription;
+    } else if (canRequest) {
+      message = l10n.requestGroupDescription;
+    } else if (ownerAlreadyGrouped) {
+      // The owner already belongs to a group, so they cannot create another.
+      message = l10n.alreadyInGroup;
+    } else {
+      message = l10n.onlyOwnerCanCreateGroups;
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
@@ -108,7 +193,7 @@ class _EmptyState extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              l10n.noMemberGroupsDescription,
+              message,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -116,15 +201,396 @@ class _EmptyState extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          PrimaryButton(
-            label: l10n.createGroup,
-            icon: Icons.add_rounded,
-            onPressed: onCreate,
-          ),
+          if (canCreate) ...[
+            const SizedBox(height: 24),
+            PrimaryButton(
+              label: l10n.createGroup,
+              icon: Icons.add_rounded,
+              onPressed: onCreate,
+            ),
+          ],
+          if (canRequest) ...[
+            const SizedBox(height: 12),
+            PrimaryButton(
+              label: l10n.requestGroup,
+              icon: Icons.outbox_rounded,
+              onPressed: onRequest,
+            ),
+          ],
         ],
       ),
     );
+  }
+}
+
+class _PendingRequestsSection extends StatelessWidget {
+  final List<GroupRequest> requests;
+  final AppState state;
+
+  const _PendingRequestsSection({
+    required this.requests,
+    required this.state,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(title: l10n.pendingGroupRequests),
+          const SizedBox(height: 4),
+          Text(
+            l10n.pendingGroupRequestsDescription,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (final request in requests) ...[
+            _RequestCard(request: request, state: state),
+            const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RequestCard extends StatelessWidget {
+  final GroupRequest request;
+  final AppState state;
+
+  const _RequestCard({
+    required this.request,
+    required this.state,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
+    final requesterName =
+        state.memberName(request.requesterUserId) ?? 'Unknown';
+    final memberNames = request.memberUserIds
+        .map((id) => state.memberName(id) ?? 'Unknown')
+        .toList();
+
+    return Material(
+      color: isDark ? AppColors.surfaceDark : Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.border,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                MemberAvatar(name: requesterName, size: 40, outline: true),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        requesterName,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        '${l10n.requestedBy} · ${l10n.groupOwner}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (memberNames.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final name in memberNames)
+                    Chip(
+                      avatar: MemberAvatar(name: name, size: 18),
+                      label: Text(
+                        name,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                      backgroundColor: isDark
+                          ? AppColors.surfaceAltDark
+                          : AppColors.surfaceAlt,
+                      side: BorderSide(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.border,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    label: Text(l10n.reject),
+                    onPressed: () => _reject(context, state),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    icon: const Icon(Icons.check_rounded, size: 18),
+                    label: Text(l10n.approve),
+                    onPressed: () => _approve(context, state),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _approve(BuildContext context, AppState state) async {
+    final l10n = context.l10n;
+    try {
+      final group = await state.approveGroupRequest(request.id);
+      if (!context.mounted) return;
+      showToast(
+        context,
+        group != null ? l10n.groupRequestApproved : l10n.groupRequestApprovedFail,
+        type: group != null ? ToastType.success : ToastType.danger,
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      showToast(context, l10n.groupRequestApprovedFail, type: ToastType.danger);
+    }
+  }
+
+  Future<void> _reject(BuildContext context, AppState state) async {
+    final l10n = context.l10n;
+    try {
+      await state.rejectGroupRequest(request.id);
+      if (!context.mounted) return;
+      showToast(context, l10n.groupRequestRejected, type: ToastType.warning);
+    } catch (_) {
+      if (!context.mounted) return;
+      showToast(context, l10n.groupRequestRejectFail, type: ToastType.danger);
+    }
+  }
+}
+
+class RequestGroupSheet extends StatefulWidget {
+  const RequestGroupSheet({super.key});
+
+  @override
+  State<RequestGroupSheet> createState() => _RequestGroupSheetState();
+}
+
+class _RequestGroupSheetState extends State<RequestGroupSheet> {
+  final _pickedMembers = <String>{};
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.read<AppState>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
+
+    final members = state.requestableGroupMembers;
+
+    // A group can hold at most (space members - 1) users including the owner.
+    // The owner is the requester, so at most (max - 1) others can be chosen.
+    final maxOtherMembers = state.maxGroupMembers - 1;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.requestGroupTitle,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.requestGroupDescription,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              l10n.groupOwner,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  MemberAvatar(
+                    name: state.currentUser?.name ?? l10n.you,
+                    size: 32,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          state.currentUser?.name ?? l10n.you,
+                          style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          l10n.youAreOwner,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              l10n.selectGroupMembers,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (members.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  l10n.noMembersToRequest,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark
+                        ? AppColors.textMutedDark
+                        : AppColors.textMuted,
+                  ),
+                ),
+              )
+            else
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 200),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: members.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 4),
+                  itemBuilder: (_, i) {
+                    final m = members[i];
+                    return CheckboxListTile(
+                      value: _pickedMembers.contains(m.userId),
+                      title: Text(m.name),
+                      onChanged: (v) => setState(() {
+                        if (v == true) {
+                          // Rule: a group can hold at most (space members - 1)
+                          // users including the requester/owner.
+                          if (_pickedMembers.length >= maxOtherMembers) return;
+                          _pickedMembers.add(m.userId);
+                        } else {
+                          _pickedMembers.remove(m.userId);
+                        }
+                      }),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 20),
+            PrimaryButton(
+              label: l10n.requestGroup,
+              onPressed: _pickedMembers.isNotEmpty
+                  ? () => _submit(context, state)
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit(BuildContext context, AppState state) async {
+    final l10n = context.l10n;
+    if (state.hasPendingGroupRequest(state.currentUserId ?? '')) {
+      if (!context.mounted) return;
+      showToast(context, l10n.groupRequestAlreadyPending, type: ToastType.warning);
+      return;
+    }
+    try {
+      final request = await state.requestGroup(_pickedMembers.toList());
+      if (!context.mounted) return;
+      if (request == null) {
+        showToast(context, l10n.groupRequestFailed, type: ToastType.danger);
+        return;
+      }
+      Navigator.of(context).pop();
+      showToast(context, l10n.groupRequested, type: ToastType.success);
+    } catch (_) {
+      if (!context.mounted) return;
+      showToast(context, l10n.groupRequestFailed, type: ToastType.danger);
+    }
   }
 }
 
@@ -270,9 +736,17 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
 
+    // Rule 2: every user can belong to at most one group. Users already in an
+    // active group cannot be added to a new one.
+    final alreadyGrouped = state.groupedUserIds;
     final members = state.members
         .where((m) => m.userId != state.currentUserId)
+        .where((m) => !alreadyGrouped.contains(m.userId))
         .toList();
+
+    // A group can hold at most (space members - 1) users including the owner.
+    // The owner creates the group, so at most (max - 1) others can be chosen.
+    final maxOtherMembers = state.maxGroupMembers - 1;
 
     return SafeArea(
       child: Padding(
@@ -377,6 +851,9 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
                       title: Text(m.name),
                       onChanged: (v) => setState(() {
                         if (v == true) {
+                          // Rule: a group can hold at most (space members - 1)
+                          // users including the owner.
+                          if (_pickedMembers.length >= maxOtherMembers) return;
                           _pickedMembers.add(m.userId);
                         } else {
                           _pickedMembers.remove(m.userId);
@@ -404,6 +881,14 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
   Future<void> _createGroup(BuildContext context, AppState state) async {
     final l10n = context.l10n;
     final memberIds = _pickedMembers.toList();
+
+    // Rule 2: the owner themselves can belong to only one group, so they cannot
+    // create a new group while already represented by an existing one.
+    if (state.groupedUserIds.contains(state.currentUserId)) {
+      if (!context.mounted) return;
+      showToast(context, l10n.alreadyInGroup, type: ToastType.warning);
+      return;
+    }
 
     try {
       final groupId = 'g_${genId(8)}';
@@ -554,11 +1039,24 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   void _openAddMemberSheet(BuildContext context, AppState state) {
+    // Rule 2: a user can belong to only one group, so exclude anyone already
+    // represented by another active group.
+    final alreadyGrouped = state.groupedUserIds;
     final availableMembers = state.members
         .where((m) =>
             m.userId != widget.group.ownerUserId &&
-            !_memberIds.contains(m.userId))
+            !_memberIds.contains(m.userId) &&
+            !alreadyGrouped.contains(m.userId))
         .toList();
+
+    // Rule: a group can hold at most (space members - 1) users including the
+    // owner. If the group is already at the cap, members must be removed
+    // before any new member can be added.
+    final slotsRemaining = state.groupMemberSlotsRemaining(_memberIds.length);
+    if (slotsRemaining <= 0) {
+      showToast(context, context.l10n.groupFull, type: ToastType.warning);
+      return;
+    }
 
     if (availableMembers.isEmpty) {
       showToast(context, context.l10n.noMembersAvailableToAdd, type: ToastType.warning);
@@ -602,22 +1100,26 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     shrinkWrap: true,
                     itemCount: availableMembers.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 4),
-                    itemBuilder: (_, i) {
-                      final m = availableMembers[i];
-                      return CheckboxListTile(
-                        value: picked.contains(m.userId),
-                        title: Text(m.name),
-                        onChanged: (v) => setSheetState(() {
-                          if (v == true) {
-                            picked.add(m.userId);
-                          } else {
-                            picked.remove(m.userId);
-                          }
-                        }),
-                        controlAffinity: ListTileControlAffinity.leading,
-                        dense: true,
-                      );
-                    },
+itemBuilder: (_, i) {
+                    final m = availableMembers[i];
+                    return CheckboxListTile(
+                      value: picked.contains(m.userId),
+                      title: Text(m.name),
+                      onChanged: (v) => setSheetState(() {
+                        if (v == true) {
+                          // Rule: a group can hold at most (space members - 1)
+                          // users including the owner; never exceed remaining
+                          // slots.
+                          if (picked.length >= slotsRemaining) return;
+                          picked.add(m.userId);
+                        } else {
+                          picked.remove(m.userId);
+                        }
+                      }),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                    );
+                  },
                   ),
                 ),
                 const SizedBox(height: 20),

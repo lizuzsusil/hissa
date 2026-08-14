@@ -138,19 +138,17 @@ void main() {
     expect(find.byIcon(Icons.groups_rounded), findsWidgets);
   });
 
-  testWidgets('selecting a Member Group deselects its members individually',
+  testWidgets('members of an active group are not individually selectable',
       (tester) async {
     final state = await makeSplitStateWithGroups();
     await tester.pumpWidget(harness(state));
 
-    // First select Sita individually
+    // Rule 8: Sita is part of "Ram's Group", so she must not appear as an
+    // individual participant chip.
     final sitaChip = find.widgetWithText(FilterChip, 'Sita');
-    await tester.ensureVisible(sitaChip);
-    await tester.pumpAndSettle();
-    await tester.tap(sitaChip);
-    await tester.pumpAndSettle();
+    expect(sitaChip, findsNothing);
 
-    // Now select the group "Ram's Group" (which contains Sita)
+    // The group itself is offered as a single participant.
     final groupChip = find.widgetWithText(FilterChip, "Ram's Group");
     await tester.ensureVisible(groupChip);
     await tester.pumpAndSettle();

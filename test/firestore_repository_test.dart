@@ -425,6 +425,47 @@ void main() {
         expect(legacy.updatedAt, isNull);
       },
     );
+    test(
+      'groupRequests persist and load across repo instances',
+      () async {
+        final db = FakeFirebaseFirestore();
+        final writer = FirestoreRepository(db);
+        await writer.saveSpace(_space('h1', 'ABCDE'));
+        await writer.saveMember(
+          SpaceMember(
+            userId: 'u1',
+            name: 'A',
+            role: MemberRole.owner,
+            joinedAt: DateTime(2026, 1, 1),
+          ),
+          'h1',
+        );
+        await writer.saveGroupRequest(
+          GroupRequest(
+            id: 'grp1',
+            spaceId: 'h1',
+            requesterUserId: 'u2',
+            memberUserIds: const ['u3'],
+            status: GroupRequestStatus.pending,
+            createdAt: DateTime(2026, 1, 2),
+          ),
+        );
+        await writer.updateGroupRequestStatus('grp1', GroupRequestStatus.approved);
+
+        var notified = 0;
+        final repo = FirestoreRepository(db);
+        await repo.start(uid: 'u1', spaceId: 'h1', onChanged: () => notified++);
+
+        final requests = repo.groupRequests;
+        expect(requests, hasLength(1));
+        expect(requests.single.id, 'grp1');
+        expect(requests.single.requesterUserId, 'u2');
+        expect(requests.single.memberUserIds, ['u3']);
+        expect(requests.single.status, GroupRequestStatus.approved);
+
+        repo.stop();
+      },
+    );
   });
 }
 

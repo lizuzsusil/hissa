@@ -31,6 +31,7 @@ class FirestoreRepository implements ExpenseRepository {
   final List<Category> _categories = [];
   final List<MemberGroup> _memberGroups = [];
   final List<MemberGroupMember> _memberGroupMembers = [];
+  final List<GroupRequest> _groupRequests = [];
 
   final List<StreamSubscription<dynamic>> _subs = [];
   final Map<String, StreamSubscription<dynamic>> _userDocSubs = {};
@@ -119,6 +120,10 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('memberGroupMembers')
           .where('spaceId', isEqualTo: spaceId)
           .get();
+      final groupRequestsF = _db
+          .collection('groupRequests')
+          .where('spaceId', isEqualTo: spaceId)
+          .get();
 
       final spaceSnap = await spaceF;
       _spaces.clear();
@@ -187,6 +192,11 @@ class FirestoreRepository implements ExpenseRepository {
           _memberGroups[idx] = g.copyWith(memberIds: ids);
         }
       }
+
+      final groupRequests = await groupRequestsF;
+      _groupRequests
+        ..clear()
+        ..addAll(groupRequests.docs.map((d) => GroupRequest.fromJson(d.data())));
     } catch (_) {
       // Permission denied or missing data: degrade to an empty cache rather
       // than failing the whole attach flow.
@@ -369,6 +379,22 @@ class FirestoreRepository implements ExpenseRepository {
         onError: (_) {},
       ),
     );
+
+    _subs.add(
+      _db
+          .collection('groupRequests')
+          .where('spaceId', isEqualTo: spaceId)
+          .snapshots()
+          .listen(
+        (snap) {
+          _groupRequests
+            ..clear()
+            ..addAll(snap.docs.map((d) => GroupRequest.fromJson(d.data())));
+          _notify();
+        },
+        onError: (_) {},
+      ),
+    );
   }
 
   void _syncMemberUserDocs(Iterable<String> userIds) {
@@ -414,6 +440,7 @@ class FirestoreRepository implements ExpenseRepository {
     _categories.clear();
     _memberGroups.clear();
     _memberGroupMembers.clear();
+    _groupRequests.clear();
   }
 
   // ---- reads ----
@@ -448,6 +475,9 @@ class FirestoreRepository implements ExpenseRepository {
   @override
   List<MemberGroupMember> get memberGroupMembers =>
       List.unmodifiable(_memberGroupMembers);
+
+  @override
+  List<GroupRequest> get groupRequests => List.unmodifiable(_groupRequests);
 
   @override
   List<ExpenseShare> sharesForExpense(String expenseId) {
@@ -647,6 +677,30 @@ class FirestoreRepository implements ExpenseRepository {
     for (final d in members.docs) {
       await d.reference.delete();
     }
+  }
+
+  @override
+  Future<void> saveGroupRequest(GroupRequest request) async {
+    _upsert(_groupRequests, request, (r) => r.id);
+    await _db
+        .collection('groupRequests')
+        .doc('${request.spaceId}_${request.id}')
+        .set(request.toJson());
+  }
+
+  @override
+  Future<void> updateGroupRequestStatus(
+    String requestId,
+    GroupRequestStatus status,
+  ) async {
+    final existing = _groupRequests.where((r) => r.id == requestId).firstOrNull;
+    if (existing == null) return;
+    final updated = existing.copyWith(status: status);
+    _upsert(_groupRequests, updated, (r) => r.id);
+    await _db
+        .collection('groupRequests')
+        .doc('${existing.spaceId}_$requestId')
+        .update({'status': status.name});
   }
 
   // ---- queries ----

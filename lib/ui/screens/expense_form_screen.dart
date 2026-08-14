@@ -137,9 +137,16 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       groupParties.add(SplitParty.group(groupId: g.id, name: g.name, userIds: g.memberIds));
     }
 
+    // Users represented by any active Member Group are only split via their
+    // group, never as individual parties (Rule 8 / Rule 10).
+    final allGrouped = groupedUserIds;
+    for (final g in context.read<AppState>().activeMemberGroups) {
+      allGrouped.addAll(g.allUserIds);
+    }
+
     return [
       for (final id in _participants)
-        if (!groupedUserIds.contains(id)) SplitParty.individual(id),
+        if (!allGrouped.contains(id)) SplitParty.individual(id),
       ...groupParties,
     ];
   }
@@ -161,7 +168,12 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final state = context.watch<AppState>();
     final isPersonal = state.isPersonalMode;
     if (!isPersonal && _participants.isEmpty && state.members.isNotEmpty) {
-      _participants = state.members.map((m) => m.userId).toSet();
+      // Default to every member NOT represented by an active group (Rule 8).
+      final grouped = state.groupedUserIds;
+      _participants = state.members
+          .where((m) => !grouped.contains(m.userId))
+          .map((m) => m.userId)
+          .toSet();
       if (_splitType == SplitType.equal) {
         _percentages = {};
         _customAmounts = {};
@@ -470,6 +482,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         .where((g) => g.spaceId == currentSpaceId && g.isActive)
         .toList();
 
+    // Users represented by ANY active group are only selectable via their
+    // group, never as individual participants (Rule 8 / Rule 10).
+    final allGroupedUserIds = <String>{};
+    for (final g in memberGroups) {
+      allGroupedUserIds.addAll(g.allUserIds);
+    }
+
     // Collect all user IDs represented by the selected groups (owner + members)
     // so no one is double-counted both inside a group and individually.
     final groupedUserIds = <String>{};
@@ -477,8 +496,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       groupedUserIds.addAll(g.allUserIds);
     }
 
-    // Check if a member is selectable (not already in a selected group)
-    bool isMemberSelectable(String userId) => !groupedUserIds.contains(userId);
+    // A member is selectable only when they are not part of any selected group
+    // AND not represented by any existing active group.
+    bool isMemberSelectable(String userId) =>
+        !groupedUserIds.contains(userId) &&
+        !allGroupedUserIds.contains(userId);
 
     // Check if a group is selectable (none of its represented users are selected individually)
     bool isGroupSelectable(MemberGroup group) {
@@ -494,26 +516,27 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           runSpacing: 8,
           children: [
             for (final m in state.members)
-              FilterChip(
-                avatar: MemberAvatar(name: m.name, size: 22),
-                label: Text(m.name),
-                selected: _participants.contains(m.userId),
-                onSelected: isMemberSelectable(m.userId) && !_saving
-                    ? (selected) => setState(() {
-                          if (selected) {
-                            _participants.add(m.userId);
-                          } else {
-                            _participants.remove(m.userId);
-                            _percentages.remove(m.userId);
-                            _customAmounts.remove(m.userId);
-                            _shareUnits.remove(m.userId);
-                          }
-                        })
-                    : null,
-                showCheckmark: false,
-                selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                checkmarkColor: AppColors.primary,
-              ),
+              if (!allGroupedUserIds.contains(m.userId))
+                FilterChip(
+                  avatar: MemberAvatar(name: m.name, size: 22),
+                  label: Text(m.name),
+                  selected: _participants.contains(m.userId),
+                  onSelected: isMemberSelectable(m.userId) && !_saving
+                      ? (selected) => setState(() {
+                            if (selected) {
+                              _participants.add(m.userId);
+                            } else {
+                              _participants.remove(m.userId);
+                              _percentages.remove(m.userId);
+                              _customAmounts.remove(m.userId);
+                              _shareUnits.remove(m.userId);
+                            }
+                          })
+                      : null,
+                  showCheckmark: false,
+                  selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                  checkmarkColor: AppColors.primary,
+                ),
           ],
         ),
         const SizedBox(height: 16),
