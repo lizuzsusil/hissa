@@ -28,6 +28,24 @@ service cloud.firestore {
       );
     }
 
+    // Whether `groupId` belongs to `spaceId`.
+    function groupInSpace(spaceId, groupId) {
+      return groupId != null && exists(
+        /databases/$(database)/documents/memberGroups/$(groupId)
+      ) && get(
+        /databases/$(database)/documents/memberGroups/$(groupId)
+      ).data.spaceId == spaceId;
+    }
+
+    // Whether the signed-in user owns the group identified by `groupId`.
+    function groupOwner(groupId) {
+      return groupId != null && exists(
+        /databases/$(database)/documents/memberGroups/$(groupId)
+      ) && get(
+        /databases/$(database)/documents/memberGroups/$(groupId)
+      ).data.ownerUserId == request.auth.uid;
+    }
+
     // Public profile + pseudo member profiles. Reads are open to any signed-in
     // user; each user may update only their own profile.
     match /users/{userId} {
@@ -111,13 +129,24 @@ service cloud.firestore {
       allow read: if signedIn()
         && memberOf(resource.data.spaceId);
 
-      // The share's user must be a member of the Space; a client can never
-      // mint a share for a user outside the Space (Phase 8 security).
+      // A share is either for an individual Space member (USER) or for a
+      // persistent Member Group (GROUP). A client can never mint a share for a
+      // user outside the Space, nor for a group outside the Space (Phase 8
+      // security). Group shares carry a null `userId` and a `memberGroupId`.
       allow write: if signedIn()
         && memberOf(request.resource.data.spaceId)
-        && memberById(
-          request.resource.data.spaceId,
-          request.resource.data.userId
+        && (
+          (request.resource.data.participantType == 'GROUP'
+            && groupInSpace(
+              request.resource.data.spaceId,
+              request.resource.data.memberGroupId
+            ))
+          ||
+          (request.resource.data.participantType != 'GROUP'
+            && memberById(
+              request.resource.data.spaceId,
+              request.resource.data.userId
+            ))
         );
     }
 
@@ -127,6 +156,52 @@ service cloud.firestore {
 
       allow write: if signedIn()
         && memberOf(request.resource.data.spaceId);
+    }
+
+    match /memberGroups/{groupId} {
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
+      allow create: if signedIn()
+        && memberOf(request.resource.data.spaceId)
+        && request.resource.data.ownerUserId == request.auth.uid;
+
+      // Only the owner may modify a group, and the owner/Space are immutable so
+      // ownership can never be silently transferred (Phase 1, §52).
+      allow update: if signedIn()
+        && memberOf(resource.data.spaceId)
+        && resource.data.ownerUserId == request.auth.uid
+        && request.resource.data.ownerUserId == resource.data.ownerUserId
+        && request.resource.data.spaceId == resource.data.spaceId;
+
+      allow delete: if signedIn()
+        && memberOf(resource.data.spaceId)
+        && resource.data.ownerUserId == request.auth.uid;
+    }
+
+    match /memberGroupMembers/{memberId} {
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
+      // Only the group owner may add a member, the target user must belong to
+      // the same Space as the group, and the target must not already be a
+      // member (uniqueness is enforced by the composite doc id).
+      allow create: if signedIn()
+        && memberOf(request.resource.data.spaceId)
+        && groupInSpace(
+          request.resource.data.spaceId,
+          request.resource.data.groupId
+        )
+        && groupOwner(request.resource.data.groupId)
+        && memberById(
+          request.resource.data.spaceId,
+          request.resource.data.userId
+        );
+
+      // Only the group owner may remove a member.
+      allow delete: if signedIn()
+        && memberOf(resource.data.spaceId)
+        && groupOwner(resource.data.groupId);
     }
   }
 }

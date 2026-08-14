@@ -80,6 +80,22 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                // Member Groups are financial participants too: surface their
+                // balance so the sheet reconciles (§37).
+                ...state.repo.memberGroups
+                    .where((g) => g.spaceId == space.id && g.isActive)
+                    .map((g) {
+                      final balance = balances
+                          .where((b) => b.userId == g.id)
+                          .firstOrNull;
+                      if (balance == null || balance.balance.isZero) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _GroupBalanceCard(group: g, balance: balance),
+                      );
+                    }),
                 const SizedBox(height: 16),
                 SectionHeader(
                   title: l10n.recentExpenses,
@@ -623,6 +639,94 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
+class _GroupBalanceCard extends StatelessWidget {
+  final MemberGroup group;
+  final BalanceInfo balance;
+
+  const _GroupBalanceCard({required this.group, required this.balance});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final b = balance;
+    final statusColor = b.balance.isZero
+        ? AppColors.textMuted
+        : b.balance.isPositive
+        ? AppColors.positive
+        : AppColors.negative;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.border,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.groups_rounded,
+              size: 22,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  group.name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  context.l10n.memberPaidShare(
+                    formatMoneyCompact(b.paid, showSymbol: false),
+                    formatMoneyCompact(b.share, showSymbol: false),
+                  ),
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              (b.balance.isPositive ? '+' : '') + formatMoneyCompact(b.balance),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: statusColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MemberBalanceCard extends StatelessWidget {
   final SpaceMember member;
   final BalanceInfo? balance;
@@ -645,6 +749,7 @@ class _MemberBalanceCard extends StatelessWidget {
         : balanceValue.isPositive
         ? AppColors.positive
         : AppColors.negative;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

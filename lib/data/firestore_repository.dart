@@ -29,6 +29,8 @@ class FirestoreRepository implements ExpenseRepository {
   final List<ExpenseShare> _shares = [];
   final List<Settlement> _settlements = [];
   final List<Category> _categories = [];
+  final List<MemberGroup> _memberGroups = [];
+  final List<MemberGroupMember> _memberGroupMembers = [];
 
   final List<StreamSubscription<dynamic>> _subs = [];
   final Map<String, StreamSubscription<dynamic>> _userDocSubs = {};
@@ -109,6 +111,14 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('settlements')
           .where('spaceId', isEqualTo: spaceId)
           .get();
+      final memberGroupsF = _db
+          .collection('memberGroups')
+          .where('spaceId', isEqualTo: spaceId)
+          .get();
+      final groupMembersF = _db
+          .collection('memberGroupMembers')
+          .where('spaceId', isEqualTo: spaceId)
+          .get();
 
       final spaceSnap = await spaceF;
       _spaces.clear();
@@ -150,6 +160,33 @@ class FirestoreRepository implements ExpenseRepository {
       _settlements
         ..clear()
         ..addAll(settlements.docs.map((d) => Settlement.fromJson(d.data())));
+
+      final memberGroups = await memberGroupsF;
+      _memberGroups
+        ..clear()
+        ..addAll(memberGroups.docs.map((d) => MemberGroup.fromJson(d.data())));
+
+      final groupMembers = await groupMembersF;
+      _memberGroupMembers
+        ..clear()
+        ..addAll(
+          groupMembers.docs.map((d) => MemberGroupMember.fromJson(d.data())),
+        );
+
+      // Populate memberIds for each MemberGroup from the loaded groupMembers
+      final memberIdsByGroup = <String, List<String>>{};
+      for (final m in _memberGroupMembers) {
+        memberIdsByGroup
+            .putIfAbsent(m.groupId, () => [])
+            .add(m.userId);
+      }
+      for (final g in _memberGroups) {
+        final ids = memberIdsByGroup[g.id] ?? [];
+        final idx = _memberGroups.indexOf(g);
+        if (idx >= 0) {
+          _memberGroups[idx] = g.copyWith(memberIds: ids);
+        }
+      }
     } catch (_) {
       // Permission denied or missing data: degrade to an empty cache rather
       // than failing the whole attach flow.
@@ -286,6 +323,52 @@ class FirestoreRepository implements ExpenseRepository {
         onError: (_) {},
       ),
     );
+
+    _subs.add(
+      _db
+          .collection('memberGroups')
+          .where('spaceId', isEqualTo: spaceId)
+          .snapshots()
+          .listen(
+        (snap) {
+          _memberGroups
+            ..clear()
+            ..addAll(snap.docs.map((d) => MemberGroup.fromJson(d.data())));
+          // Repopulate memberIds from current group members
+          final memberIdsByGroup = <String, List<String>>{};
+          for (final m in _memberGroupMembers) {
+            memberIdsByGroup
+                .putIfAbsent(m.groupId, () => [])
+                .add(m.userId);
+          }
+          for (var i = 0; i < _memberGroups.length; i++) {
+            final g = _memberGroups[i];
+            final ids = memberIdsByGroup[g.id] ?? [];
+            _memberGroups[i] = g.copyWith(memberIds: ids);
+          }
+          _notify();
+        },
+        onError: (_) {},
+      ),
+    );
+
+    _subs.add(
+      _db
+          .collection('memberGroupMembers')
+          .where('spaceId', isEqualTo: spaceId)
+          .snapshots()
+          .listen(
+        (snap) {
+          _memberGroupMembers
+            ..clear()
+            ..addAll(
+              snap.docs.map((d) => MemberGroupMember.fromJson(d.data())),
+            );
+          _notify();
+        },
+        onError: (_) {},
+      ),
+    );
   }
 
   void _syncMemberUserDocs(Iterable<String> userIds) {
@@ -329,6 +412,8 @@ class FirestoreRepository implements ExpenseRepository {
     _shares.clear();
     _settlements.clear();
     _categories.clear();
+    _memberGroups.clear();
+    _memberGroupMembers.clear();
   }
 
   // ---- reads ----
@@ -356,6 +441,13 @@ class FirestoreRepository implements ExpenseRepository {
 
   @override
   List<Category> get categories => List.unmodifiable(_categories);
+
+  @override
+  List<MemberGroup> get memberGroups => List.unmodifiable(_memberGroups);
+
+  @override
+  List<MemberGroupMember> get memberGroupMembers =>
+      List.unmodifiable(_memberGroupMembers);
 
   @override
   List<ExpenseShare> sharesForExpense(String expenseId) {
@@ -493,6 +585,68 @@ class FirestoreRepository implements ExpenseRepository {
         .collection('categories')
         .doc('${category.spaceId}_${category.id}')
         .set(category.toJson());
+  }
+
+  @override
+  Future<void> saveMemberGroup(MemberGroup group) async {
+    _upsert(_memberGroups, group, (g) => g.id);
+    await _db
+        .collection('memberGroups')
+        .doc(group.id)
+        .set(group.toJson());
+  }
+
+  @override
+  Future<void> addGroupMember(String groupId, String userId) async {
+    // Resolve the group's Space so the member row can be space-scoped, matching
+    // how the security rules and space-scoped queries expect the data.
+    final sid = _memberGroups
+            .where((g) => g.id == groupId)
+            .firstOrNull
+            ?.spaceId ??
+        _currentSpaceId;
+    final member = MemberGroupMember(
+      groupId: groupId,
+      userId: userId,
+      spaceId: sid,
+      createdAt: DateTime.now(),
+    );
+    _upsert(_memberGroupMembers, member, (m) => m.id);
+    await _db
+        .collection('memberGroups')
+        .doc(groupId)
+        .update({'updatedAt': DateTime.now().toIso8601String()});
+    await _db
+        .collection('memberGroupMembers')
+        .doc(member.id)
+        .set(member.toJson());
+  }
+
+  @override
+  Future<void> removeGroupMember(String groupId, String userId) async {
+    _memberGroupMembers.removeWhere((m) => m.groupId == groupId && m.userId == userId);
+    await _db
+        .collection('memberGroups')
+        .doc(groupId)
+        .update({'updatedAt': DateTime.now().toIso8601String()});
+    await _db
+        .collection('memberGroupMembers')
+        .doc('${groupId}_$userId')
+        .delete();
+  }
+
+  @override
+  Future<void> deleteMemberGroup(String groupId) async {
+    _memberGroups.removeWhere((g) => g.id == groupId);
+    _memberGroupMembers.removeWhere((m) => m.groupId == groupId);
+    await _db.collection('memberGroups').doc(groupId).delete();
+    final members = await _db
+        .collection('memberGroupMembers')
+        .where('groupId', isEqualTo: groupId)
+        .get();
+    for (final d in members.docs) {
+      await d.reference.delete();
+    }
   }
 
   // ---- queries ----

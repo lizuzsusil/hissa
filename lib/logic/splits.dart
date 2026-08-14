@@ -2,27 +2,50 @@ import '../core/ids.dart';
 import '../core/money.dart';
 import '../models/models.dart';
 
-/// A single split party: either one Space member or a group of members that
-/// share a single share of an expense (Phase 6).
+/// A single split party: either one Space member (USER) or a Member Group (GROUP).
 ///
-/// The split amount is computed at the party level; a group's share is then
-/// distributed equally between its members.
+/// The split amount is computed at the party level. A group party produces a
+/// SINGLE share — its amount is never divided between the users inside it.
 class SplitParty {
-  /// Party identifier: the [userId] for an individual, or the group id.
+  /// Party identifier: the [userId] for USER, or the [memberGroupId] for GROUP.
   final String id;
 
-  /// Display name for a group (e.g. "B + C"); null for individuals.
+  /// The type of this participant entity.
+  final ExpenseParticipantType type;
+
+  /// Display name for a group (e.g. "User 2's Group"); null for individuals.
   final String? name;
 
-  /// Underlying user ids that make up this party.
+  /// Underlying user ids that make up this party (for display only).
   final List<String> userIds;
 
-  bool get isGroup => userIds.length > 1;
+  bool get isGroup => type == ExpenseParticipantType.group;
 
-  const SplitParty({required this.id, this.name, required this.userIds});
+  const SplitParty({
+    required this.id,
+    required this.type,
+    this.name,
+    required this.userIds,
+  });
 
   factory SplitParty.individual(String userId) =>
-      SplitParty(id: userId, userIds: [userId]);
+      SplitParty(
+        id: userId,
+        type: ExpenseParticipantType.user,
+        userIds: [userId],
+      );
+
+  factory SplitParty.group({
+    required String groupId,
+    required String name,
+    required List<String> userIds,
+  }) =>
+      SplitParty(
+        id: groupId,
+        type: ExpenseParticipantType.group,
+        name: name,
+        userIds: userIds,
+      );
 }
 
 /// Computes per-user shares for an expense under any supported split strategy.
@@ -49,8 +72,8 @@ class SplitCalculator {
     );
   }
 
-  /// Splits [amount] across [parties] at the party level, then distributes each
-  /// group party's share equally between its members.
+  /// Splits [amount] across [parties] at the party level. Each party gets
+  /// exactly ONE [ExpenseShare] — groups are never internally divided.
   ///
   /// [percentages], [customAmounts] and [shareUnits] are keyed by party id
   /// (the [SplitParty.id], which is a userId for individuals and a group id for
@@ -80,24 +103,32 @@ class SplitCalculator {
     for (var i = 0; i < parties.length; i++) {
       final party = parties[i];
       final partyPaisa = partyAmounts[i];
-      final members = party.userIds;
-      final base = partyPaisa ~/ members.length;
-      var remainder = partyPaisa % members.length;
-      final percentage =
-          type == SplitType.percentage ? percentages[party.id] : null;
-      final shareUnits_ =
-          type == SplitType.shares ? shareUnits[party.id] : null;
-      for (final uid in members) {
-        final paisa = base + (remainder > 0 ? 1 : 0);
-        if (remainder > 0) remainder--;
+      final isGroup = party.isGroup;
+
+      if (isGroup) {
+        // Single share for the group as a financial participant.
         shares.add(ExpenseShare(
           id: genId(),
           expenseId: expenseId,
-          userId: uid,
-          amount: Money(paisa),
-          percentage: percentage,
-          shares: shareUnits_,
-          groupId: party.isGroup ? party.id : null,
+          userId: null,
+          amount: Money(partyPaisa),
+          percentage: type == SplitType.percentage ? percentages[party.id] : null,
+          shares: type == SplitType.shares ? shareUnits[party.id] : null,
+          participantType: ExpenseParticipantType.group,
+          memberGroupId: party.id,
+          // The snapshot is attached by the caller (AppState) which has access
+          // to the current MemberGroup membership.
+        ));
+      } else {
+        // Single share for the individual user.
+        shares.add(ExpenseShare(
+          id: genId(),
+          expenseId: expenseId,
+          userId: party.id,
+          amount: Money(partyPaisa),
+          percentage: type == SplitType.percentage ? percentages[party.id] : null,
+          shares: type == SplitType.shares ? shareUnits[party.id] : null,
+          participantType: ExpenseParticipantType.user,
         ));
       }
     }

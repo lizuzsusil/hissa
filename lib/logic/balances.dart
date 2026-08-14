@@ -1,17 +1,19 @@
 import '../core/money.dart';
 import '../models/models.dart';
 
-/// Per-member ledger summary for a cycle.
-class BalanceInfo {
-  final String userId;
+/// A balance entry for either a Space member (USER) or a Member Group (GROUP).
+class BalanceEntry {
+  final String id;
+  final ExpenseParticipantType type;
   final Money paid;
   final Money share;
   final Money balance;
-  final Money settledOut; // money given to others
-  final Money settledIn; // money received from others
+  final Money settledOut;
+  final Money settledIn;
 
-  const BalanceInfo({
-    required this.userId,
+  const BalanceEntry({
+    required this.id,
+    required this.type,
     required this.paid,
     required this.share,
     required this.balance,
@@ -26,13 +28,16 @@ class BalanceInfo {
 
   bool get isOwed => balance.isPositive;
   bool get owes => balance.isNegative;
+
+  bool get isGroup => type == ExpenseParticipantType.group;
 }
 
 class BalanceCalculator {
-  /// Computes [BalanceInfo] for every member of [space] within [cycle].
-  static List<BalanceInfo> compute({
+  /// Computes balance entries for every participant (users + groups) of [space] within [cycle].
+  static List<BalanceEntry> compute({
     required Space space,
     required List<SpaceMember> members,
+    required List<MemberGroup> memberGroups,
     required Cycle cycle,
     required List<Expense> expenses,
     required List<ExpenseShare> shares,
@@ -45,16 +50,21 @@ class BalanceCalculator {
     final settlementsInCycle =
         settlements.where((s) => s.cycleId == cycle.id).toList();
 
+    // Collect all participant entities: users + groups
+    final userIds = members.map((m) => m.userId).toSet();
+    final groupIds = memberGroups.where((g) => g.isActive).map((g) => g.id).toSet();
+    final allParticipantIds = {...userIds, ...groupIds};
+
     final paidBy = <String, int>{};
     final shareBy = <String, int>{};
     final settledOut = <String, int>{};
     final settledIn = <String, int>{};
 
-    for (final member in members) {
-      paidBy[member.userId] = 0;
-      shareBy[member.userId] = 0;
-      settledOut[member.userId] = 0;
-      settledIn[member.userId] = 0;
+    for (final id in allParticipantIds) {
+      paidBy[id] = 0;
+      shareBy[id] = 0;
+      settledOut[id] = 0;
+      settledIn[id] = 0;
     }
 
     for (final expense in expensesInCycle) {
@@ -63,7 +73,11 @@ class BalanceCalculator {
     }
 
     for (final share in sharesInCycle) {
-      shareBy[share.userId] = (shareBy[share.userId] ?? 0) + share.amount.paisa;
+      // For USER: share.userId is the key. For GROUP: share.memberGroupId is the key.
+      final key = share.participantId;
+      if (key.isNotEmpty) {
+        shareBy[key] = (shareBy[key] ?? 0) + share.amount.paisa;
+      }
     }
 
     for (final settlement in settlementsInCycle) {
@@ -74,18 +88,42 @@ class BalanceCalculator {
           (settledIn[settlement.toUserId] ?? 0) + settlement.amount.paisa;
     }
 
-    return members.map((member) {
-      final paid = paidBy[member.userId] ?? 0;
-      final share = shareBy[member.userId] ?? 0;
-      return BalanceInfo(
-        userId: member.userId,
+    final entries = <BalanceEntry>[];
+
+    // User entries
+    for (final member in members) {
+      final id = member.userId;
+      final paid = paidBy[id] ?? 0;
+      final share = shareBy[id] ?? 0;
+      entries.add(BalanceEntry(
+        id: id,
+        type: ExpenseParticipantType.user,
         paid: Money(paid),
         share: Money(share),
         balance: Money(paid - share),
-        settledOut: Money(settledOut[member.userId] ?? 0),
-        settledIn: Money(settledIn[member.userId] ?? 0),
-      );
-    }).toList();
+        settledOut: Money(settledOut[id] ?? 0),
+        settledIn: Money(settledIn[id] ?? 0),
+      ));
+    }
+
+    // Group entries
+    for (final group in memberGroups) {
+      if (!group.isActive) continue;
+      final id = group.id;
+      final paid = paidBy[id] ?? 0;
+      final share = shareBy[id] ?? 0;
+      entries.add(BalanceEntry(
+        id: id,
+        type: ExpenseParticipantType.group,
+        paid: Money(paid),
+        share: Money(share),
+        balance: Money(paid - share),
+        settledOut: Money(settledOut[id] ?? 0),
+        settledIn: Money(settledIn[id] ?? 0),
+      ));
+    }
+
+    return entries;
   }
 
   static Money totalSpent(List<Expense> expenses, String cycleId) {
@@ -93,4 +131,30 @@ class BalanceCalculator {
         .where((e) => e.cycleId == cycleId)
         .fold(Money.zero(), (sum, e) => sum + e.amount);
   }
+}
+
+/// Legacy per-user balance info (used by existing UI until migrated).
+class BalanceInfo {
+  final String userId;
+  final Money paid;
+  final Money share;
+  final Money balance;
+  final Money settledOut;
+  final Money settledIn;
+
+  const BalanceInfo({
+    required this.userId,
+    required this.paid,
+    required this.share,
+    required this.balance,
+    required this.settledOut,
+    required this.settledIn,
+  });
+
+  Money get remaining => balance + settledOut - settledIn;
+
+  Money get totalPaid => paid + settledOut;
+
+  bool get isOwed => balance.isPositive;
+  bool get owes => balance.isNegative;
 }

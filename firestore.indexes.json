@@ -7,6 +7,20 @@
         { "fieldPath": "spaceId", "order": "ASCENDING" },
         { "fieldPath": "expenseId", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "memberGroups",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "spaceId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "memberGroupMembers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "spaceId", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

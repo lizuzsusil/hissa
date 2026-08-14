@@ -475,25 +475,48 @@ class ParticipantGroup {
 class ExpenseShare {
   final String id;
   final String expenseId;
-  final String userId;
+
+  /// The participant this share belongs to. Nullable for backwards compatibility
+  /// with old expenses that always had a userId.
+  final String? userId;
+
   final Money amount;
   final double? percentage;
   final int? shares;
 
-  /// The participant group this share belongs to (Phase 6), or null when the
-  /// user participates on their own. Group member shares always preserve the
-  /// underlying user identity via [userId].
-  final String? groupId;
+  /// The entity type of this participant. USER = individual member, GROUP = Member Group.
+  /// Null defaults to USER for backward compatibility with pre-Phase-2 expenses.
+  final ExpenseParticipantType? participantType;
+
+  /// For GROUP participants: the persistent MemberGroup id.
+  final String? memberGroupId;
+
+  /// For GROUP participants: snapshot of the group's membership at expense creation.
+  /// Keeps historical expenses auditable regardless of later group changes.
+  final GroupSnapshot? groupSnapshot;
+
+  /// Legacy Phase-6 field: the expense-scoped participant group id. Used to
+  /// interpret pre-Phase-2 grouped expenses where shares were divided among members.
+  final String? expenseGroupId;
 
   ExpenseShare({
     required this.id,
     required this.expenseId,
-    required this.userId,
+    this.userId,
     required this.amount,
     this.percentage,
     this.shares,
-    this.groupId,
+    this.participantType,
+    this.memberGroupId,
+    this.groupSnapshot,
+    this.expenseGroupId,
   });
+
+  /// Convenience: true when this share represents a persistent Member Group.
+  bool get isGroup => participantType == ExpenseParticipantType.group;
+
+  /// The display id for this share's participant: userId for USER, memberGroupId for GROUP.
+  String get participantId => memberGroupId ?? userId ?? '';
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -502,18 +525,33 @@ class ExpenseShare {
         'amountPaisa': amount.paisa,
         'percentage': percentage,
         'shares': shares,
-        'groupId': groupId,
+        'participantType': participantType?.value,
+        'memberGroupId': memberGroupId,
+        'groupSnapshot': groupSnapshot?.toJson(),
+        'expenseGroupId': expenseGroupId,
       };
 
-  factory ExpenseShare.fromJson(Map<String, dynamic> json) => ExpenseShare(
-        id: json['id'] as String,
-        expenseId: json['expenseId'] as String,
-        userId: json['userId'] as String,
-        amount: Money(json['amountPaisa'] as int),
-        percentage: (json['percentage'] as num?)?.toDouble(),
-        shares: json['shares'] as int?,
-        groupId: json['groupId'] as String?,
-      );
+  factory ExpenseShare.fromJson(Map<String, dynamic> json) {
+    final participantType = ExpenseParticipantType.parse(json['participantType']);
+    // Backward compat: if participantType missing but expenseGroupId present, it's
+    // a legacy Phase-6 grouped expense (shares divided among members).
+    final legacyGroupId = json['expenseGroupId'] as String?;
+    return ExpenseShare(
+      id: json['id'] as String,
+      expenseId: json['expenseId'] as String,
+      // Legacy expenses always have userId; new group participants have null userId.
+      userId: json['userId'] as String?,
+      amount: Money(json['amountPaisa'] as int),
+      percentage: (json['percentage'] as num?)?.toDouble(),
+      shares: json['shares'] as int?,
+      participantType: participantType,
+      memberGroupId: json['memberGroupId'] as String?,
+      groupSnapshot: json['groupSnapshot'] != null
+          ? GroupSnapshot.fromJson(json['groupSnapshot'] as Map<String, dynamic>)
+          : null,
+      expenseGroupId: legacyGroupId,
+    );
+  }
 }
 
 class Settlement {
@@ -573,5 +611,157 @@ class Settlement {
         note: json['note'] as String?,
         status: SettlementStatus.values.byName(json['status'] as String),
         createdAt: DateTime.parse(json['createdAt'] as String),
+      );
+}
+
+/// A persistent Member Group inside a Split Space (Phase 1).
+///
+/// A Member Group is a reusable relationship where one Space member (the
+/// owner) manages one or more other Space members. The group itself is treated
+/// as a single financial participant when splitting an expense: its share is
+/// never divided between the users inside it.
+///
+/// Persisted in the `memberGroups/{id}` Firestore collection. The owner is the
+/// group's creator and the only member allowed to modify it.
+class MemberGroup {
+  final String id;
+  final String spaceId;
+  final String ownerUserId;
+
+  /// Display name, e.g. "{Owner}'s Group". Derived from the owner at creation
+  /// but stored so historical expenses stay readable if the owner leaves.
+  final String name;
+
+  final bool isActive;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  /// The member user IDs in this group (excluding the owner).
+  /// Populated after loading from Firestore by joining with memberGroupMembers.
+  final List<String> memberIds;
+
+  const MemberGroup({
+    required this.id,
+    required this.spaceId,
+    required this.ownerUserId,
+    required this.name,
+    required this.isActive,
+    required this.createdAt,
+    required this.updatedAt,
+    this.memberIds = const [],
+  });
+
+  MemberGroup copyWith({
+    String? name,
+    bool? isActive,
+    DateTime? updatedAt,
+    List<String>? memberIds,
+  }) {
+    return MemberGroup(
+      id: id,
+      spaceId: spaceId,
+      ownerUserId: ownerUserId,
+      name: name ?? this.name,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? DateTime.now(),
+      memberIds: memberIds ?? this.memberIds,
+    );
+  }
+
+  /// All user IDs represented by this group (owner + members).
+  List<String> get allUserIds => [ownerUserId, ...memberIds];
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'spaceId': spaceId,
+        'ownerUserId': ownerUserId,
+        'name': name,
+        'isActive': isActive,
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt.toIso8601String(),
+      };
+
+  factory MemberGroup.fromJson(Map<String, dynamic> json) => MemberGroup(
+        id: json['id'] as String,
+        spaceId: json['spaceId'] as String,
+        ownerUserId: json['ownerUserId'] as String,
+        name: json['name'] as String,
+        isActive: json['isActive'] as bool? ?? true,
+        createdAt: DateTime.parse(json['createdAt'] as String),
+        updatedAt: DateTime.parse(json['updatedAt'] as String),
+        memberIds: (json['memberIds'] as List?)?.cast<String>() ?? const [],
+      );
+}
+
+/// A member of a [MemberGroup] (Phase 1). The owner is implied by
+/// [MemberGroup.ownerUserId] and never stored as a row.
+///
+/// Persisted in the `memberGroupMembers/{id}` Firestore collection with the
+/// composite id `${groupId}_${userId}`.
+class MemberGroupMember {
+  final String groupId;
+  final String userId;
+
+  /// The Space this group membership belongs to. Persisted so Firestore
+  /// security rules and space-scoped queries can resolve it.
+  final String? spaceId;
+
+  final DateTime createdAt;
+
+  const MemberGroupMember({
+    required this.groupId,
+    required this.userId,
+    this.spaceId,
+    required this.createdAt,
+  });
+
+  /// Composite membership id, matching the Firestore doc convention
+  /// `${groupId}_${userId}`.
+  String get id => '${groupId}_$userId';
+
+  Map<String, dynamic> toJson() => {
+        'groupId': groupId,
+        'userId': userId,
+        'spaceId': spaceId,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory MemberGroupMember.fromJson(Map<String, dynamic> json) =>
+      MemberGroupMember(
+        groupId: json['groupId'] as String,
+        userId: json['userId'] as String,
+        spaceId: json['spaceId'] as String?,
+        createdAt: DateTime.parse(json['createdAt'] as String),
+      );
+}
+
+/// Immutable snapshot of a Member Group's membership at the time an expense
+/// used it as a participant (Phase 2). Keeps historical expenses auditable and
+/// independent from the group's current configuration.
+class GroupSnapshot {
+  final String groupId;
+  final String ownerUserId;
+  final List<String> memberUserIds;
+
+  const GroupSnapshot({
+    required this.groupId,
+    required this.ownerUserId,
+    required this.memberUserIds,
+  });
+
+  /// All users represented by the group (owner + members).
+  List<String> get allUserIds => [ownerUserId, ...memberUserIds];
+
+  Map<String, dynamic> toJson() => {
+        'groupId': groupId,
+        'ownerUserId': ownerUserId,
+        'memberUserIds': memberUserIds,
+      };
+
+  factory GroupSnapshot.fromJson(Map<String, dynamic> json) => GroupSnapshot(
+        groupId: json['groupId'] as String,
+        ownerUserId: json['ownerUserId'] as String,
+        memberUserIds: (json['memberUserIds'] as List).cast<String>(),
       );
 }

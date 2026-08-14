@@ -259,7 +259,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ungroup => 'Remove group';
 
   @override
-  String get selectGroupMembers => 'Choose members to group together';
+  String get selectGroupMembers => 'Select Members';
 
   @override
   String get editExpense => 'Edit expense';
@@ -458,7 +458,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whoLivesHere => 'Who lives here?';
 
   @override
-  String get addMember => 'Add a member';
+  String get addMember => 'Add Member';
 
   @override
   String get name => 'Name';
@@ -818,6 +818,110 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categories => 'Categories';
 
   @override
+  String get memberGroups => 'Member Groups';
+
+  @override
+  String get memberGroupsSubtitle =>
+      'Create groups to split as a single participant';
+
+  @override
+  String get noMemberGroups => 'No member groups yet';
+
+  @override
+  String get noMemberGroupsDescription =>
+      'Create a group to combine members into a single participant when splitting expenses.';
+
+  @override
+  String get createMemberGroup => 'Create Member Group';
+
+  @override
+  String get createGroupDescription =>
+      'Select members to add to this group. The group will be owned by you.';
+
+  @override
+  String get groupOwner => 'Owner';
+
+  @override
+  String get youAreOwner => 'You are the owner of this group';
+
+  @override
+  String get noOtherMembersToAdd => 'No other space members to add';
+
+  @override
+  String get managedByYou => 'Managed by you';
+
+  @override
+  String get managedBy => 'Managed by';
+
+  @override
+  String get groupCreated => 'Group created';
+
+  @override
+  String get groupCreateFailed => 'Failed to create group';
+
+  @override
+  String get deleteGroupTitle => 'Delete Group';
+
+  @override
+  String get deleteGroupMessage =>
+      'This group will be removed. Historical expenses using this group will not be affected.';
+
+  @override
+  String get deleteGroup => 'Delete';
+
+  @override
+  String get groupDeleted => 'Group deleted';
+
+  @override
+  String get groupDeleteFailed => 'Failed to delete group';
+
+  @override
+  String get addGroupMember => 'Add Member';
+
+  @override
+  String get memberAdded => 'Member added';
+
+  @override
+  String get memberAddFailed => 'Failed to add member';
+
+  @override
+  String get removeMember => 'Remove';
+
+  @override
+  String get memberRemoved => 'Member removed';
+
+  @override
+  String get memberRemoveFailed => 'Failed to remove member';
+
+  @override
+  String removeGroupMemberTitle(Object name) {
+    return 'Remove $name from this group?';
+  }
+
+  @override
+  String get removeGroupMemberMessage =>
+      'They will no longer be part of this group. Historical expenses are not affected.';
+
+  @override
+  String get groupCountsAsOneParticipant =>
+      'This group counts as one participant.';
+
+  @override
+  String get noMembersAvailableToAdd => 'No members available to add';
+
+  @override
+  String get groupMembers => 'Members';
+
+  @override
+  String get noMembersInGroup => 'No members in this group yet';
+
+  @override
+  String get groupOwnerLabel => 'Group Owner';
+
+  @override
+  String get members => 'Members';
+
+  @override
   String get defaultCategories => 'Default categories';
 
   @override
@@ -856,9 +960,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shareInviteHint =>
       'Share this code so friends and roommates can join your space.';
-
-  @override
-  String get members => 'Members';
 
   @override
   String get addMemberFieldHint => 'Name';

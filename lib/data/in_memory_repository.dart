@@ -15,6 +15,8 @@ class InMemoryRepository implements ExpenseRepository {
   final List<ExpenseShare> _shares = [];
   final List<Settlement> _settlements = [];
   final List<Category> _categories = [];
+  final List<MemberGroup> _memberGroups = [];
+  final List<MemberGroupMember> _memberGroupMembers = [];
 
   @override
   List<User> get users => List.unmodifiable(_users);
@@ -39,6 +41,13 @@ class InMemoryRepository implements ExpenseRepository {
 
   @override
   List<Category> get categories => List.unmodifiable(_categories);
+
+  @override
+  List<MemberGroup> get memberGroups => List.unmodifiable(_memberGroups);
+
+  @override
+  List<MemberGroupMember> get memberGroupMembers =>
+      List.unmodifiable(_memberGroupMembers);
 
   @override
   Future<void> saveUser(User user) async {
@@ -127,6 +136,35 @@ class InMemoryRepository implements ExpenseRepository {
     } else {
       _categories.add(category);
     }
+  }
+
+  @override
+  Future<void> saveMemberGroup(MemberGroup group) async {
+    final idx = _memberGroups.indexWhere((g) => g.id == group.id);
+    if (idx >= 0) {
+      _memberGroups[idx] = group;
+    } else {
+      _memberGroups.add(group);
+    }
+  }
+
+  @override
+  Future<void> addGroupMember(String groupId, String userId) async {
+    _memberGroupMembers.removeWhere((m) => m.groupId == groupId && m.userId == userId);
+    _memberGroupMembers.add(
+      MemberGroupMember(groupId: groupId, userId: userId, createdAt: DateTime.now()),
+    );
+  }
+
+  @override
+  Future<void> removeGroupMember(String groupId, String userId) async {
+    _memberGroupMembers.removeWhere((m) => m.groupId == groupId && m.userId == userId);
+  }
+
+  @override
+  Future<void> deleteMemberGroup(String groupId) async {
+    _memberGroups.removeWhere((g) => g.id == groupId);
+    _memberGroupMembers.removeWhere((m) => m.groupId == groupId);
   }
 
   @override

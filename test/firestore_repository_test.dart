@@ -70,35 +70,111 @@ void main() {
     });
 
     test(
-      'saveExpense persists participant groups and their member shares',
+      'saveExpense persists participant groups as single participant (no internal split)',
       () async {
         final db = FakeFirebaseFirestore();
         final repo = FirestoreRepository(db);
 
         final grouped = _groupedExpense('e1');
-        final shares = SplitCalculator.buildGrouped(
+        var shares = SplitCalculator.buildGrouped(
           expenseId: 'e1',
           amount: grouped.amount,
           parties: [
             SplitParty.individual('u1'),
-            SplitParty(id: 'g1', name: 'B + C', userIds: ['u2', 'u3']),
+            SplitParty.group(groupId: 'g1', name: 'B + C', userIds: ['u2', 'u3']),
           ],
         );
+        // Attach group snapshot (normally done by AppState which has MemberGroup context)
+        shares = shares.map((s) {
+          if (s.isGroup && s.memberGroupId == 'g1') {
+            return ExpenseShare(
+              id: s.id,
+              expenseId: s.expenseId,
+              userId: s.userId,
+              amount: s.amount,
+              percentage: s.percentage,
+              shares: s.shares,
+              participantType: s.participantType,
+              memberGroupId: s.memberGroupId,
+              groupSnapshot: GroupSnapshot(
+                groupId: 'g1',
+                ownerUserId: 'u2',
+                memberUserIds: ['u3'],
+              ),
+              expenseGroupId: s.expenseGroupId,
+            );
+          }
+          return s;
+        }).toList();
         await repo.saveExpense(grouped, shares);
 
         final reader = FirestoreRepository(db);
         await reader.start(uid: 'u1', spaceId: 'h1', onChanged: () {});
         final saved = reader.expenses.firstWhere((e) => e.id == 'e1');
+        // New model: expense stores participantGroups for legacy compat, but shares are per-participant
         expect(saved.participantGroups, hasLength(1));
         expect(saved.participantGroups.first.name, 'B + C');
         expect(saved.participantGroups.first.userIds, ['u2', 'u3']);
 
         final savedShares = reader.sharesForExpense('e1');
-        expect(savedShares, hasLength(3));
-        final b = savedShares.firstWhere((s) => s.userId == 'u2');
-        final c = savedShares.firstWhere((s) => s.userId == 'u3');
-        expect(b.groupId, 'g1');
-        expect(c.groupId, 'g1');
+        // New behavior: 2 shares (u1 individual + 1 group share), NOT 3
+        expect(savedShares, hasLength(2));
+        final groupShare = savedShares.firstWhere((s) => s.isGroup);
+        expect(groupShare.memberGroupId, 'g1');
+        expect(groupShare.groupSnapshot, isNotNull);
+        expect(groupShare.groupSnapshot!.allUserIds, ['u2', 'u3']);
+
+        repo.stop();
+      },
+    );
+
+    test(
+      'member group members are space-scoped and load with memberIds',
+      () async {
+        final db = FakeFirebaseFirestore();
+        final repo = FirestoreRepository(db);
+        await repo.saveMember(
+          SpaceMember(
+            userId: 'u1',
+            name: 'A',
+            role: MemberRole.owner,
+            joinedAt: DateTime(2026, 1, 1),
+          ),
+          'h1',
+        );
+        await repo.saveMember(
+          SpaceMember(
+            userId: 'u2',
+            name: 'B',
+            role: MemberRole.member,
+            joinedAt: DateTime(2026, 1, 1),
+          ),
+          'h1',
+        );
+        await repo.saveMemberGroup(
+          MemberGroup(
+            id: 'g1',
+            spaceId: 'h1',
+            ownerUserId: 'u1',
+            name: "A's Group",
+            isActive: true,
+            createdAt: DateTime(2026, 1, 1),
+            updatedAt: DateTime(2026, 1, 1),
+          ),
+        );
+        await repo.addGroupMember('g1', 'u2');
+
+        // The member row must carry the group's Space so Firestore security
+        // rules and space-scoped queries can resolve it.
+        final doc = await db.collection('memberGroupMembers').doc('g1_u2').get();
+        expect(doc.data()!['spaceId'], 'h1');
+
+        final reader = FirestoreRepository(db);
+        await reader.start(uid: 'u1', spaceId: 'h1', onChanged: () {});
+        expect(reader.memberGroupMembers, hasLength(1));
+        expect(reader.memberGroupMembers.single.userId, 'u2');
+        final group = reader.memberGroups.first;
+        expect(group.memberIds, ['u2']);
 
         repo.stop();
       },

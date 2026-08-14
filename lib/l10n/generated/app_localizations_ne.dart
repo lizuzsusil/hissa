@@ -259,7 +259,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get ungroup => 'समूह हटाउनुहोस्';
 
   @override
-  String get selectGroupMembers => 'समूहमा राख्न सदस्यहरू छान्नुहोस्';
+  String get selectGroupMembers => 'सदस्यहरू छान्नुहोस्';
 
   @override
   String get editExpense => 'खर्च सम्पादन गर्नुहोस्';
@@ -817,6 +817,110 @@ class AppLocalizationsNe extends AppLocalizations {
   String get categories => 'श्रेणीहरू';
 
   @override
+  String get memberGroups => 'सदस्य समूहहरू';
+
+  @override
+  String get memberGroupsSubtitle =>
+      'एकल भागीदारको रूपमा विभाजन गर्न समूह बन्नुहोस्';
+
+  @override
+  String get noMemberGroups => 'सदस्य समूहहरू छैनन्';
+
+  @override
+  String get noMemberGroupsDescription =>
+      'खर्च विभाजन गर्दा सदस्यहरूलाई एकल भागीदारको रूपमा जोड्न समूह बन्नुहोस्।';
+
+  @override
+  String get createMemberGroup => 'सदस्य समूह बन्नुहोस्';
+
+  @override
+  String get createGroupDescription =>
+      'यस समूहमा थप्नका लागि सदस्यहरू छान्नुहोस्। समूहको स्वामी तपाई हुनेछ।';
+
+  @override
+  String get groupOwner => 'स्वामी';
+
+  @override
+  String get youAreOwner => 'तपाई यो समूहको स्वामी हुनुहुन्��';
+
+  @override
+  String get noOtherMembersToAdd => 'थप्नका लागि अर्को स्पेस सदस्य छैनन्';
+
+  @override
+  String get managedByYou => 'तपाईंले व्यवस्थापन गर्नुभएको';
+
+  @override
+  String get managedBy => 'व्यवस्थापक';
+
+  @override
+  String get groupCreated => 'समूह बनेको';
+
+  @override
+  String get groupCreateFailed => 'समूह बन्न असफल';
+
+  @override
+  String get deleteGroupTitle => 'समूह मेट्नुहोस्';
+
+  @override
+  String get deleteGroupMessage =>
+      'यो समूह मेटिने��। यस समूह प्रयोग गरेका ऐतिहासिक खर्चहरू प्रभावित हुन्ने��ैन।';
+
+  @override
+  String get deleteGroup => 'मेट्नुहोस्';
+
+  @override
+  String get groupDeleted => 'समूह मेटिएको';
+
+  @override
+  String get groupDeleteFailed => 'समूह मेट्न असफल';
+
+  @override
+  String get addGroupMember => 'सदस्य थप्नुहोस्';
+
+  @override
+  String get memberAdded => 'सदस्य थपिएको';
+
+  @override
+  String get memberAddFailed => 'सदस्य थप्न असफल';
+
+  @override
+  String get removeMember => 'हटाउनुहोस्';
+
+  @override
+  String get memberRemoved => 'सदस्य हटाइयो';
+
+  @override
+  String get memberRemoveFailed => 'सदस्य हटाउन असफल';
+
+  @override
+  String removeGroupMemberTitle(Object name) {
+    return '$name लाई यो समूहबाट हटाउने हो?';
+  }
+
+  @override
+  String get removeGroupMemberMessage =>
+      'उनीहरू अब यो समूहको हिस्सा हुनेछैनन्। पुराना खर्चहरू प्रभावित हुँदैनन्।';
+
+  @override
+  String get groupCountsAsOneParticipant =>
+      'यो समूह एकल भागीदारको रूपमा गनिने��।';
+
+  @override
+  String get noMembersAvailableToAdd => 'थप्नका लागि सदस्यहरू उपलब्ध छैनन्';
+
+  @override
+  String get groupMembers => 'सदस्यहरू';
+
+  @override
+  String get noMembersInGroup => 'यस समूहमा हालसम्म कुनै सदस्य छैनन्';
+
+  @override
+  String get groupOwnerLabel => 'समूह स्वामी';
+
+  @override
+  String get members => 'सदस्यहरू';
+
+  @override
   String get defaultCategories => 'पूर्वनिर्धारित श्रेणीहरू';
 
   @override
@@ -855,9 +959,6 @@ class AppLocalizationsNe extends AppLocalizations {
   @override
   String get shareInviteHint =>
       'यो कोड साझा गर्नुहोस् ताकि साथी र रूममेटहरू तपाईंको ठाउँमा सामेल हुन सकून्।';
-
-  @override
-  String get members => 'सदस्यहरू';
 
   @override
   String get addMemberFieldHint => 'नाम';

@@ -644,7 +644,21 @@ class AppState extends ChangeNotifier {
 
   Future<void> removeMember(String userId) async {
     if (userId == currentUser?.id) return;
-    await _repo.removeMember(userId, _spaceId ?? '');
+    final spaceId = _spaceId;
+    if (spaceId == null) return;
+    // §52: a group whose owner leaves the Space is deactivated (never
+    // auto-transferred); historical expenses still reference it.
+    for (final g in _repo.memberGroups) {
+      if (g.spaceId != spaceId) continue;
+      if (g.ownerUserId == userId && g.isActive) {
+        await _repo.saveMemberGroup(g.copyWith(isActive: false));
+      }
+      // §53: a leaving member is removed from any groups they belong to.
+      if (g.memberIds.contains(userId)) {
+        await _repo.removeGroupMember(g.id, userId);
+      }
+    }
+    await _repo.removeMember(userId, spaceId);
     await _commit();
   }
 
@@ -735,22 +749,6 @@ class AppState extends ChangeNotifier {
 
   // ---- expenses ----
 
-  /// Builds disjoint split parties from the selected participant ids plus any
-  /// participant groups. Users inside a group form one party; every other
-  /// selected user is an individual party.
-  List<SplitParty> _partiesFrom({
-    required List<String> participantIds,
-    required List<ParticipantGroup> groups,
-  }) {
-    final grouped = <String>{for (final g in groups) ...g.userIds};
-    return [
-      for (final id in participantIds)
-        if (!grouped.contains(id)) SplitParty.individual(id),
-      for (final g in groups)
-        SplitParty(id: g.id, name: g.name, userIds: g.userIds),
-    ];
-  }
-
   /// Whether every participant and every participant-group member belongs to
   /// the selected Space. A client must never be able to include a user who is
   /// not a member (security rule mirrored in the Firestore rules).
@@ -792,6 +790,55 @@ class AppState extends ChangeNotifier {
     ];
   }
 
+  /// Validates that all referenced MemberGroups belong to the current Space
+  /// and are active.
+  bool _memberGroupsAreValid(List<MemberGroup> memberGroups) {
+    if (memberGroups.isEmpty) return true;
+    final spaceId = _spaceId;
+    if (spaceId == null) return false;
+    for (final g in memberGroups) {
+      if (!g.isActive || g.spaceId != spaceId) return false;
+    }
+    return true;
+  }
+
+  /// Builds split parties from individual participants, old ad-hoc groups,
+  /// and new persistent MemberGroups.
+  List<SplitParty> _partiesFrom({
+    required List<String> participantIds,
+    required List<ParticipantGroup> groups,
+    required List<MemberGroup> memberGroups,
+  }) {
+    final groupedUserIds = <String>{};
+    final groupParties = <SplitParty>[];
+
+    // Old model: ad-hoc ParticipantGroup from expense form
+    for (final g in groups) {
+      groupedUserIds.addAll(g.userIds);
+      groupParties.add(SplitParty.group(groupId: g.id, name: g.name, userIds: g.userIds));
+    }
+
+    // New model: persistent MemberGroups selected from Settings
+    for (final g in memberGroups) {
+      // Dedup against every user the group represents (owner + members) so the
+      // owner cannot also be selected individually and double-counted.
+      groupedUserIds.addAll(g.allUserIds);
+      groupParties.add(SplitParty.group(groupId: g.id, name: g.name, userIds: g.memberIds));
+    }
+
+    return [
+      for (final id in participantIds)
+        if (!groupedUserIds.contains(id)) SplitParty.individual(id),
+      ...groupParties,
+    ];
+  }
+
+  /// Attaches group snapshots to ExpenseShare for persistent MemberGroups.
+  /// NOTE: intentionally a no-op for now — group snapshots (historical
+  /// membership auditability) are not yet persisted. The shares still carry
+  /// `memberGroupId` so historical amounts remain fixed.
+  void _attachGroupSnapshots(List<ExpenseShare> shares, List<MemberGroup> memberGroups) {}
+
   Future<void> addExpense({
     required String description,
     required Money amount,
@@ -800,6 +847,7 @@ class AppState extends ChangeNotifier {
     String? note,
     required List<String> participantIds,
     List<ParticipantGroup> groups = const [],
+    List<MemberGroup> memberGroups = const [],
     SplitType splitType = SplitType.equal,
     Map<String, double> percentages = const {},
     Map<String, Money> customAmounts = const {},
@@ -808,7 +856,9 @@ class AppState extends ChangeNotifier {
     final s = space;
     final cycle = selectedCycle;
     if (s == null || cycle == null) return;
+    // Validate both old ad-hoc groups and new persistent groups
     if (!_participantsAreMembers(participantIds, groups)) return;
+    if (!_memberGroupsAreValid(memberGroups)) return;
     final expenseId = 'e_${genId(8)}';
     final expense = Expense(
       id: expenseId,
@@ -826,15 +876,23 @@ class AppState extends ChangeNotifier {
       updatedAt: DateTime.now(),
       participantGroups: _bindGroups(groups, expenseId),
     );
+    // Build parties from individual participants + old ad-hoc groups + new persistent member groups
+    final parties = _partiesFrom(
+      participantIds: participantIds,
+      groups: groups,
+      memberGroups: memberGroups,
+    );
     final shares = SplitCalculator.buildGrouped(
       expenseId: expense.id,
       amount: expense.amount,
-      parties: _partiesFrom(participantIds: participantIds, groups: groups),
+      parties: parties,
       type: splitType,
       percentages: percentages,
       customAmounts: customAmounts,
       shareUnits: shareUnits,
     );
+    // Attach group snapshots for persistent MemberGroups
+    _attachGroupSnapshots(shares, memberGroups);
     await _repo.saveExpense(expense, shares);
     await _commit();
   }
@@ -848,6 +906,7 @@ class AppState extends ChangeNotifier {
     String? note,
     required List<String> participantIds,
     List<ParticipantGroup> groups = const [],
+    List<MemberGroup> memberGroups = const [],
     SplitType splitType = SplitType.equal,
     Map<String, double> percentages = const {},
     Map<String, Money> customAmounts = const {},
@@ -855,6 +914,7 @@ class AppState extends ChangeNotifier {
   }) async {
     if (!canEditExpense(expense)) return;
     if (!_participantsAreMembers(participantIds, groups)) return;
+    if (!_memberGroupsAreValid(memberGroups)) return;
     final updated = expense.copyWith(
       description: description.trim().isEmpty ? 'Expense' : description.trim(),
       amount: amount,
@@ -863,15 +923,21 @@ class AppState extends ChangeNotifier {
       note: note?.trim().isEmpty ?? true ? null : note!.trim(),
       participantGroups: _bindGroups(groups, expense.id),
     );
+    final parties = _partiesFrom(
+      participantIds: participantIds,
+      groups: groups,
+      memberGroups: memberGroups,
+    );
     final shares = SplitCalculator.buildGrouped(
       expenseId: expense.id,
       amount: updated.amount,
-      parties: _partiesFrom(participantIds: participantIds, groups: groups),
+      parties: parties,
       type: splitType,
       percentages: percentages,
       customAmounts: customAmounts,
       shareUnits: shareUnits,
     );
+    _attachGroupSnapshots(shares, memberGroups);
     await _repo.saveExpense(updated, shares);
     await _commit();
   }
@@ -1026,14 +1092,26 @@ class AppState extends ChangeNotifier {
         ? selectedCycle
         : _repo.cycles.where((c) => c.id == cycleId).firstOrNull;
     if (s == null || cycle == null) return const [];
-    return BalanceCalculator.compute(
+    // BalanceCalculator returns entries for users AND Member Groups. A group is
+    // a financial participant: its share is never attributed to its members, so
+    // the group's own balance must be surfaced for the sheet to reconcile.
+    final entries = BalanceCalculator.compute(
       space: s,
       members: members,
+      memberGroups: _repo.memberGroups,
       cycle: cycle,
       expenses: _repo.expenses,
       shares: _repo.shares,
       settlements: _repo.settlements,
     );
+    return entries.map((e) => BalanceInfo(
+          userId: e.id,
+          paid: e.paid,
+          share: e.share,
+          balance: e.balance,
+          settledOut: e.settledOut,
+          settledIn: e.settledIn,
+        )).toList();
   }
 
   Money totalSpent([String? cycleId]) {
@@ -1053,8 +1131,13 @@ class AppState extends ChangeNotifier {
     return SettlementCalculator.minimize(map);
   }
 
-  String? memberName(String userId) =>
-      members.where((m) => m.userId == userId).firstOrNull?.name;
+  String? memberName(String id) {
+    final member = members.where((m) => m.userId == id).firstOrNull;
+    if (member != null) return member.name;
+    // A balance/settlement entry may reference a Member Group as a financial
+    // participant, so resolve group ids to the group name too.
+    return _repo.memberGroups.where((g) => g.id == id).firstOrNull?.name;
+  }
 
   Category? categoryFor(String? categoryId) {
     if (categoryId == null) return null;

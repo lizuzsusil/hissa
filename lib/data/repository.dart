@@ -13,6 +13,8 @@ abstract class ExpenseRepository {
   List<ExpenseShare> get shares;
   List<Settlement> get settlements;
   List<Category> get categories;
+  List<MemberGroup> get memberGroups;
+  List<MemberGroupMember> get memberGroupMembers;
 
   Future<void> saveUser(User user);
   Future<void> saveSpace(Space space);
@@ -24,6 +26,21 @@ abstract class ExpenseRepository {
   Future<void> addShare(ExpenseShare share);
   Future<void> saveSettlement(Settlement settlement);
   Future<void> saveCategory(Category category);
+
+  /// Creates a Member Group owned by [ownerUserId]. Group members must already
+  /// belong to [spaceId]; the owner is always implied and never stored as a
+  /// member row.
+  Future<void> saveMemberGroup(MemberGroup group);
+
+  /// Adds [userId] to [groupId]. The user must be a member of the group's
+  /// Space and must not already belong to the group.
+  Future<void> addGroupMember(String groupId, String userId);
+
+  /// Removes [userId] from [groupId]. Removing the owner is rejected.
+  Future<void> removeGroupMember(String groupId, String userId);
+
+  /// Marks [groupId] inactive (deleted) without touching historical expenses.
+  Future<void> deleteMemberGroup(String groupId);
 
   List<ExpenseShare> sharesForExpense(String expenseId);
   List<ExpenseShare> sharesForCycle(List<Expense> expenses);

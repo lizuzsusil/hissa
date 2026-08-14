@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants.dart';
 import '../../core/formatters.dart';
-import '../../core/ids.dart';
 import '../../core/money.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../l10n/l10n.dart';
@@ -57,27 +56,37 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       _amount = expense.amount;
       _date = expense.date;
       final shares = state.sharesForExpense(expense.id);
-      _participants = shares.map((s) => s.userId).toSet();
+
+      // Handle both old (Phase-6) and new (persistent MemberGroup) share models.
+      // New model: share.isGroup with memberGroupId + groupSnapshot.
+      // Old model: share.expenseGroupId with expense.participantGroups.
+      _participants = shares
+          .where((s) => !s.isGroup && s.userId != null)
+          .map((s) => s.userId!)
+          .toSet();
       _groups = expense.participantGroups.toList();
       _splitType = _detectSplitType(shares, _groups);
       _percentages = {};
       _customAmounts = {};
       _shareUnits = {};
       for (final s in shares) {
-        final key = s.groupId ?? s.userId;
+        final key = s.expenseGroupId ?? s.userId ?? s.memberGroupId ?? '';
+        if (key.isEmpty) continue;
         if (s.percentage != null) _percentages[key] = s.percentage!;
         if (s.shares != null) _shareUnits[key] = s.shares!;
       }
       // For custom splits, a group's party-level amount is the sum of its
-      // members' shares; individuals carry their own amount.
+      // members' shares (old model) or the single share amount (new model).
       for (final g in _groups) {
         final total = shares
-            .where((s) => s.groupId == g.id)
+            .where((s) => s.expenseGroupId == g.id)
             .fold<int>(0, (sum, s) => sum + s.amount.paisa);
         if (total > 0) _customAmounts[g.id] = Money(total);
       }
       for (final s in shares) {
-        if (s.groupId == null) _customAmounts[s.userId] = s.amount;
+        if (s.expenseGroupId == null && s.userId != null) {
+          _customAmounts[s.userId!] = s.amount;
+        }
       }
     }
   }
@@ -102,7 +111,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       partyAmounts.add(g.customAmountPaisa ?? 0);
     }
     for (final s in shares) {
-      if (s.groupId == null) partyAmounts.add(s.amount.paisa);
+      if (s.expenseGroupId == null) partyAmounts.add(s.amount.paisa);
     }
     partyAmounts.removeWhere((p) => p == 0);
     if (partyAmounts.length > 1) return SplitType.custom;
@@ -112,12 +121,26 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   /// The split parties currently in effect: users not in a group are
   /// individual parties; each group is one party containing its members.
   List<SplitParty> get _parties {
-    final grouped = <String>{for (final g in _groups) ...g.userIds};
+    // Handle both old (ParticipantGroup) and new (persistent MemberGroup) models
+    final groupedUserIds = <String>{};
+    final groupParties = <SplitParty>[];
+
+    // Old model: ad-hoc ParticipantGroup from expense form
+    for (final g in _groups) {
+      groupedUserIds.addAll(g.userIds);
+      groupParties.add(SplitParty.group(groupId: g.id, name: g.name, userIds: g.userIds));
+    }
+
+    // New model: persistent MemberGroups selected from Settings
+    for (final g in _selectedGroups) {
+      groupedUserIds.addAll(g.allUserIds);
+      groupParties.add(SplitParty.group(groupId: g.id, name: g.name, userIds: g.memberIds));
+    }
+
     return [
       for (final id in _participants)
-        if (!grouped.contains(id)) SplitParty.individual(id),
-      for (final g in _groups)
-        SplitParty(id: g.id, name: g.name, userIds: g.userIds),
+        if (!groupedUserIds.contains(id)) SplitParty.individual(id),
+      ...groupParties,
     ];
   }
 
@@ -146,7 +169,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       }
     }
 
-    final members = state.members;
     final categories = state.categories;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
@@ -199,9 +221,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               const SizedBox(height: 24),
               _Label(l10n.splitBetween),
               const SizedBox(height: 10),
-              _buildParticipantSelector(members),
-              const SizedBox(height: 12),
-              _buildGroupSection(state),
+              _buildParticipantSelector(state),
               const SizedBox(height: 20),
               _buildSplitTypeSelector(),
               const SizedBox(height: 20),
@@ -439,179 +459,137 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
   }
 
-  Widget _buildParticipantSelector(List<SpaceMember> members) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final m in members)
-          FilterChip(
-            avatar: MemberAvatar(name: m.name, size: 22),
-            label: Text(m.name),
-            selected: _participants.contains(m.userId),
-            onSelected: _saving
-                ? null
-                : (selected) => setState(() {
-                      if (selected) {
-                        _participants.add(m.userId);
-                      } else {
-                        _participants.remove(m.userId);
-                        _percentages.remove(m.userId);
-                        _customAmounts.remove(m.userId);
-                        _shareUnits.remove(m.userId);
-                        _removeUserFromGroups(m.userId);
-                      }
-                    }),
-          ),
-      ],
-    );
-  }
+  /// Builds the unified participant selector showing both individual members
+  /// and persistent Member Groups.
+  Widget _buildParticipantSelector(AppState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-  /// Removes [userId] from any group that contains them, dissolving groups
-  /// that drop below two members.
-  void _removeUserFromGroups(String userId) {
-    final remaining = <ParticipantGroup>[];
-    for (final g in _groups) {
-      final ids = g.userIds.where((id) => id != userId).toList();
-      if (ids.length >= 2) {
-        remaining.add(ParticipantGroup(
-          id: g.id,
-          expenseId: g.expenseId,
-          name: g.name,
-          userIds: ids,
-        ));
-      } else {
-        _percentages.remove(g.id);
-        _customAmounts.remove(g.id);
-        _shareUnits.remove(g.id);
-      }
-    }
-    _groups = remaining;
-  }
-
-  Widget _buildGroupSection(AppState state) {
-    final l10n = context.l10n;
-    final grouped = <String>{for (final g in _groups) ...g.userIds};
-    final selectable = state.members
-        .where(
-          (m) =>
-              _participants.contains(m.userId) &&
-              !grouped.contains(m.userId),
-        )
+    // Get active Member Groups for this space
+    final currentSpaceId = state.space?.id;
+    final memberGroups = state.repo.memberGroups
+        .where((g) => g.spaceId == currentSpaceId && g.isActive)
         .toList();
+
+    // Collect all user IDs represented by the selected groups (owner + members)
+    // so no one is double-counted both inside a group and individually.
+    final groupedUserIds = <String>{};
+    for (final g in _selectedGroups) {
+      groupedUserIds.addAll(g.allUserIds);
+    }
+
+    // Check if a member is selectable (not already in a selected group)
+    bool isMemberSelectable(String userId) => !groupedUserIds.contains(userId);
+
+    // Check if a group is selectable (none of its represented users are selected individually)
+    bool isGroupSelectable(MemberGroup group) {
+      return !group.allUserIds.any((id) => _participants.contains(id));
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_groups.isNotEmpty) ...[
+        // Individual members
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final m in state.members)
+              FilterChip(
+                avatar: MemberAvatar(name: m.name, size: 22),
+                label: Text(m.name),
+                selected: _participants.contains(m.userId),
+                onSelected: isMemberSelectable(m.userId) && !_saving
+                    ? (selected) => setState(() {
+                          if (selected) {
+                            _participants.add(m.userId);
+                          } else {
+                            _participants.remove(m.userId);
+                            _percentages.remove(m.userId);
+                            _customAmounts.remove(m.userId);
+                            _shareUnits.remove(m.userId);
+                          }
+                        })
+                    : null,
+                showCheckmark: false,
+                selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                checkmarkColor: AppColors.primary,
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Member Groups (persistent)
+        if (memberGroups.isNotEmpty) ...[
+          Text(
+            context.l10n.memberGroups,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (var i = 0; i < _groups.length; i++)
-                InputChip(
+              for (final g in memberGroups)
+                FilterChip(
                   avatar: const Icon(
-                    Icons.group_outlined,
+                    Icons.groups_rounded,
                     size: 18,
                     color: AppColors.primary,
                   ),
-                  label: Text(_groups[i].name),
-                  onDeleted: _saving
-                      ? null
-                      : () => setState(() {
-                            _groups.removeAt(i);
-                          }),
-                  deleteButtonTooltipMessage: l10n.ungroup,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.08),
-                  side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
+                  label: Text(g.name),
+                  labelStyle: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  selected: _selectedGroups.any((sg) => sg.id == g.id),
+                  onSelected: isGroupSelectable(g) && !_saving
+                      ? (selected) => setState(() {
+                            if (selected) {
+                              _selectedGroups.add(g);
+                              // Auto-remove any individual users (owner + members)
+                              // that are represented by this group
+                              for (final id in g.allUserIds) {
+                                _participants.remove(id);
+                                _percentages.remove(id);
+                                _customAmounts.remove(id);
+                                _shareUnits.remove(id);
+                              }
+                            } else {
+                              _selectedGroups.removeWhere((sg) => sg.id == g.id);
+                            }
+                          })
+                      : null,
+                  showCheckmark: false,
+                  selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                  checkmarkColor: AppColors.primary,
+                  tooltip: g.memberIds.isNotEmpty
+                      ? '${context.l10n.groupMembers}: ${g.memberIds.map((id) => state.memberName(id) ?? id).join(', ')}'
+                      : null,
                 ),
             ],
           ),
-          const SizedBox(height: 10),
-        ],
-        TextButton.icon(
-          onPressed: !_saving && selectable.length >= 2
-              ? () => _openGroupPicker(state, selectable)
-              : null,
-          icon: const Icon(Icons.group_add_outlined, size: 18),
-          label: Text(l10n.createGroup),
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.primary,
-            padding: const EdgeInsets.symmetric(horizontal: 6),
+          const SizedBox(height: 8),
+          Text(
+            context.l10n.groupCountsAsOneParticipant,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 
-  Future<void> _openGroupPicker(
-    AppState state,
-    List<SpaceMember> selectable,
-  ) async {
-    final l10n = context.l10n;
-    final picked = <String>{};
-    final result = await showModalBottomSheet<String?>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.selectGroupMembers,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                for (final m in selectable)
-                  CheckboxListTile(
-                    value: picked.contains(m.userId),
-                    title: Text(m.name),
-                    onChanged: (v) => setSheetState(() {
-                      if (v == true) {
-                        picked.add(m.userId);
-                      } else {
-                        picked.remove(m.userId);
-                      }
-                    }),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    dense: true,
-                  ),
-                const SizedBox(height: 12),
-                PrimaryButton(
-                  label: l10n.createGroup,
-                  onPressed: picked.length >= 2
-                      ? () => Navigator.of(sheetContext).pop(
-                            picked.toList().join('|'),
-                          )
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    if (result == null || !mounted) return;
-    final ids = result.split('|');
-    final members = state.members
-        .where((m) => ids.contains(m.userId))
-        .toList();
-    setState(() {
-      _groups.add(ParticipantGroup(
-        id: 'g_${genId(8)}',
-        expenseId: widget.expense?.id ?? '',
-        name: members.map((m) => m.name).join(' + '),
-        userIds: members.map((m) => m.userId).toList(),
-      ));
-    });
-  }
+  // Selected persistent Member Groups (replaces _groups)
+  final List<MemberGroup> _selectedGroups = [];
+
+  // No more _buildGroupSection, _openGroupPicker, _removeUserFromGroups
+  // Groups are now selected from persistent MemberGroups only
 
   Widget _buildSplitTypeSelector() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -754,34 +732,35 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           ),
           const SizedBox(height: 12),
           for (final share in shares)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  MemberAvatar(
-                    name: state.memberName(share.userId) ?? '?',
-                    size: 26,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      state.memberName(share.userId) ?? '?',
-                      style: const TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
+            if (share.userId != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    MemberAvatar(
+                      name: state.memberName(share.userId!) ?? '?',
+                      size: 26,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        state.memberName(share.userId!) ?? '?',
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  Text(
-                    formatMoney(share.amount),
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
+                    Text(
+                      formatMoney(share.amount),
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           const Divider(height: 20),
           Row(
             children: [
@@ -878,9 +857,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         return;
       }
       final participants = _participants.toList();
+      // Keep old ParticipantGroup for backward compat (ad-hoc groups created in expense form)
       final groups = _groups.map((g) {
-        // The party-level config is restored on edit from the expense; for a new
-        // expense the id is assigned by the repository.
         final percentage = _splitType == SplitType.percentage
             ? _percentages[g.id]
             : null;
@@ -898,6 +876,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           customAmountPaisa: custom,
         );
       }).toList();
+      // New persistent MemberGroups from Settings
+      final memberGroups = _selectedGroups.toList();
       if (expense == null) {
         await state.addExpense(
           description: _descriptionController.text,
@@ -907,6 +887,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           note: _noteController.text,
           participantIds: participants,
           groups: groups,
+          memberGroups: memberGroups,
           splitType: _splitType,
           percentages: _percentages,
           customAmounts: _customAmounts,
@@ -922,6 +903,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           note: _noteController.text,
           participantIds: participants,
           groups: groups,
+          memberGroups: _selectedGroups.toList(),
           splitType: _splitType,
           percentages: _percentages,
           customAmounts: _customAmounts,

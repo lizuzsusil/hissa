@@ -497,7 +497,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectGroupMembers.
   ///
   /// In en, this message translates to:
-  /// **'Choose members to group together'**
+  /// **'Select Members'**
   String get selectGroupMembers;
 
   /// No description provided for @editExpense.
@@ -869,7 +869,7 @@ abstract class AppLocalizations {
   /// No description provided for @addMember.
   ///
   /// In en, this message translates to:
-  /// **'Add a member'**
+  /// **'Add Member'**
   String get addMember;
 
   /// No description provided for @name.
@@ -1520,6 +1520,198 @@ abstract class AppLocalizations {
   /// **'Categories'**
   String get categories;
 
+  /// No description provided for @memberGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Member Groups'**
+  String get memberGroups;
+
+  /// No description provided for @memberGroupsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create groups to split as a single participant'**
+  String get memberGroupsSubtitle;
+
+  /// No description provided for @noMemberGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'No member groups yet'**
+  String get noMemberGroups;
+
+  /// No description provided for @noMemberGroupsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a group to combine members into a single participant when splitting expenses.'**
+  String get noMemberGroupsDescription;
+
+  /// No description provided for @createMemberGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Member Group'**
+  String get createMemberGroup;
+
+  /// No description provided for @createGroupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Select members to add to this group. The group will be owned by you.'**
+  String get createGroupDescription;
+
+  /// No description provided for @groupOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get groupOwner;
+
+  /// No description provided for @youAreOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'You are the owner of this group'**
+  String get youAreOwner;
+
+  /// No description provided for @noOtherMembersToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'No other space members to add'**
+  String get noOtherMembersToAdd;
+
+  /// No description provided for @managedByYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Managed by you'**
+  String get managedByYou;
+
+  /// No description provided for @managedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Managed by'**
+  String get managedBy;
+
+  /// No description provided for @groupCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Group created'**
+  String get groupCreated;
+
+  /// No description provided for @groupCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create group'**
+  String get groupCreateFailed;
+
+  /// No description provided for @deleteGroupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Group'**
+  String get deleteGroupTitle;
+
+  /// No description provided for @deleteGroupMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This group will be removed. Historical expenses using this group will not be affected.'**
+  String get deleteGroupMessage;
+
+  /// No description provided for @deleteGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteGroup;
+
+  /// No description provided for @groupDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Group deleted'**
+  String get groupDeleted;
+
+  /// No description provided for @groupDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete group'**
+  String get groupDeleteFailed;
+
+  /// No description provided for @addGroupMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Member'**
+  String get addGroupMember;
+
+  /// No description provided for @memberAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Member added'**
+  String get memberAdded;
+
+  /// No description provided for @memberAddFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add member'**
+  String get memberAddFailed;
+
+  /// No description provided for @removeMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeMember;
+
+  /// No description provided for @memberRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Member removed'**
+  String get memberRemoved;
+
+  /// No description provided for @memberRemoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to remove member'**
+  String get memberRemoveFailed;
+
+  /// No description provided for @removeGroupMemberTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from this group?'**
+  String removeGroupMemberTitle(Object name);
+
+  /// No description provided for @removeGroupMemberMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'They will no longer be part of this group. Historical expenses are not affected.'**
+  String get removeGroupMemberMessage;
+
+  /// No description provided for @groupCountsAsOneParticipant.
+  ///
+  /// In en, this message translates to:
+  /// **'This group counts as one participant.'**
+  String get groupCountsAsOneParticipant;
+
+  /// No description provided for @noMembersAvailableToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'No members available to add'**
+  String get noMembersAvailableToAdd;
+
+  /// No description provided for @groupMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get groupMembers;
+
+  /// No description provided for @noMembersInGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'No members in this group yet'**
+  String get noMembersInGroup;
+
+  /// No description provided for @groupOwnerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Owner'**
+  String get groupOwnerLabel;
+
+  /// No description provided for @members.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get members;
+
   /// No description provided for @defaultCategories.
   ///
   /// In en, this message translates to:
@@ -1597,12 +1789,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Share this code so friends and roommates can join your space.'**
   String get shareInviteHint;
-
-  /// No description provided for @members.
-  ///
-  /// In en, this message translates to:
-  /// **'Members'**
-  String get members;
 
   /// No description provided for @addMemberFieldHint.
   ///

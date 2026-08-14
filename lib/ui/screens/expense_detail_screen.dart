@@ -182,20 +182,42 @@ class ExpenseDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
+                  // New model: GROUP participant (single share with memberGroupId + snapshot)
                   for (final share in shares)
-                    if (share.groupId == null)
+                    if (share.isGroup) ...[
+                      _GroupSnapshotRow(
+                        share: share,
+                        memberName: (uid) => state.memberName(uid) ?? '?',
+                        paidByUserId: expense.paidByUserId,
+                      ),
+                    ],
+                  // Old Phase-6 model: expense-scoped participant groups
+                  for (final g in expense.participantGroups) ...[
+                    _GroupPartyRow(
+                      group: g,
+                      shares: shares
+                          .where((s) => s.expenseGroupId == g.id)
+                          .toList(),
+                      memberName: (uid) =>
+                          state.memberName(uid) ?? '?',
+                      paidByUserId: expense.paidByUserId,
+                    ),
+                  ],
+                  // Individual participants (USER type)
+                  for (final share in shares)
+                    if (!share.isGroup && share.userId != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Row(
                           children: [
                             MemberAvatar(
-                              name: state.memberName(share.userId) ?? '?',
+                              name: state.memberName(share.userId!) ?? '?',
                               size: 36,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                state.memberName(share.userId) ?? '?',
+                                state.memberName(share.userId!) ?? '?',
                                 style: const TextStyle(
                                   fontSize: 14.5,
                                   fontWeight: FontWeight.w600,
@@ -224,17 +246,6 @@ class ExpenseDetailScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                  for (final g in expense.participantGroups) ...[
-                    _GroupPartyRow(
-                      group: g,
-                      shares: shares
-                          .where((s) => s.groupId == g.id)
-                          .toList(),
-                      memberName: (uid) =>
-                          state.memberName(uid) ?? '?',
-                      paidByUserId: expense.paidByUserId,
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -345,45 +356,148 @@ class _GroupPartyRow extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           for (final share in shares)
-            Padding(
-              padding: const EdgeInsets.only(left: 48, bottom: 4),
-              child: Row(
-                children: [
-                  MemberAvatar(name: memberName(share.userId), size: 22),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      memberName(share.userId),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  if (share.userId == paidByUserId)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
+            if (share.userId != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 48, bottom: 4),
+                child: Row(
+                  children: [
+                    MemberAvatar(name: memberName(share.userId!), size: 22),
+                    const SizedBox(width: 8),
+                    Expanded(
                       child: Text(
-                        context.l10n.paid,
+                        memberName(share.userId!),
                         style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.positive,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ),
-                  Text(
-                    formatMoney(share.amount),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
+                    if (share.userId == paidByUserId)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          context.l10n.paid,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.positive,
+                          ),
+                        ),
+                      ),
+                    Text(
+                      formatMoney(share.amount),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GroupSnapshotRow extends StatelessWidget {
+  final ExpenseShare share;
+  final String Function(String) memberName;
+  final String paidByUserId;
+
+  const _GroupSnapshotRow({
+    required this.share,
+    required this.memberName,
+    required this.paidByUserId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = share.groupSnapshot;
+    final members = snapshot?.allUserIds ?? [];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final totalPaisa = share.amount.paisa;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.group_outlined,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  snapshot?.ownerUserId != null
+                      ? '${memberName(snapshot!.ownerUserId)}\'s Group'
+                      : 'Member Group',
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                formatMoney(Money(totalPaisa)),
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          if (members.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            for (final uid in members)
+              Padding(
+                padding: const EdgeInsets.only(left: 48, bottom: 4),
+                child: Row(
+                  children: [
+                    MemberAvatar(name: memberName(uid), size: 22),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        memberName(uid),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    if (uid == paidByUserId)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          context.l10n.paid,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.positive,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
         ],
       ),
     );

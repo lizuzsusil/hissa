@@ -109,3 +109,28 @@ enum SpaceMode {
   /// User-facing label for the mode.
   final String label;
 }
+
+/// The entity a single expense participant (and its share) refers to. A
+/// participant is either an individual Space member ([ExpenseParticipantType
+/// .user]) or a persistent Member Group ([ExpenseParticipantType.group]).
+///
+/// A Member Group always counts as exactly one financial participant: its
+/// share is never divided between the users inside it.
+enum ExpenseParticipantType {
+  user('USER'),
+  group('GROUP');
+
+  const ExpenseParticipantType(this.value);
+
+  /// Stable internal value used for persistence.
+  final String value;
+
+  static ExpenseParticipantType parse(Object? value) {
+    if (value is String) {
+      for (final t in values) {
+        if (t.value == value) return t;
+      }
+    }
+    return ExpenseParticipantType.user;
+  }
+}
