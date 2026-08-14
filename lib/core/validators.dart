@@ -110,7 +110,7 @@ String? validatePassword(
 
 final RegExp _inviteRe = RegExp(r'^[A-Z0-9]{6}$');
 
-/// A household invite code: exactly 6 uppercase letters/digits.
+/// A space invite code: exactly 6 uppercase letters/digits.
 String? validateInviteCode(
   String? value, {
   ValidatorMessages messages = const ValidatorMessages.en(),

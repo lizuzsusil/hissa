@@ -68,7 +68,7 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 _QuickActions(proposals: proposals),
                 const SizedBox(height: 24),
-                SectionHeader(title: l10n.householdBalances),
+                SectionHeader(title: l10n.spaceBalances),
                 ...members.map((m) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: _MemberBalanceCard(

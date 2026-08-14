@@ -362,11 +362,11 @@ abstract class AppLocalizations {
   /// **'Close {name}?'**
   String closeCycleTitle(String name);
 
-  /// No description provided for @householdMembersCount.
+  /// No description provided for @spaceMembersCount.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 member} other{{count} members}}'**
-  String householdMembersCount(int count);
+  String spaceMembersCount(int count);
 
   /// No description provided for @category.
   ///
@@ -542,11 +542,11 @@ abstract class AppLocalizations {
   /// **'Total spending'**
   String get totalSpending;
 
-  /// No description provided for @householdBalances.
+  /// No description provided for @spaceBalances.
   ///
   /// In en, this message translates to:
   /// **'Space balances'**
-  String get householdBalances;
+  String get spaceBalances;
 
   /// No description provided for @recentExpenses.
   ///
@@ -836,12 +836,6 @@ abstract class AppLocalizations {
   /// **'Any small group sharing expenses'**
   String get modeOtherSubtitle;
 
-  /// No description provided for @setUpHousehold.
-  ///
-  /// In en, this message translates to:
-  /// **'Set up your space'**
-  String get setUpHousehold;
-
   /// No description provided for @setUpSubtitle.
   ///
   /// In en, this message translates to:
@@ -859,18 +853,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Join'**
   String get join;
-
-  /// No description provided for @householdName.
-  ///
-  /// In en, this message translates to:
-  /// **'Space name'**
-  String get householdName;
-
-  /// No description provided for @householdNameHint.
-  ///
-  /// In en, this message translates to:
-  /// **'e.g. Our Home'**
-  String get householdNameHint;
 
   /// No description provided for @whoLivesHere.
   ///
@@ -896,12 +878,6 @@ abstract class AppLocalizations {
   /// **'Currency'**
   String get currency;
 
-  /// No description provided for @createHousehold.
-  ///
-  /// In en, this message translates to:
-  /// **'Create space'**
-  String get createHousehold;
-
   /// No description provided for @inviteLater.
   ///
   /// In en, this message translates to:
@@ -926,23 +902,11 @@ abstract class AppLocalizations {
   /// **'Ask the space owner for their invite code. Codes are shown in Settings → Space.'**
   String get inviteCodeHelp;
 
-  /// No description provided for @joinHousehold.
-  ///
-  /// In en, this message translates to:
-  /// **'Join space'**
-  String get joinHousehold;
-
   /// No description provided for @inviteNotFound.
   ///
   /// In en, this message translates to:
   /// **'Invite code not found. Check the code and try again.'**
   String get inviteNotFound;
-
-  /// No description provided for @householdNameRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Space name is required'**
-  String get householdNameRequired;
 
   /// No description provided for @enterMemberNameError.
   ///
@@ -1526,17 +1490,17 @@ abstract class AppLocalizations {
   /// **'Enter your name'**
   String get enterNameError;
 
-  /// No description provided for @household.
+  /// No description provided for @space.
   ///
   /// In en, this message translates to:
   /// **'Space'**
-  String get household;
+  String get space;
 
-  /// No description provided for @householdAndMembers.
+  /// No description provided for @spaceAndMembers.
   ///
   /// In en, this message translates to:
   /// **'Space & members'**
-  String get householdAndMembers;
+  String get spaceAndMembers;
 
   /// No description provided for @categories.
   ///

@@ -4,7 +4,7 @@
       "collectionGroup": "expenseShares",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "householdId", "order": "ASCENDING" },
+        { "fieldPath": "spaceId", "order": "ASCENDING" },
         { "fieldPath": "expenseId", "order": "ASCENDING" }
       ]
     }

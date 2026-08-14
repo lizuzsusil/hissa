@@ -13,14 +13,14 @@ import '../widgets/avatars.dart';
 import '../widgets/buttons.dart';
 import '../widgets/toasts.dart';
 
-class HouseholdScreen extends StatefulWidget {
-  const HouseholdScreen({super.key});
+class SpaceScreen extends StatefulWidget {
+  const SpaceScreen({super.key});
 
   @override
-  State<HouseholdScreen> createState() => _HouseholdScreenState();
+  State<SpaceScreen> createState() => _SpaceScreenState();
 }
 
-class _HouseholdScreenState extends State<HouseholdScreen> {
+class _SpaceScreenState extends State<SpaceScreen> {
   final _memberController = TextEditingController();
   String? _memberError;
 
@@ -44,7 +44,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.household)),
+      appBar: AppBar(title: Text(l10n.space)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
@@ -68,7 +68,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   children: [
                     Icon(Icons.home_work_rounded, color: Colors.white, size: 22),
                     const SizedBox(width: 8),
-                    Text(l10n.household,
+                    Text(l10n.space,
                         style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 13,
@@ -89,7 +89,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                 Row(
                   children: [
                     Text(
-                      '${space.currency} · ${l10n.householdMembersCount(state.members.length)}',
+                      '${space.currency} · ${l10n.spaceMembersCount(state.members.length)}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 13,
@@ -155,7 +155,7 @@ class _HouseholdScreenState extends State<HouseholdScreen> {
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               const Spacer(),
               Text(
-                l10n.householdMembersCount(state.members.length),
+                l10n.spaceMembersCount(state.members.length),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,

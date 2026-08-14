@@ -113,7 +113,7 @@ void main() {
       );
       final legacy = Expense(
         id: 'e1',
-        householdId: 'h1',
+        spaceId: 'h1',
         cycleId: 'c1',
         paidByUserId: 'u1',
         createdBy: null,
@@ -150,7 +150,7 @@ void main() {
 
       final legacyExpense = Expense(
         id: 'e1',
-        householdId: 'h1',
+        spaceId: 'h1',
         cycleId: 'c1',
         paidByUserId: 'u1',
         createdBy: null,
@@ -162,7 +162,7 @@ void main() {
       );
       final ownedExpense = Expense(
         id: 'e2',
-        householdId: 'h1',
+        spaceId: 'h1',
         cycleId: 'c1',
         paidByUserId: 'u1',
         createdBy: 'u1',

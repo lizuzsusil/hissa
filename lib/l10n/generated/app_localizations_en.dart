@@ -185,7 +185,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String householdMembersCount(int count) {
+  String spaceMembersCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -283,7 +283,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalSpending => 'Total spending';
 
   @override
-  String get householdBalances => 'Space balances';
+  String get spaceBalances => 'Space balances';
 
   @override
   String get recentExpenses => 'Recent expenses';
@@ -443,9 +443,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modeOtherSubtitle => 'Any small group sharing expenses';
 
   @override
-  String get setUpHousehold => 'Set up your space';
-
-  @override
   String get setUpSubtitle =>
       'Create a new space or join one with an invite code.';
 
@@ -454,12 +451,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get join => 'Join';
-
-  @override
-  String get householdName => 'Space name';
-
-  @override
-  String get householdNameHint => 'e.g. Our Home';
 
   @override
   String get whoLivesHere => 'Who lives here?';
@@ -472,9 +463,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currency => 'Currency';
-
-  @override
-  String get createHousehold => 'Create space';
 
   @override
   String get inviteLater => 'You can invite more people later from Settings';
@@ -490,14 +478,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Ask the space owner for their invite code. Codes are shown in Settings → Space.';
 
   @override
-  String get joinHousehold => 'Join space';
-
-  @override
   String get inviteNotFound =>
       'Invite code not found. Check the code and try again.';
-
-  @override
-  String get householdNameRequired => 'Space name is required';
 
   @override
   String get enterMemberNameError => 'Enter a member name';
@@ -820,10 +802,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterNameError => 'Enter your name';
 
   @override
-  String get household => 'Space';
+  String get space => 'Space';
 
   @override
-  String get householdAndMembers => 'Space & members';
+  String get spaceAndMembers => 'Space & members';
 
   @override
   String get categories => 'Categories';

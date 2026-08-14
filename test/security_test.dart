@@ -54,7 +54,7 @@ void main() {
     await repo.saveCycle(
       Cycle(
         id: 'c1',
-        householdId: 'h1',
+        spaceId: 'h1',
         name: 'January 2026',
         startDate: DateTime(2026, 1, 1),
         endDate: DateTime(2026, 1, 31),
@@ -85,7 +85,7 @@ void main() {
     await state.repo.saveExpense(
       Expense(
         id: 'e1',
-        householdId: 'h1',
+        spaceId: 'h1',
         cycleId: 'c1',
         paidByUserId: 'u_ram',
         createdBy: 'u_ram',
@@ -193,7 +193,7 @@ void main() {
     await state.repo.saveExpense(
       Expense(
         id: 'e_legacy',
-        householdId: 'h1',
+        spaceId: 'h1',
         cycleId: 'c1',
         paidByUserId: 'u_ram',
         createdBy: null, // pre-ownership record

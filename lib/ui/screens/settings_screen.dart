@@ -14,7 +14,7 @@ import '../widgets/misc.dart';
 import '../widgets/toasts.dart';
 import 'categories_screen.dart';
 import 'export_screen.dart';
-import 'household_screen.dart';
+import 'space_screen.dart';
 import 'profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -54,12 +54,12 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
           ],
-          SectionHeader(title: l10n.household),
+          SectionHeader(title: l10n.space),
           _SettingTile(
             icon: Icons.home_work_outlined,
-            title: l10n.householdAndMembers,
+            title: l10n.spaceAndMembers,
             subtitle: space?.name ?? l10n.noSpace,
-            onTap: () => _push(context, HouseholdScreen()),
+            onTap: () => _push(context, SpaceScreen()),
           ),
           _SettingTile(
             icon: Icons.category_outlined,

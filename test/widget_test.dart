@@ -154,7 +154,7 @@ void main() {
   group('BalanceCalculator', () {
     test('balance is paid minus share', () {
       final balances = BalanceCalculator.compute(
-        space: _household,
+        space: _space,
         members: _members,
         cycle: _cycle,
         expenses: [
@@ -175,7 +175,7 @@ void main() {
 
     test('settlement reduces outstanding balances', () {
       final balances = BalanceCalculator.compute(
-        space: _household,
+        space: _space,
         members: _members,
         cycle: _cycle,
         expenses: [
@@ -196,7 +196,7 @@ void main() {
 
     test('personal expenses (no cycle) never affect split balances', () {
       final balances = BalanceCalculator.compute(
-        space: _household,
+        space: _space,
         members: _members,
         cycle: _cycle,
         expenses: [
@@ -217,7 +217,7 @@ void main() {
       expect(BalanceCalculator.totalSpent(
         [Expense(
           id: 'p1',
-          householdId: 'h',
+          spaceId: 'h',
           cycleId: null,
           paidByUserId: 'u_ram',
           createdBy: 'u_ram',
@@ -235,7 +235,7 @@ void main() {
     test('fromJson tolerates a null cycleId and a missing createdBy', () {
       final e = Expense.fromJson({
         'id': 'p1',
-        'householdId': 'h1',
+        'spaceId': 'h1',
         'cycleId': null,
         'paidByUserId': 'u1',
         'amountPaisa': 25000,
@@ -296,7 +296,7 @@ void main() {
   group('Expense ownership', () {
     final expense = Expense(
       id: 'e1',
-      householdId: 'h',
+      spaceId: 'h',
       cycleId: 'c',
       paidByUserId: 'u_ram',
       createdBy: 'u_ram',
@@ -323,7 +323,7 @@ void main() {
     test('legacy expenses without a creator are locked', () {
       final legacy = Expense(
         id: 'e2',
-        householdId: 'h',
+        spaceId: 'h',
         cycleId: 'c',
         paidByUserId: 'u_ram',
         amount: const Money(50000),
@@ -393,7 +393,7 @@ void main() {
     test('carry-forward keeps a settled balance at zero across cycles', () {
       // Cycle 1: a and b split 100, b pays 50, a pays 50 -> both owe 0.
       final info = BalanceCalculator.compute(
-        space: _household,
+        space: _space,
         members: _members,
         cycle: _cycle,
         expenses: [
@@ -419,7 +419,7 @@ void main() {
     test('historical settlements and cycle history stay intact', () {
       // A paid settlement in a cycle reduces that cycle's owed amount to zero.
       final info = BalanceCalculator.compute(
-        space: _household,
+        space: _space,
         members: _members,
         cycle: _cycle,
         expenses: [
@@ -454,7 +454,7 @@ void main() {
   });
 }
 
-final Household _household = Household(
+final Space _space = Space(
   id: 'h',
   name: 'Test',
   currency: 'NPR',
@@ -462,14 +462,14 @@ final Household _household = Household(
   createdAt: DateTime(2026, 1, 1),
 );
 
-final List<HouseholdMember> _members = [
-  HouseholdMember(
+final List<SpaceMember> _members = [
+  SpaceMember(
     userId: 'u_ram',
     name: 'Ram',
     role: MemberRole.owner,
     joinedAt: DateTime(2026, 1, 1),
   ),
-  HouseholdMember(
+  SpaceMember(
     userId: 'u_sita',
     name: 'Sita',
     role: MemberRole.member,
@@ -479,7 +479,7 @@ final List<HouseholdMember> _members = [
 
 final Cycle _cycle = Cycle(
   id: 'c',
-  householdId: 'h',
+  spaceId: 'h',
   name: 'Test cycle',
   startDate: DateTime(2026, 1, 1),
   endDate: DateTime(2026, 1, 31),
@@ -495,7 +495,7 @@ Expense _expense(
 ) {
   return Expense(
     id: id,
-    householdId: 'h',
+    spaceId: 'h',
     cycleId: cycleId,
     paidByUserId: payer,
     amount: Money(paisa),
@@ -517,7 +517,7 @@ ExpenseShare _share(String id, String userId, int paisa) {
 Expense _personalExpense(String id, String payer, int paisa) {
   return Expense(
     id: id,
-    householdId: 'h',
+    spaceId: 'h',
     cycleId: null,
     paidByUserId: payer,
     createdBy: payer,
@@ -531,7 +531,7 @@ Expense _personalExpense(String id, String payer, int paisa) {
 Expense _groupedExpense() {
   return Expense(
     id: 'e1',
-    householdId: 'h',
+    spaceId: 'h',
     cycleId: 'c',
     paidByUserId: 'a',
     createdBy: 'a',
@@ -560,7 +560,7 @@ Settlement _settlement(
 ) {
   return Settlement(
     id: id,
-    householdId: 'h',
+    spaceId: 'h',
     cycleId: cycleId,
     fromUserId: from,
     toUserId: to,

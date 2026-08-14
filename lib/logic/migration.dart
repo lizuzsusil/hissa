@@ -43,8 +43,8 @@ class MigrationReport {
 ///  3. Marks the remaining legacy expenses as ambiguous; they stay read-only
 ///     historical records (ownership is never invented).
 ///
-/// The existing Firestore schema (`households/{id}`) is intentionally kept, so
-/// mapping Household → Space requires no record rewrite.
+/// The Firestore schema (`spaces/{id}`) is the single source of truth; the
+/// migrator only touches records that predate the explicit [SpaceMode].
 class SpaceMigrator {
   /// True when [space] predates the explicit [SpaceMode] field. New records
   /// always carry a `mode`; legacy records default to split on read, but are

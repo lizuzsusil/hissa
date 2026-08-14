@@ -185,7 +185,7 @@ class AppLocalizationsNe extends AppLocalizations {
   }
 
   @override
-  String householdMembersCount(int count) {
+  String spaceMembersCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -283,7 +283,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get totalSpending => 'कुल खर्च';
 
   @override
-  String get householdBalances => 'ठाउँका ब्यालेन्सहरू';
+  String get spaceBalances => 'ठाउँका ब्यालेन्सहरू';
 
   @override
   String get recentExpenses => 'भर्खरका खर्चहरू';
@@ -442,9 +442,6 @@ class AppLocalizationsNe extends AppLocalizations {
   String get modeOtherSubtitle => 'खर्च बाँड्ने कुनै पनि सानो समूह';
 
   @override
-  String get setUpHousehold => 'आफ्नो ठाउँ सेटअप गर्नुहोस्';
-
-  @override
   String get setUpSubtitle =>
       'नयाँ ठाउँ बनाउनुहोस् वा इन्भाइट कोडबाट सामेल हुनुहोस्।';
 
@@ -453,12 +450,6 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get join => 'सामेल हुनुहोस्';
-
-  @override
-  String get householdName => 'ठाउँको नाम';
-
-  @override
-  String get householdNameHint => 'जस्तै: हाम्रो घर';
 
   @override
   String get whoLivesHere => 'यहाँ को-को बस्नुहुन्छ?';
@@ -471,9 +462,6 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get currency => 'मुद्रा';
-
-  @override
-  String get createHousehold => 'ठाउँ सिर्जना गर्नुहोस्';
 
   @override
   String get inviteLater => 'पछि सेटिङबाट थप मानिसहरूलाई बोलाउन सक्नुहुन्छ';
@@ -489,14 +477,8 @@ class AppLocalizationsNe extends AppLocalizations {
       'ठाउँको मालिकलाई उनीहरूको इन्भाइट कोड सोध्नुहोस्। कोडहरू सेटिङ → ठाउँमा देखिन्छन्।';
 
   @override
-  String get joinHousehold => 'ठाउँमा सामेल हुनुहोस्';
-
-  @override
   String get inviteNotFound =>
       'इन्भाइट कोड भेटिएन। कोड जाँचेर फेरि प्रयास गर्नुहोस्।';
-
-  @override
-  String get householdNameRequired => 'ठाउँको नाम चाहिन्छ';
 
   @override
   String get enterMemberNameError => 'सदस्यको नाम लेख्नुहोस्';
@@ -818,10 +800,10 @@ class AppLocalizationsNe extends AppLocalizations {
   String get enterNameError => 'आफ्नो नाम लेख्नुहोस्';
 
   @override
-  String get household => 'ठाउँ';
+  String get space => 'ठाउँ';
 
   @override
-  String get householdAndMembers => 'ठाउँ र सदस्यहरू';
+  String get spaceAndMembers => 'ठाउँ र सदस्यहरू';
 
   @override
   String get categories => 'श्रेणीहरू';

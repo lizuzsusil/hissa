@@ -101,7 +101,7 @@ const List<ModePreset> kOnboardingModes = [
   ),
   ModePreset(
     title: 'Family',
-    subtitle: 'Parents, kids and the whole household',
+    subtitle: 'Parents, kids and the whole family',
     icon: Icons.family_restroom_outlined,
     members: ['Mom', 'Dad'],
   ),

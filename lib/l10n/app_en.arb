@@ -135,12 +135,12 @@
   },
   "closeCycleTitle": "Close {name}?",
 
-  "@householdMembersCount": {
+  "@spaceMembersCount": {
     "placeholders": {
       "count": { "type": "int" }
     }
   },
-  "householdMembersCount": "{count, plural, =1{1 member} other{{count} members}}",
+  "spaceMembersCount": "{count, plural, =1{1 member} other{{count} members}}",
 
   "category": "Category",
   "amount": "Amount",
@@ -171,7 +171,7 @@
   "youReceive": "You receive",
   "youOwe": "You owe",
   "totalSpending": "Total spending",
-  "householdBalances": "Space balances",
+  "spaceBalances": "Space balances",
   "recentExpenses": "Recent expenses",
   "thisMonth": "This month",
   "lastMonth": "Last month",
@@ -223,24 +223,18 @@
   "modeOther": "Other",
   "modeOtherSubtitle": "Any small group sharing expenses",
 
-  "setUpHousehold": "Set up your space",
   "setUpSubtitle": "Create a new space or join one with an invite code.",
   "create": "Create",
   "join": "Join",
-  "householdName": "Space name",
-  "householdNameHint": "e.g. Our Home",
   "whoLivesHere": "Who lives here?",
   "addMember": "Add a member",
   "name": "Name",
   "currency": "Currency",
-  "createHousehold": "Create space",
   "inviteLater": "You can invite more people later from Settings",
   "inviteCode": "Invite code",
   "inviteCodeHint": "ABCDE2",
   "inviteCodeHelp": "Ask the space owner for their invite code. Codes are shown in Settings → Space.",
-  "joinHousehold": "Join space",
   "inviteNotFound": "Invite code not found. Check the code and try again.",
-  "householdNameRequired": "Space name is required",
   "enterMemberNameError": "Enter a member name",
   "duplicateMemberError": "That name is already in the list",
   "enterInviteCodeError": "Enter the invite code",
@@ -357,8 +351,8 @@
   "displayNameHint": "This name is shared with your space members.",
   "enterNameError": "Enter your name",
 
-  "household": "Space",
-  "householdAndMembers": "Space & members",
+  "space": "Space",
+  "spaceAndMembers": "Space & members",
   "categories": "Categories",
   "defaultCategories": "Default categories",
   "customCategories": "Custom categories",

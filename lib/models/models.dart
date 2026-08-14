@@ -52,10 +52,8 @@ class User {
       );
 }
 
-/// The container for expenses and members in Hissa. Supersedes the legacy
-/// [Household] terminology; existing (legacy) records are read through the
-/// same Firestore schema (`households/{id}`) so pre-existing Split Mode data
-/// stays fully readable without a data migration.
+/// The container for expenses and members in Hissa. Persisted in the
+/// `spaces/{id}` Firestore collection.
 class Space {
   final String id;
   String name;
@@ -63,9 +61,7 @@ class Space {
   final String inviteCode;
   final String? createdBy;
 
-  /// The mode of this Space. Existing (legacy) households default to
-  /// [SpaceMode.split] so pre-existing records keep behaving exactly as
-  /// before.
+  /// The mode of this Space.
   SpaceMode mode;
 
   final DateTime createdAt;
@@ -137,9 +133,8 @@ class Space {
   }
 }
 
-/// A member of a [Space]. Replaces the legacy [HouseholdMember] model; the
-/// persisted record shape is unchanged (a `householdId` field scopes the
-/// membership) so existing members stay associated with their Space.
+/// A member of a [Space]. Persisted in the `spaceMembers/{spaceId}_{userId}`
+/// collection; a `spaceId` field scopes the membership.
 class SpaceMember {
   final String userId;
   String name;
@@ -148,7 +143,7 @@ class SpaceMember {
   final String? avatarUrl;
 
   /// The Space this membership belongs to. Populated from the persisted
-  /// `householdId` (or `spaceId`) field when loaded from Firestore.
+  /// `spaceId` field when loaded from Firestore.
   final String? spaceId;
   final MembershipStatus status;
 
@@ -198,8 +193,7 @@ class SpaceMember {
         role: MemberRole.values.byName(json['role'] as String),
         joinedAt: DateTime.parse(json['joinedAt'] as String),
         avatarUrl: json['avatarUrl'] as String?,
-        spaceId: json['spaceId'] as String? ??
-            json['householdId'] as String?,
+        spaceId: json['spaceId'] as String?,
         status: _parseStatus(json['status']),
       );
 
@@ -213,17 +207,9 @@ class SpaceMember {
   }
 }
 
-/// Compatibility aliases for the legacy terminology, kept until the migration
-/// (Phase 7) is verified. New code should use [Space]/[SpaceMember].
-@Deprecated('Use Space instead.')
-typedef Household = Space;
-
-@Deprecated('Use SpaceMember instead.')
-typedef HouseholdMember = SpaceMember;
-
 class Category {
   final String id;
-  final String householdId;
+  final String spaceId;
   final String name;
   final int? iconCodePoint;
   final int? colorValue;
@@ -231,7 +217,7 @@ class Category {
 
   Category({
     required this.id,
-    required this.householdId,
+    required this.spaceId,
     required this.name,
     this.iconCodePoint,
     this.colorValue,
@@ -240,14 +226,14 @@ class Category {
 
   factory Category.preset({
     required String id,
-    required String householdId,
+    required String spaceId,
     required String name,
     required IconData icon,
     required Color color,
   }) {
     return Category(
       id: id,
-      householdId: householdId,
+      spaceId: spaceId,
       name: name,
       iconCodePoint: icon.codePoint,
       colorValue: color.toARGB32(),
@@ -257,7 +243,7 @@ class Category {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'householdId': householdId,
+        'spaceId': spaceId,
         'name': name,
         'iconCodePoint': iconCodePoint,
         'colorValue': colorValue,
@@ -266,7 +252,7 @@ class Category {
 
   factory Category.fromJson(Map<String, dynamic> json) => Category(
         id: json['id'] as String,
-        householdId: json['householdId'] as String,
+        spaceId: json['spaceId'] as String,
         name: json['name'] as String,
         iconCodePoint: json['iconCodePoint'] as int?,
         colorValue: json['colorValue'] as int?,
@@ -276,7 +262,7 @@ class Category {
 
 class Cycle {
   final String id;
-  final String householdId;
+  final String spaceId;
   String name;
   final DateTime startDate;
   DateTime endDate;
@@ -285,7 +271,7 @@ class Cycle {
 
   Cycle({
     required this.id,
-    required this.householdId,
+    required this.spaceId,
     required this.name,
     required this.startDate,
     required this.endDate,
@@ -301,7 +287,7 @@ class Cycle {
   }) {
     return Cycle(
       id: id,
-      householdId: householdId,
+      spaceId: spaceId,
       name: name ?? this.name,
       startDate: startDate,
       endDate: endDate ?? this.endDate,
@@ -312,7 +298,7 @@ class Cycle {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'householdId': householdId,
+        'spaceId': spaceId,
         'name': name,
         'startDate': startDate.toIso8601String(),
         'endDate': endDate.toIso8601String(),
@@ -322,7 +308,7 @@ class Cycle {
 
   factory Cycle.fromJson(Map<String, dynamic> json) => Cycle(
         id: json['id'] as String,
-        householdId: json['householdId'] as String,
+        spaceId: json['spaceId'] as String,
         name: json['name'] as String,
         startDate: DateTime.parse(json['startDate'] as String),
         endDate: DateTime.parse(json['endDate'] as String),
@@ -335,7 +321,7 @@ class Cycle {
 
 class Expense {
   final String id;
-  final String householdId;
+  final String spaceId;
   final String? cycleId;
   final String paidByUserId;
   final String? createdBy;
@@ -355,7 +341,7 @@ class Expense {
 
   Expense({
     required this.id,
-    required this.householdId,
+    required this.spaceId,
     required this.cycleId,
     required this.paidByUserId,
     this.createdBy,
@@ -383,7 +369,7 @@ class Expense {
   }) {
     return Expense(
       id: id,
-      householdId: householdId,
+      spaceId: spaceId,
       cycleId: cycleId,
       paidByUserId: paidByUserId ?? this.paidByUserId,
       createdBy: createdBy ?? this.createdBy,
@@ -401,7 +387,7 @@ class Expense {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'householdId': householdId,
+        'spaceId': spaceId,
         'cycleId': cycleId,
         'paidByUserId': paidByUserId,
         'createdBy': createdBy,
@@ -418,7 +404,7 @@ class Expense {
 
   factory Expense.fromJson(Map<String, dynamic> json) => Expense(
         id: json['id'] as String,
-        householdId: json['householdId'] as String,
+        spaceId: json['spaceId'] as String,
         cycleId: json['cycleId'] as String?,
         paidByUserId: json['paidByUserId'] as String,
         createdBy: json['createdBy'] as String?,
@@ -531,7 +517,7 @@ class ExpenseShare {
 
 class Settlement {
   final String id;
-  final String householdId;
+  final String spaceId;
   final String cycleId;
   final String fromUserId;
   final String toUserId;
@@ -545,7 +531,7 @@ class Settlement {
 
   Settlement({
     required this.id,
-    required this.householdId,
+    required this.spaceId,
     required this.cycleId,
     required this.fromUserId,
     required this.toUserId,
@@ -560,7 +546,7 @@ class Settlement {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'householdId': householdId,
+        'spaceId': spaceId,
         'cycleId': cycleId,
         'fromUserId': fromUserId,
         'toUserId': toUserId,
@@ -575,7 +561,7 @@ class Settlement {
 
   factory Settlement.fromJson(Map<String, dynamic> json) => Settlement(
         id: json['id'] as String,
-        householdId: json['householdId'] as String,
+        spaceId: json['spaceId'] as String,
         cycleId: json['cycleId'] as String,
         fromUserId: json['fromUserId'] as String,
         toUserId: json['toUserId'] as String,

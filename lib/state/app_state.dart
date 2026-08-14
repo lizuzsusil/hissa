@@ -85,7 +85,7 @@ class AppState extends ChangeNotifier {
       try {
         final json = jsonDecode(sessionRaw) as Map<String, dynamic>;
         userId = json['userId'] as String?;
-        spaceId = json['householdId'] as String?; // legacy key name kept for compat
+        spaceId = json['spaceId'] as String?;
         cycleId = json['cycleId'] as String?;
         _onboardingMode = json['mode'] as String?;
       } catch (_) {
@@ -114,7 +114,7 @@ class AppState extends ChangeNotifier {
       _sessionKey,
       jsonEncode({
         'userId': _currentUserId,
-        'householdId': _spaceId, // legacy key name kept for session compat
+        'spaceId': _spaceId,
         'cycleId': _cycleId,
         'mode': _onboardingMode,
       }),
@@ -418,7 +418,7 @@ class AppState extends ChangeNotifier {
   List<Cycle> get cycles {
     if (_spaceId == null) return const [];
     final all =
-        _repo.cycles.where((c) => c.householdId == _spaceId).toList()
+        _repo.cycles.where((c) => c.spaceId == _spaceId).toList()
       ..sort((a, b) => b.startDate.compareTo(a.startDate));
     return all;
   }
@@ -428,12 +428,12 @@ class AppState extends ChangeNotifier {
     final active = _repo.cycles
         .where(
           (c) =>
-              c.householdId == _spaceId && c.status == CycleStatus.active,
+              c.spaceId == _spaceId && c.status == CycleStatus.active,
         )
         .firstOrNull;
     if (active != null) return active;
     return _repo.cycles
-        .where((c) => c.householdId == _spaceId)
+        .where((c) => c.spaceId == _spaceId)
         .toList()
         .lastOrNull;
   }
@@ -478,7 +478,7 @@ class AppState extends ChangeNotifier {
   List<Category> get categories {
     if (_spaceId == null) return const [];
     return _repo.categories
-        .where((c) => c.householdId == _spaceId)
+        .where((c) => c.spaceId == _spaceId)
         .toList();
   }
 
@@ -637,7 +637,7 @@ class AppState extends ChangeNotifier {
     await _repo.saveCategory(
       Category(
         id: 'cat_${genId(8)}',
-        householdId: s.id,
+        spaceId: s.id,
         name: name.trim(),
         iconCodePoint: icon.codePoint,
         colorValue: color.toARGB32(),
@@ -652,7 +652,7 @@ class AppState extends ChangeNotifier {
       await _repo.saveCategory(
         Category.preset(
           id: 'cat_${preset.name.toLowerCase()}',
-          householdId: spaceId,
+spaceId: spaceId,
           name: preset.name,
           icon: preset.icon,
           color: preset.color,
@@ -669,7 +669,7 @@ class AppState extends ChangeNotifier {
     final existing = _repo.cycles
         .where(
           (c) =>
-              c.householdId == spaceId &&
+              c.spaceId == spaceId &&
               c.startDate.year == start.year &&
               c.startDate.month == start.month,
         )
@@ -678,7 +678,7 @@ class AppState extends ChangeNotifier {
     await _repo.saveCycle(
       Cycle(
         id: 'c_${genId(8)}',
-        householdId: spaceId,
+        spaceId: spaceId,
         name: '${_monthLabel(start)} ${start.year}',
         startDate: start,
         endDate: end,
@@ -793,7 +793,7 @@ class AppState extends ChangeNotifier {
     final expenseId = 'e_${genId(8)}';
     final expense = Expense(
       id: expenseId,
-      householdId: s.id,
+      spaceId: s.id,
       cycleId: cycle.id,
       // Phase 5: an expense is always paid for by the authenticated user.
       paidByUserId: payerForCurrentUser(_currentUserId),
@@ -884,7 +884,7 @@ class AppState extends ChangeNotifier {
   List<Expense> get personalExpenses {
     if (_spaceId == null) return const [];
     final list = _repo.expenses
-        .where((e) => e.householdId == _spaceId && e.cycleId == null)
+        .where((e) => e.spaceId == _spaceId && e.cycleId == null)
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
     return list;
@@ -912,7 +912,7 @@ class AppState extends ChangeNotifier {
     if (s == null) return;
     final expense = Expense(
       id: 'e_${genId(8)}',
-      householdId: s.id,
+      spaceId: s.id,
       cycleId: null,
       paidByUserId: _currentUserId ?? '',
       createdBy: _currentUserId,
@@ -963,7 +963,7 @@ class AppState extends ChangeNotifier {
     await _repo.saveSettlement(
       Settlement(
         id: 's_${genId(8)}',
-        householdId: s.id,
+        spaceId: s.id,
         cycleId: cycle.id,
         fromUserId: fromUserId,
         toUserId: toUserId,

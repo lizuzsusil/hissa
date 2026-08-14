@@ -35,7 +35,7 @@ void main() {
       await writer.saveSettlement(
         Settlement(
           id: 's1',
-          householdId: 'h1',
+          spaceId: 'h1',
           cycleId: 'c1',
           fromUserId: 'u2',
           toUserId: 'u1',
@@ -172,7 +172,7 @@ void main() {
       final repo = FirestoreRepository(db);
       final personal = Expense(
         id: 'p1',
-        householdId: 'h1',
+        spaceId: 'h1',
         cycleId: null,
         paidByUserId: 'u1',
         createdBy: 'u1',
@@ -240,7 +240,7 @@ void main() {
 
       await repo.removeMember('u2', 'h1');
       expect(repo.members.map((m) => m.userId), isNot(contains('u2')));
-      expect((await db.collection('householdMembers').doc('h1_u2').get()).exists,
+      expect((await db.collection('spaceMembers').doc('h1_u2').get()).exists,
           isFalse);
     });
 
@@ -325,11 +325,11 @@ void main() {
       );
       expect((await repo.findSpacesForUser('u1')), isEmpty);
       final solo = Space.fromJson(
-        (await db.collection('households').doc('h1').get()).data()!,
+        (await db.collection('spaces').doc('h1').get()).data()!,
       );
       expect(solo.mode, SpaceMode.solo);
 
-      await db.collection('households').doc('legacy').set({
+      await db.collection('spaces').doc('legacy').set({
         'id': 'legacy',
         'name': 'Old home',
         'currency': 'NPR',
@@ -337,7 +337,7 @@ void main() {
         'createdAt': '2026-01-01T00:00:00.000',
       });
       final legacy = Space.fromJson(
-        (await db.collection('households').doc('legacy').get()).data()!,
+        (await db.collection('spaces').doc('legacy').get()).data()!,
       );
       expect(legacy.mode, SpaceMode.split);
       expect(legacy.createdBy, isNull);
@@ -367,9 +367,9 @@ Space _space(String id, String inviteCode) => Space(
       createdAt: DateTime(2026, 1, 1),
     );
 
-Cycle _cycle(String id, String householdId) => Cycle(
+Cycle _cycle(String id, String spaceId) => Cycle(
       id: id,
-      householdId: householdId,
+      spaceId: spaceId,
       name: 'January 2026',
       startDate: DateTime(2026, 1, 1),
       endDate: DateTime(2026, 1, 31),
@@ -378,7 +378,7 @@ Cycle _cycle(String id, String householdId) => Cycle(
 
 Expense _expense(String id) => Expense(
       id: id,
-      householdId: 'h1',
+      spaceId: 'h1',
       cycleId: 'c1',
       paidByUserId: 'u1',
       amount: const Money(100000),
@@ -390,7 +390,7 @@ Expense _expense(String id) => Expense(
 
 Expense _groupedExpense(String id) => Expense(
       id: id,
-      householdId: 'h1',
+      spaceId: 'h1',
       cycleId: 'c1',
       paidByUserId: 'u1',
       amount: const Money(100000),

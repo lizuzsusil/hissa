@@ -154,8 +154,8 @@ class _RootGateState extends State<RootGate> {
     _go(_FlowStep.dashboard);
   }
 
-  void _selectSpace(Household household) {
-    context.read<AppState>().selectSpace(household.id);
+  void _selectSpace(Space space) {
+    context.read<AppState>().selectSpace(space.id);
     _go(_FlowStep.app);
   }
 

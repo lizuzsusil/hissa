@@ -275,7 +275,7 @@ class _SpaceCard extends StatelessWidget {
                         if (memberCount != null) ...[
                           const SizedBox(width: 10),
                           Text(
-                            l10n.householdMembersCount(memberCount!),
+                            l10n.spaceMembersCount(memberCount!),
                             style: TextStyle(
                               fontSize: 12.5,
                               color: isDark

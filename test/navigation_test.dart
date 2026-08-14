@@ -51,7 +51,7 @@ void main() {
       await repo.saveCycle(
         Cycle(
           id: 'c1',
-          householdId: 'h1',
+          spaceId: 'h1',
           name: 'January 2026',
           startDate: DateTime(2026, 1, 1),
           endDate: DateTime(2026, 1, 31),
