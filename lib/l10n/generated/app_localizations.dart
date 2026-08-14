@@ -839,7 +839,7 @@ abstract class AppLocalizations {
   /// No description provided for @setUpSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Create a new space or join one with an invite code.'**
+  /// **'Enter an invite code to join a space'**
   String get setUpSubtitle;
 
   /// No description provided for @create.

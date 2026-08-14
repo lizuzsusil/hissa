@@ -443,8 +443,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modeOtherSubtitle => 'Any small group sharing expenses';
 
   @override
-  String get setUpSubtitle =>
-      'Create a new space or join one with an invite code.';
+  String get setUpSubtitle => 'Enter an invite code to join a space';
 
   @override
   String get create => 'Create';

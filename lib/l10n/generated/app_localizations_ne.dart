@@ -443,7 +443,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get setUpSubtitle =>
-      'नयाँ ठाउँ बनाउनुहोस् वा इन्भाइट कोडबाट सामेल हुनुहोस्।';
+      'इन्भाइट कोड प्रविष्ट गर्नुहोस् र स्पेसमा सामेल हुनुहोस्।';
 
   @override
   String get create => 'सिर्जना गर्नुहोस्';
