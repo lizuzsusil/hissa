@@ -9,7 +9,9 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
+import '../widgets/cards.dart';
 import '../widgets/misc.dart';
+import '../widgets/motion.dart';
 import 'settlement_form.dart';
 
 class SettleScreen extends StatelessWidget {
@@ -40,7 +42,7 @@ class SettleScreen extends StatelessWidget {
             for (final proposal in proposals)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: _ProposalCard(proposal: proposal),
+                child: Reveal(child: _ProposalCard(proposal: proposal)),
               ),
           ],
           if (proposals.isNotEmpty) ...[
@@ -136,8 +138,9 @@ class _OutstandingCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  formatMoney(totalOutstanding),
+                AnimatedMoney(
+                  paisa: totalOutstanding.paisa,
+                  formatter: (p) => formatMoney(Money(p)),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 26,
@@ -219,20 +222,11 @@ class _ProposalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fromName = state.memberName(proposal.fromUserId) ?? '?';
     final toName = state.memberName(proposal.toUserId) ?? '?';
     final l10n = context.l10n;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-      ),
+    return SurfaceCard(
       child: Row(
         children: [
           _AvatarPair(fromName: fromName, toName: toName),
@@ -258,7 +252,7 @@ class _ProposalCard extends StatelessWidget {
               ],
             ),
           ),
-          GestureDetector(
+          PressableScale(
             onTap: () => _openSettlement(context, state),
             child: Container(
               padding:
@@ -344,19 +338,12 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fromName = state.memberName(settlement.fromUserId) ?? '?';
     final toName = state.memberName(settlement.toUserId) ?? '?';
     final l10n = context.l10n;
-    return Container(
+    return SurfaceCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-      ),
+      borderRadius: 18,
       child: Row(
         children: [
           Container(
@@ -387,7 +374,7 @@ class _HistoryRow extends StatelessWidget {
                   ),
                   style: TextStyle(
                     fontSize: 12.5,
-                    color: isDark
+                    color: Theme.of(context).brightness == Brightness.dark
                         ? AppColors.textSecondaryDark
                         : AppColors.textSecondary,
                   ),

@@ -11,6 +11,7 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
+import '../widgets/cards.dart';
 import '../widgets/misc.dart';
 
 class InsightsScreen extends StatelessWidget {
@@ -236,15 +237,8 @@ class _MonthlyBarChart extends StatelessWidget {
         ? 1.0
         : data.fold<double>(0, (m, d) => d.total.major > m ? d.total.major : m);
 
-    return Container(
+    return SurfaceCard(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -408,15 +402,8 @@ class _CategoryPie extends StatelessWidget {
       );
     }).toList();
 
-    return Container(
+    return SurfaceCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-      ),
       child: Column(
         children: [
           SizedBox(
@@ -572,9 +559,23 @@ class _SummaryRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.06),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withValues(alpha: 0.10),
+            AppColors.primary.withValues(alpha: 0.04),
+          ],
+        ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.10),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

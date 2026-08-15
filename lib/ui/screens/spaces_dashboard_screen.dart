@@ -8,6 +8,7 @@ import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 import '../widgets/misc.dart';
+import '../widgets/motion.dart';
 
 /// Post-login landing screen. Lists every Space the user belongs to with its
 /// mode and member count, and offers Create Space, Join Space and Sign Out.
@@ -141,10 +142,13 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
                       separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final space = spaces[index];
-                        return _SpaceCard(
-                          space: space,
-                          memberCount: _counts[space.id],
-                          onTap: () => widget.onSelect(space),
+                        return Reveal(
+                          delay: Duration(milliseconds: 60 * index),
+                          child: _SpaceCard(
+                            space: space,
+                            memberCount: _counts[space.id],
+                            onTap: () => widget.onSelect(space),
+                          ),
                         );
                       },
                     ),
@@ -195,107 +199,104 @@ class _SpaceCard extends StatelessWidget {
     final modeLabel = isSplit ? l10n.splitMode : l10n.personalMode;
     final modeIcon = isSplit ? Icons.groups_outlined : Icons.person_outline;
 
-    return Material(
-      color: isDark ? AppColors.surfaceDark : Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: isDark ? AppColors.borderDark : AppColors.border,
-            ),
+    return PressableScale(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : Colors.transparent,
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  gradient: isSplit
-                      ? AppColors.heroGradient
-                      : const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF5B8A6E),
-                            AppColors.positive,
+          boxShadow: cardShadow(),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: isSplit
+                    ? AppColors.heroGradient
+                    : const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF5B8A6E),
+                          AppColors.positive,
+                        ],
+                      ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(modeIcon, size: 26, color: Colors.white),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    space.name,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: modeColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(modeIcon, size: 13, color: modeColor),
+                            const SizedBox(width: 5),
+                            Text(
+                              modeLabel,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: modeColor,
+                              ),
+                            ),
                           ],
                         ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(modeIcon, size: 26, color: Colors.white),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      space.name,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimary,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: modeColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(modeIcon, size: 13, color: modeColor),
-                              const SizedBox(width: 5),
-                              Text(
-                                modeLabel,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: modeColor,
-                                ),
-                              ),
-                            ],
+                      if (memberCount != null) ...[
+                        const SizedBox(width: 10),
+                        Text(
+                          l10n.spaceMembersCount(memberCount!),
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondary,
                           ),
                         ),
-                        if (memberCount != null) ...[
-                          const SizedBox(width: 10),
-                          Text(
-                            l10n.spaceMembersCount(memberCount!),
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
                       ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 26,
-                color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
-              ),
-            ],
-          ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 26,
+              color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+            ),
+          ],
         ),
       ),
     );

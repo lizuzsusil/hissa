@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
 import '../widgets/buttons.dart';
+import '../widgets/motion.dart';
 import 'expense_form_screen.dart';
 
 class ExpenseDetailScreen extends StatelessWidget {
@@ -85,9 +86,9 @@ class ExpenseDetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(
-                        formatMoney(expense.amount),
-                        textAlign: TextAlign.center,
+                      AnimatedMoney(
+                        paisa: expense.amount.paisa,
+                        formatter: (p) => formatMoney(Money(p)),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 34,

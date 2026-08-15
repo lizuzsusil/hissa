@@ -10,8 +10,10 @@ import '../../state/app_state.dart';
 import '../state/shell_tab_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
+import '../widgets/cards.dart';
 import '../widgets/category_icon.dart';
 import '../widgets/misc.dart';
+import '../widgets/motion.dart';
 import 'expense_form_screen.dart';
 import 'expense_detail_screen.dart';
 
@@ -68,16 +70,19 @@ class DashboardScreen extends StatelessWidget {
                 _QuickActions(proposals: proposals),
                 const SizedBox(height: 24),
                 SectionHeader(title: l10n.spaceBalances),
-                ...members.map(
-                  (m) => Padding(
+                ...members.asMap().entries.map(
+                  (entry) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _MemberBalanceCard(
-                      member: m,
-                      avatarUrl: state.memberAvatarUrl(m.userId),
-                      balance: balances
-                          .where((b) => b.userId == m.userId)
-                          .firstOrNull,
-                      isYou: m.userId == state.currentUser?.id,
+                    child: Reveal(
+                      delay: Duration(milliseconds: 60 * entry.key),
+                      child: _MemberBalanceCard(
+                        member: entry.value,
+                        avatarUrl: state.memberAvatarUrl(entry.value.userId),
+                        balance: balances
+                            .where((b) => b.userId == entry.value.userId)
+                            .firstOrNull,
+                        isYou: entry.value.userId == state.currentUser?.id,
+                      ),
                     ),
                   ),
                 ),
@@ -113,10 +118,17 @@ class DashboardScreen extends StatelessWidget {
                 else
                   ...expenses
                       .take(5)
+                      .toList()
+                      .asMap()
+                      .entries
                       .map(
-                        (e) => Padding(
+                        (entry) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
-                          child: _ExpenseTile(expense: e),
+                          child: Reveal(
+                            delay:
+                                Duration(milliseconds: 60 * entry.key),
+                            child: _ExpenseTile(expense: entry.value),
+                          ),
                         ),
                       ),
                 const SizedBox(height: 24),
@@ -224,8 +236,9 @@ class _Header extends StatelessWidget {
               const SizedBox(height: 4),
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(
-                  formatMoney(totalSpent),
+                child: AnimatedMoney(
+                  paisa: totalSpent.paisa,
+                  formatter: (p) => formatMoney(Money(p)),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 38,
@@ -323,17 +336,8 @@ class _YourBalanceCard extends StatelessWidget {
     final mine = balances.where((b) => b.userId == user.id).firstOrNull;
     if (mine == null) return const SizedBox.shrink();
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
+    return SurfaceCard(
       padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -546,7 +550,7 @@ class _QuickActions extends StatelessWidget {
         ),
         if (proposals.isNotEmpty) ...[
           const SizedBox(height: 12),
-          GestureDetector(
+          PressableScale(
             onTap: () => context.read<ShellTabController>().switchTo(2),
             child: Container(
               width: double.infinity,
@@ -554,6 +558,7 @@ class _QuickActions extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: AppColors.heroGradient,
                 borderRadius: BorderRadius.circular(18),
+                boxShadow: cardShadow(color: AppColors.primaryDeep, opacity: 0.25),
               ),
               child: Row(
                 children: [
@@ -648,22 +653,13 @@ class _GroupBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final b = balance;
     final statusColor = b.balance.isZero
         ? AppColors.textMuted
         : b.balance.isPositive
         ? AppColors.positive
         : AppColors.negative;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-      ),
+    return SurfaceCard(
       child: Row(
         children: [
           Container(
@@ -699,7 +695,7 @@ class _GroupBalanceCard extends StatelessWidget {
                   ),
                   style: TextStyle(
                     fontSize: 12.5,
-                    color: isDark
+                    color: Theme.of(context).brightness == Brightness.dark
                         ? AppColors.textSecondaryDark
                         : AppColors.textSecondary,
                   ),
@@ -753,15 +749,7 @@ class _MemberBalanceCard extends StatelessWidget {
         ? AppColors.positive
         : AppColors.negative;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-      ),
+    return SurfaceCard(
       child: Row(
         children: [
           MemberAvatar(name: member.name, avatarUrl: avatarUrl, size: 46),
@@ -858,7 +846,7 @@ class _ExpenseTile extends StatelessWidget {
     final l10n = context.l10n;
     final category = state.categoryFor(expense.categoryId);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
+    return PressableScale(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -866,15 +854,9 @@ class _ExpenseTile extends StatelessWidget {
           ),
         );
       },
-      child: Container(
+      child: SurfaceCard(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.border,
-          ),
-        ),
+        borderRadius: 18,
         child: Row(
           children: [
             CategoryIcon(category: category, size: 42),
@@ -903,9 +885,12 @@ class _ExpenseTile extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
+Text(
               formatMoney(expense.amount),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),

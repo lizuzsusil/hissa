@@ -5,10 +5,11 @@ import '../theme/app_theme.dart';
 /// A rounded surface container used across screens.
 class SurfaceCard extends StatelessWidget {
   final Widget child;
-  final EdgeInsets padding;
-  final EdgeInsets margin;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry margin;
   final Color? color;
   final BorderRadius? radius;
+  final double borderRadius;
   final bool border;
   final VoidCallback? onTap;
 
@@ -19,6 +20,7 @@ class SurfaceCard extends StatelessWidget {
     this.margin = EdgeInsets.zero,
     this.color,
     this.radius,
+    this.borderRadius = 18,
     this.border = true,
     this.onTap,
   });
@@ -27,23 +29,46 @@ class SurfaceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final shape = RoundedRectangleBorder(
-      borderRadius: radius ?? BorderRadius.circular(18),
+      borderRadius: radius ?? BorderRadius.circular(borderRadius),
     );
+    final borderShape = border
+        ? shape.copyWith(
+            side: BorderSide(
+              color: isDark ? AppColors.borderDark : Colors.transparent,
+              width: 1,
+            ),
+          )
+        : shape;
     return Container(
       margin: margin,
+      decoration: BoxDecoration(
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
       child: Material(
         color: color ?? (isDark ? AppColors.surfaceDark : Colors.white),
-        shape: border
-            ? shape.copyWith(
-                side: BorderSide(
-                  color: isDark ? AppColors.borderDark : AppColors.border,
-                  width: 1,
-                ),
-              )
-            : shape,
+        shape: borderShape,
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          borderRadius: radius ?? BorderRadius.circular(18),
           child: Padding(padding: padding, child: child),
         ),
       ),

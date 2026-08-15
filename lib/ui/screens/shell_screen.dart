@@ -6,6 +6,7 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../state/shell_tab_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/motion.dart';
 import 'dashboard_screen.dart';
 import 'expense_form_screen.dart';
 import 'expenses_screen.dart';
@@ -191,13 +192,14 @@ class _NavBar extends StatelessWidget {
           ];
 
     return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: isDark ? AppColors.borderDark : AppColors.border,
-          ),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.border,
         ),
+        boxShadow: cardShadow(),
       ),
       child: SafeArea(
         top: false,
@@ -240,35 +242,41 @@ class _NavItem extends StatelessWidget {
     return InkResponse(
       onTap: onTap,
       radius: 40,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 40,
-            height: 28,
-            decoration: BoxDecoration(
-              color: selected
-                  ? AppColors.primary.withValues(alpha: 0.14)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(14),
+      child: AnimatedScale(
+        scale: selected ? 1.04 : 1,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 44,
+              height: 30,
+              decoration: BoxDecoration(
+                color: selected
+                    ? AppColors.primary.withValues(alpha: 0.14)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(
+                icon,
+                size: 22,
+                color: selected ? AppColors.primary : AppColors.textMuted,
+              ),
             ),
-            child: Icon(
-              icon,
-              size: 22,
-              color: selected ? AppColors.primary : AppColors.textMuted,
+            const SizedBox(height: 3),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? AppColors.primary : AppColors.textMuted,
+              ),
+              child: Text(label),
             ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected ? AppColors.primary : AppColors.textMuted,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

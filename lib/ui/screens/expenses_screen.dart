@@ -9,8 +9,10 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
+import '../widgets/cards.dart';
 import '../widgets/category_icon.dart';
 import '../widgets/misc.dart';
+import '../widgets/motion.dart';
 import 'expense_detail_screen.dart';
 
 class ExpensesScreen extends StatefulWidget {
@@ -425,7 +427,7 @@ class _ExpenseRow extends StatelessWidget {
     final l10n = context.l10n;
     final category = state.categoryFor(expense.categoryId);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
+    return PressableScale(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -433,15 +435,9 @@ class _ExpenseRow extends StatelessWidget {
           ),
         );
       },
-      child: Container(
+      child: SurfaceCard(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.border,
-          ),
-        ),
+        borderRadius: 18,
         child: Row(
           children: [
             CategoryIcon(category: category, size: 42),
@@ -475,7 +471,10 @@ class _ExpenseRow extends StatelessWidget {
             ),
             Text(
               formatMoney(expense.amount),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),

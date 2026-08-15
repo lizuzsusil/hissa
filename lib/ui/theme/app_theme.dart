@@ -1,5 +1,6 @@
-import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
+
+import '../widgets/motion.dart' show HissaPageTransitionsBuilder;
 
 /// Central design tokens for Hissa, derived from the University of Texas
 /// brand palette (UT blue primary, burnt orange, iron grey, forest green,
@@ -85,11 +86,11 @@ class AppTheme {
       fontFamily: 'Roboto',
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.android: HissaPageTransitionsBuilder(),
+          TargetPlatform.iOS: HissaPageTransitionsBuilder(),
+          TargetPlatform.macOS: HissaPageTransitionsBuilder(),
+          TargetPlatform.windows: HissaPageTransitionsBuilder(),
+          TargetPlatform.linux: HissaPageTransitionsBuilder(),
         },
       ),
     );

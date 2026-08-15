@@ -10,8 +10,10 @@ import '../../state/app_state.dart';
 import '../state/shell_tab_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
+import '../widgets/cards.dart';
 import '../widgets/category_icon.dart';
 import '../widgets/misc.dart';
+import '../widgets/motion.dart';
 import 'expense_detail_screen.dart';
 import 'expense_form_screen.dart';
 
@@ -115,10 +117,19 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                 else
                   ...expenses
                       .take(8)
+                      .toList()
+                      .asMap()
+                      .entries
                       .map(
-                        (e) => Padding(
+                        (entry) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
-                          child: _PersonalExpenseTile(expense: e),
+                          child: Reveal(
+                            delay:
+                                Duration(milliseconds: 60 * entry.key),
+                            child: _PersonalExpenseTile(
+                              expense: entry.value,
+                            ),
+                          ),
                         ),
                       ),
                 const SizedBox(height: 24),
@@ -239,8 +250,9 @@ class _Header extends StatelessWidget {
               const SizedBox(height: 4),
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(
-                  formatMoney(total),
+                child: AnimatedMoney(
+                  paisa: total.paisa,
+                  formatter: (p) => formatMoney(Money(p)),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 38,
@@ -345,15 +357,9 @@ class _MonthSpendingCard extends StatelessWidget {
     final color = positive ? AppColors.positive : AppColors.negative;
     final soft = positive ? AppColors.positiveSoft : AppColors.negativeSoft;
 
-    return Container(
+    return SurfaceCard(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-      ),
+      borderRadius: 20,
       child: Row(
         children: [
           Expanded(
@@ -371,12 +377,10 @@ class _MonthSpendingCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  formatMoney(total),
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
+                AnimatedMoney(
+                  paisa: total.paisa,
+                  formatter: (p) => formatMoney(Money(p)),
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
                 ),
               ],
             ),
@@ -425,7 +429,7 @@ class _AddExpenseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         width: double.infinity,
@@ -472,7 +476,7 @@ class _PersonalExpenseTile extends StatelessWidget {
     final l10n = context.l10n;
     final category = state.categoryFor(expense.categoryId);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
+    return PressableScale(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -480,15 +484,9 @@ class _PersonalExpenseTile extends StatelessWidget {
           ),
         );
       },
-      child: Container(
+      child: SurfaceCard(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.border,
-          ),
-        ),
+        borderRadius: 18,
         child: Row(
           children: [
             CategoryIcon(category: category, size: 42),
@@ -519,7 +517,10 @@ class _PersonalExpenseTile extends StatelessWidget {
             ),
             Text(
               formatMoney(expense.amount),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),
