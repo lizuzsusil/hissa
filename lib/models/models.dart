@@ -147,6 +147,13 @@ class SpaceMember {
   final String? spaceId;
   final MembershipStatus status;
 
+  /// Set when this member was added through an email invite (rather than
+  /// directly joining). The backend emails [invitedEmail] to notify them.
+  final String? invitedEmail;
+
+  /// The Space member who sent the email invite.
+  final String? invitedByUserId;
+
   SpaceMember({
     required this.userId,
     required this.name,
@@ -155,6 +162,8 @@ class SpaceMember {
     this.avatarUrl,
     this.spaceId,
     this.status = MembershipStatus.active,
+    this.invitedEmail,
+    this.invitedByUserId,
   });
 
   /// Composite membership id, matching the Firestore doc convention
@@ -166,6 +175,8 @@ class SpaceMember {
     MemberRole? role,
     MembershipStatus? status,
     String? avatarUrl,
+    String? invitedEmail,
+    String? invitedByUserId,
   }) {
     return SpaceMember(
       userId: userId,
@@ -175,6 +186,8 @@ class SpaceMember {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       spaceId: spaceId,
       status: status ?? this.status,
+      invitedEmail: invitedEmail ?? this.invitedEmail,
+      invitedByUserId: invitedByUserId ?? this.invitedByUserId,
     );
   }
 
@@ -186,6 +199,8 @@ class SpaceMember {
         'avatarUrl': avatarUrl,
         'spaceId': spaceId,
         'status': status.name,
+        'invitedEmail': invitedEmail,
+        'invitedByUserId': invitedByUserId,
       };
 
   factory SpaceMember.fromJson(Map<String, dynamic> json) => SpaceMember(
@@ -196,6 +211,8 @@ class SpaceMember {
         avatarUrl: json['avatarUrl'] as String?,
         spaceId: json['spaceId'] as String?,
         status: _parseStatus(json['status']),
+        invitedEmail: json['invitedEmail'] as String?,
+        invitedByUserId: json['invitedByUserId'] as String?,
       );
 
   static MembershipStatus _parseStatus(Object? value) {
@@ -789,6 +806,65 @@ class GroupRequest {
             (json['memberUserIds'] as List).cast<String>().toList(),
         status: GroupRequestStatus.values.byName(
           json['status'] as String? ?? GroupRequestStatus.pending.name,
+        ),
+        createdAt: DateTime.parse(json['createdAt'] as String),
+      );
+}
+
+/// A user's request to join a Space with an invite code. Mirrors the Member
+/// Group request lifecycle: joining is never immediate — the Space owner must
+/// approve (or reject) the request, and the requester stays in a pending state
+/// until a decision is made.
+///
+/// Persisted in the `spaceJoinRequests/{spaceId}_{id}` Firestore collection.
+class SpaceJoinRequest {
+  final String id;
+  final String spaceId;
+  final String requesterUserId;
+
+  /// The requester's display name at submission time, used by the owner to
+  /// decide and by the backend email copy.
+  final String requesterName;
+  final SpaceJoinRequestStatus status;
+  final DateTime createdAt;
+
+  const SpaceJoinRequest({
+    required this.id,
+    required this.spaceId,
+    required this.requesterUserId,
+    required this.requesterName,
+    this.status = SpaceJoinRequestStatus.pending,
+    required this.createdAt,
+  });
+
+  SpaceJoinRequest copyWith({SpaceJoinRequestStatus? status}) {
+    return SpaceJoinRequest(
+      id: id,
+      spaceId: spaceId,
+      requesterUserId: requesterUserId,
+      requesterName: requesterName,
+      status: status ?? this.status,
+      createdAt: createdAt,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'spaceId': spaceId,
+        'requesterUserId': requesterUserId,
+        'requesterName': requesterName,
+        'status': status.name,
+        'createdAt': createdAt.toIso8601String(),
+      };
+
+  factory SpaceJoinRequest.fromJson(Map<String, dynamic> json) =>
+      SpaceJoinRequest(
+        id: json['id'] as String,
+        spaceId: json['spaceId'] as String,
+        requesterUserId: json['requesterUserId'] as String,
+        requesterName: json['requesterName'] as String? ?? 'A member',
+        status: SpaceJoinRequestStatus.values.byName(
+          json['status'] as String? ?? SpaceJoinRequestStatus.pending.name,
         ),
         createdAt: DateTime.parse(json['createdAt'] as String),
       );

@@ -202,6 +202,20 @@ void main() {
     expect(state.pendingGroupRequests, hasLength(1));
   });
 
+  test('a non-owner cannot reject a request', () async {
+    state.debugSetSession(userId: 'u_b', spaceId: 'h1');
+    final request = await state.requestGroup(['u_c']);
+    expect(request, isNotNull);
+
+    state.debugSetSession(userId: 'u_c', spaceId: 'h1');
+    await state.rejectGroupRequest(request!.id);
+    expect(state.pendingGroupRequests, hasLength(1));
+    expect(
+      state.pendingGroupRequests.first.status,
+      GroupRequestStatus.pending,
+    );
+  });
+
   test('the owner can reject a pending request', () async {
     state.debugSetSession(userId: 'u_b', spaceId: 'h1');
     final request = await state.requestGroup(['u_c']);

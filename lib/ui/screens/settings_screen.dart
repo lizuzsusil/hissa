@@ -16,7 +16,6 @@ import 'categories_screen.dart';
 import 'export_screen.dart';
 import 'space_screen.dart';
 import 'profile_screen.dart';
-import 'member_groups_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   /// Invoked to return to the Spaces dashboard so the user can switch Spaces.
@@ -69,16 +68,6 @@ class SettingsScreen extends StatelessWidget {
             subtitle: '${state.categories.length} categories',
             onTap: () => _push(context, CategoriesScreen()),
           ),
-          if (!state.isPersonalMode) ...[
-            const SizedBox(height: 24),
-            SectionHeader(title: l10n.memberGroups),
-            _SettingTile(
-              icon: Icons.groups_rounded,
-              title: l10n.memberGroups,
-              subtitle: l10n.memberGroupsSubtitle,
-              onTap: () => _push(context, MemberGroupsScreen()),
-            ),
-          ],
           if (!state.isPersonalMode) ...[
             const SizedBox(height: 24),
             SectionHeader(title: l10n.spendingCycle),

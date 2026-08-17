@@ -245,5 +245,42 @@ service cloud.firestore {
         && memberOf(resource.data.spaceId)
         && spaceOwner(resource.data.spaceId);
     }
+
+    match /spaceJoinRequests/{requestId} {
+      // The requester can read their own request (they are not yet a member,
+      // so memberOf() would fail); the Space owner may read all requests.
+      allow read: if signedIn() && (
+        resource.data.requesterUserId == request.auth.uid ||
+        spaceOwner(resource.data.spaceId)
+      );
+
+      // A signed-in user may submit a join request for themselves. It must be
+      // created as pending and the requester must not already be a member —
+      // joining is owner-approved, never immediate.
+      allow create: if signedIn()
+        && request.resource.data.requesterUserId == request.auth.uid
+        && !memberOf(request.resource.data.spaceId)
+        && request.resource.data.status == 'pending';
+
+      // Only the Space owner may approve or reject a request. The requester
+      // and the Space are immutable once the request exists.
+      allow update: if signedIn()
+        && spaceOwner(resource.data.spaceId)
+        && request.resource.data.requesterUserId == resource.data.requesterUserId
+        && request.resource.data.spaceId == resource.data.spaceId
+        && request.resource.data.status in ['approved', 'rejected'];
+
+      allow delete: if signedIn()
+        && spaceOwner(resource.data.spaceId);
+    }
+
+    // FCM device tokens, keyed by userId. Each user may only register their own
+    // token so they can receive push notifications for group requests; the
+    // backend Cloud Functions read these docs with the Admin SDK (which bypasses
+    // these rules).
+    match /fcmTokens/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if signedIn() && request.auth.uid == userId;
+    }
   }
 }

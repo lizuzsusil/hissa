@@ -24,8 +24,8 @@ class MemberGroupsScreen extends StatelessWidget {
     final l10n = context.l10n;
     final currentSpaceId = state.space?.id;
 
-    // Only the Space owner can create and manage member groups. Non-owners can
-    // view existing groups but cannot create new ones.
+    // Only the Space owner can approve/reject requests. Non-owner members see
+    // only their own pending request with its "pending approval" status.
     final isOwner = state.isOwner;
 
     // Rule 3 / Rule 11: groups need at least three members to be meaningful.
@@ -47,8 +47,19 @@ class MemberGroupsScreen extends StatelessWidget {
     // Non-owners can request a group for the owner to create (Rule 4).
     final canRequest = state.canRequestGroup;
 
-    // Pending requests are shown to the owner for review (Rule 5).
-    final pendingRequests = state.pendingGroupRequests;
+    // Whether the current user has an unresolved request awaiting the owner's
+    // decision (used to surface a clear "pending approval" status).
+    final hasPendingRequest = state.pendingGroupRequests.any(
+      (r) => r.requesterUserId == state.currentUserId,
+    );
+
+    // Pending requests are shown to the owner for review (Rule 5); non-owners
+    // only see their own request, never other members'.
+    final pendingRequests = isOwner
+        ? state.pendingGroupRequests
+        : state.pendingGroupRequests
+              .where((r) => r.requesterUserId == state.currentUserId)
+              .toList();
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.memberGroups)),
@@ -72,6 +83,7 @@ class MemberGroupsScreen extends StatelessWidget {
                   : null,
               canRequest: canRequest,
               ownerAlreadyGrouped: ownerAlreadyGrouped,
+              hasPendingRequest: hasPendingRequest,
             ),
           ] else ...[
             for (final group in activeGroups)
@@ -134,6 +146,7 @@ class _EmptyState extends StatelessWidget {
   final VoidCallback? onRequest;
   final bool canRequest;
   final bool ownerAlreadyGrouped;
+  final bool hasPendingRequest;
 
   const _EmptyState({
     this.onCreate,
@@ -142,6 +155,7 @@ class _EmptyState extends StatelessWidget {
     this.onRequest,
     this.canRequest = false,
     this.ownerAlreadyGrouped = false,
+    this.hasPendingRequest = false,
   });
 
   @override
@@ -156,6 +170,10 @@ class _EmptyState extends StatelessWidget {
       message = l10n.noMemberGroupsDescription;
     } else if (canRequest) {
       message = l10n.requestGroupDescription;
+    } else if (hasPendingRequest) {
+      // The requester's group creation request is awaiting the owner's
+      // decision (Rule 5), so the create/request actions are hidden.
+      message = l10n.yourGroupRequestPending;
     } else if (ownerAlreadyGrouped) {
       // The owner already belongs to a group, so they cannot create another.
       message = l10n.alreadyInGroup;
@@ -236,6 +254,7 @@ class _PendingRequestsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
+    final isOwner = state.isOwner;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -244,15 +263,16 @@ class _PendingRequestsSection extends StatelessWidget {
         children: [
           SectionHeader(title: l10n.pendingGroupRequests),
           const SizedBox(height: 4),
-          Text(
-            l10n.pendingGroupRequestsDescription,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
+          if (isOwner)
+            Text(
+              l10n.pendingGroupRequestsDescription,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
+              ),
             ),
-          ),
           const SizedBox(height: 12),
           for (final request in requests) ...[
             _RequestCard(request: request, state: state),
@@ -324,6 +344,24 @@ class _RequestCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    l10n.pendingApproval,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
               ],
             ),
             if (memberNames.isNotEmpty) ...[
@@ -352,25 +390,29 @@ class _RequestCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    label: Text(l10n.reject),
-                    onPressed: () => _reject(context, state),
+            // Only the Space owner may approve or reject a request (Rule 5).
+            // Non-owner members and the requester themselves see only the
+            // "pending approval" status.
+            if (state.isOwner)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      label: Text(l10n.reject),
+                      onPressed: () => _reject(context, state),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    icon: const Icon(Icons.check_rounded, size: 18),
-                    label: Text(l10n.approve),
-                    onPressed: () => _approve(context, state),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      icon: const Icon(Icons.check_rounded, size: 18),
+                      label: Text(l10n.approve),
+                      onPressed: () => _approve(context, state),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

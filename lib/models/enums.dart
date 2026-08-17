@@ -154,3 +154,23 @@ enum GroupRequestStatus {
     }
   }
 }
+
+/// The lifecycle of a Space join request submitted with an invite code.
+/// Joining is never immediate: the Space owner approves or rejects the request
+/// and the requester stays in a pending state until then.
+enum SpaceJoinRequestStatus {
+  pending,
+  approved,
+  rejected;
+
+  String get label {
+    switch (this) {
+      case SpaceJoinRequestStatus.pending:
+        return 'Pending';
+      case SpaceJoinRequestStatus.approved:
+        return 'Approved';
+      case SpaceJoinRequestStatus.rejected:
+        return 'Rejected';
+    }
+  }
+}

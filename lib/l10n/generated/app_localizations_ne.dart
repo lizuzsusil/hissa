@@ -467,7 +467,8 @@ class AppLocalizationsNe extends AppLocalizations {
   String get currency => 'मुद्रा';
 
   @override
-  String get inviteLater => 'पछि सेटिङबाट थप मानिसहरूलाई बोलाउन सक्नुहुन्छ';
+  String get inviteLater =>
+      'पछि ठाउँ → सदस्यहरूबाट थप मानिसहरूलाई बोलाउन सक्नुहुन्छ';
 
   @override
   String get inviteCode => 'इन्भाइट कोड';
@@ -874,6 +875,13 @@ class AppLocalizationsNe extends AppLocalizations {
       'सदस्यहरूले तपाईलाई समूह बनाउन अनुरोध गरेका छन्। स्वीकृत गर्दा अनुरोधकर्ताको स्वामित्वमा समूह बन्छ।';
 
   @override
+  String get pendingApproval => 'स्वीकृतिको पर्खाइमा';
+
+  @override
+  String get yourGroupRequestPending =>
+      'तपाईको समूह अनुरोध स्वीकृतिको पर्खाइमा छ। स्पेस मालिकले निर्णय गरेपछि तपाईंलाई सूचित गरिनेछ।';
+
+  @override
   String get noPendingGroupRequests =>
       'कुनै पर्खाइमा रहेका समूह अनुरोधहरू छैनन्';
 
@@ -1038,6 +1046,54 @@ class AppLocalizationsNe extends AppLocalizations {
   @override
   String get shareInviteHint =>
       'यो कोड साझा गर्नुहोस् ताकि साथी र रूममेटहरू तपाईंको ठाउँमा सामेल हुन सकून्।';
+
+  @override
+  String get inviteMember => 'सदस्य आमन्त्रण गर्नुहोस्';
+
+  @override
+  String get inviteMemberHint => 'person@example.com';
+
+  @override
+  String get inviteMemberHelper =>
+      'ठेगानामा आमन्त्रण इमेल पठाइन्छ। आमन्त्रित सदस्यहरू खर्च बाँडफाँटमा देखिनेछन्।';
+
+  @override
+  String invitedMember(String email) {
+    return '$email ठाउँमा आमन्त्रित गरियो';
+  }
+
+  @override
+  String get inviteMemberAlreadyMember =>
+      'त्यो इमेल यस ठाउँको कुनै सदस्यसँग पहिल्यै जोडिएको छ';
+
+  @override
+  String get duplicateEmailError => 'त्यो इमेल पहिल्यै सूचीमा छ';
+
+  @override
+  String get pendingJoinRequests => 'पर्खाइमा रहेका सामेल हुने अनुरोधहरू';
+
+  @override
+  String get pendingJoinRequestsDescription =>
+      'सदस्यहरूले यस ठाउँमा सामेल हुन अनुरोध गरेका छन्। स्वीकृत गरेपछि उनीहरू ठाउँमा थपिनेछन्।';
+
+  @override
+  String get joinRequestPendingDescription =>
+      'यस ठाउँमा सामेल हुने तपाईंको अनुरोध स्वीकृतिको पर्खाइमा छ। मालिकले स्वीकृत गरेपछि तपाईं ठाउँमा प्रवेश गर्न सक्नुहुनेछ।';
+
+  @override
+  String get joinRequestApproved => 'सामेल हुने अनुरोध स्वीकृत भयो';
+
+  @override
+  String get joinRequestApprovedFail => 'अनुरोध स्वीकृत गर्न असफल';
+
+  @override
+  String get joinRequestRejected => 'सामेल हुने अनुरोध अस्वीकृत भयो';
+
+  @override
+  String get joinRequestRejectFail => 'अनुरोध अस्वीकृत गर्न असफल';
+
+  @override
+  String get wantsToJoinSpace => 'यस ठाउँमा सामेल हुन चाहन्छ';
 
   @override
   String get addMemberFieldHint => 'नाम';

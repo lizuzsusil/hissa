@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../models/models.dart';
+import '../services/fcm_service.dart';
 import '../state/app_state.dart';
 import '../ui/screens/auth_screen.dart';
 import '../ui/screens/intro_screen.dart';
@@ -17,6 +18,7 @@ import '../ui/state/biometric_controller.dart';
 import '../ui/state/locale_controller.dart';
 import '../ui/state/theme_controller.dart';
 import '../ui/theme/app_theme.dart';
+import '../ui/screens/member_groups_screen.dart';
 
 class ExpenseApp extends StatelessWidget {
   const ExpenseApp({super.key});
@@ -30,13 +32,16 @@ class ExpenseApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LocaleController()),
         ChangeNotifierProvider(create: (_) => BiometricAuthController()),
       ],
-      child: const _AppView(),
+      child: _AppView(),
     );
   }
 }
 
 class _AppView extends StatelessWidget {
-  const _AppView();
+  _AppView();
+
+  final GlobalKey<NavigatorState> _navigatorKey =
+      GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +50,7 @@ class _AppView extends StatelessWidget {
     return MaterialApp(
       title: 'Hissa',
       debugShowCheckedModeBanner: false,
+      navigatorKey: _navigatorKey,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeController.mode,
@@ -56,7 +62,7 @@ class _AppView extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('en'), Locale('ne')],
-      home: const RootGate(),
+      home: RootGate(navigatorKey: _navigatorKey),
     );
   }
 }
@@ -64,7 +70,9 @@ class _AppView extends StatelessWidget {
 enum _FlowStep { splash, intro, onboarding, auth, setup, lock, dashboard, app }
 
 class RootGate extends StatefulWidget {
-  const RootGate({super.key});
+  final GlobalKey<NavigatorState> navigatorKey;
+
+  const RootGate({super.key, required this.navigatorKey});
 
   @override
   State<RootGate> createState() => _RootGateState();
@@ -108,6 +116,13 @@ class _RootGateState extends State<RootGate> {
 
   Future<void> _bootstrap() async {
     final state = context.read<AppState>();
+    FcmMessagingService.configureTapHandling(
+      onGroupRequestTap: () {
+        widget.navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const MemberGroupsScreen()),
+        );
+      },
+    );
     await Future.wait([
       state.load(),
       context.read<LocaleController>().load(),

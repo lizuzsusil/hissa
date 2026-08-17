@@ -8,7 +8,6 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
-import '../widgets/avatars.dart';
 import '../widgets/toasts.dart';
 
 class SetupScreen extends StatefulWidget {
@@ -40,7 +39,12 @@ class _SetupScreenState extends State<SetupScreen> {
   final _codeController = TextEditingController();
   final _memberController = TextEditingController();
   final _nameFocus = FocusNode();
+
+  /// Emails of the people to invite when creating the Space.
   final List<String> _members = [];
+
+  /// The Space whose join request is pending; shows the "stuck" pending state.
+  Space? _pendingSpace;
   SpaceMode _mode = SpaceMode.split;
   String? _nameError;
   String? _codeError;
@@ -86,7 +90,7 @@ class _SetupScreenState extends State<SetupScreen> {
     await state.createSpace(
       name: _nameController.text,
       currency: kDefaultCurrency,
-      memberNames: _members,
+      memberEmails: _members,
       mode: _mode,
     );
     if (mounted) {
@@ -105,30 +109,39 @@ class _SetupScreenState extends State<SetupScreen> {
     }
     setState(() => _loading = true);
     final state = context.read<AppState>();
-    final ok = await state.joinSpace(code);
+    final outcome = await state.requestSpaceJoin(code);
     if (!mounted) return;
     setState(() => _loading = false);
-    if (!ok) {
-      showToast(context, context.l10n.inviteNotFound, type: ToastType.danger);
-      return;
+    switch (outcome) {
+      case SpaceJoinOutcome.spaceNotFound:
+        showToast(context, context.l10n.inviteNotFound, type: ToastType.danger);
+      case SpaceJoinOutcome.alreadyMember:
+        widget.onDone();
+      case SpaceJoinOutcome.requestPending:
+      case SpaceJoinOutcome.requestCreated:
+        // The requester is kept in a pending state: they can see the Space's
+        // name but cannot enter it until the owner approves the request.
+        final space = await state.findSpaceByCode(code);
+        if (!mounted) return;
+        setState(() => _pendingSpace = space);
     }
-    widget.onDone();
   }
 
   void _addMember() {
-    final name = _memberController.text.trim();
+    final email = _memberController.text.trim();
     final vm = ValidatorMessages.fromL10n(context.l10n);
-    final error = validateMemberName(
-      name,
-      existing: _members.toSet(),
-      messages: vm,
-    );
+    final error = validateEmail(email, messages: vm);
     if (error != null) {
       setState(() => _memberError = error);
       return;
     }
+    final normalized = email.toLowerCase();
+    if (_members.any((e) => e.toLowerCase() == normalized)) {
+      setState(() => _memberError = context.l10n.duplicateEmailError);
+      return;
+    }
     setState(() {
-      _members.add(name);
+      _members.add(normalized);
       _memberError = null;
       _memberController.clear();
     });
@@ -276,14 +289,14 @@ class _SetupScreenState extends State<SetupScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final name in _members)
+                for (final email in _members)
                   Chip(
-                    avatar: MemberAvatar(name: name, size: 24),
-                    label: Text(name),
+                    avatar: const Icon(Icons.mail_outline_rounded, size: 18),
+                    label: Text(email),
                     deleteIcon: const Icon(Icons.close, size: 16),
                     onDeleted: _loading
                         ? null
-                        : () => setState(() => _members.remove(name)),
+                        : () => setState(() => _members.remove(email)),
                   ),
               ],
             ),
@@ -295,10 +308,11 @@ class _SetupScreenState extends State<SetupScreen> {
                 child: TextField(
                   controller: _memberController,
                   enabled: !_loading,
-                  textCapitalization: TextCapitalization.words,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
                   decoration: InputDecoration(
-                    labelText: l10n.addMember,
-                    hintText: l10n.name,
+                    labelText: l10n.inviteMember,
+                    hintText: l10n.inviteMemberHint,
                     prefixIcon: const Icon(
                       Icons.person_add_alt_1_outlined,
                       size: 18,
@@ -347,6 +361,10 @@ class _SetupScreenState extends State<SetupScreen> {
 
   Widget _buildJoin(bool isDark) {
     final l10n = context.l10n;
+    final pending = _pendingSpace;
+    if (pending != null) {
+      return _buildJoinPending(isDark, pending);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -387,6 +405,74 @@ class _SetupScreenState extends State<SetupScreen> {
           icon: Icons.group_add_outlined,
           loading: _loading,
           onPressed: _loading ? null : _join,
+        ),
+      ],
+    );
+  }
+
+  /// Pending join state: the requester sees the Space's name but cannot enter
+  /// it until the owner approves the request (mirrors the group request flow).
+  Widget _buildJoinPending(bool isDark, Space space) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.hourglass_top_rounded,
+                color: AppColors.primary,
+                size: 30,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      space.name,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.pendingApproval,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          l10n.joinRequestPendingDescription,
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondary,
+          ),
         ),
       ],
     );

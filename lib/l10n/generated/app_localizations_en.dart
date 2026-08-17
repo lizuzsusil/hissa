@@ -467,7 +467,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currency => 'Currency';
 
   @override
-  String get inviteLater => 'You can invite more people later from Settings';
+  String get inviteLater =>
+      'You can invite more people later from Space → Members';
 
   @override
   String get inviteCode => 'Invite code';
@@ -875,6 +876,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Members have asked you to create a group for them. Approving creates the group owned by the requester.';
 
   @override
+  String get pendingApproval => 'Pending approval';
+
+  @override
+  String get yourGroupRequestPending =>
+      'Your group request is pending approval. You\'ll be notified once the space owner decides.';
+
+  @override
   String get noPendingGroupRequests => 'No pending group requests';
 
   @override
@@ -1038,6 +1046,54 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shareInviteHint =>
       'Share this code so friends and roommates can join your space.';
+
+  @override
+  String get inviteMember => 'Invite a member';
+
+  @override
+  String get inviteMemberHint => 'person@example.com';
+
+  @override
+  String get inviteMemberHelper =>
+      'An invitation email is sent to the address. Invited members appear in expense splits.';
+
+  @override
+  String invitedMember(String email) {
+    return '$email invited to the space';
+  }
+
+  @override
+  String get inviteMemberAlreadyMember =>
+      'That email already belongs to a member of this space';
+
+  @override
+  String get duplicateEmailError => 'That email is already in the list';
+
+  @override
+  String get pendingJoinRequests => 'Pending join requests';
+
+  @override
+  String get pendingJoinRequestsDescription =>
+      'Members have asked to join this space. Approving adds them to the space.';
+
+  @override
+  String get joinRequestPendingDescription =>
+      'Your request to join this space is pending approval. You\'ll be able to enter the space once the owner approves it.';
+
+  @override
+  String get joinRequestApproved => 'Join request approved';
+
+  @override
+  String get joinRequestApprovedFail => 'Failed to approve request';
+
+  @override
+  String get joinRequestRejected => 'Join request rejected';
+
+  @override
+  String get joinRequestRejectFail => 'Failed to reject request';
+
+  @override
+  String get wantsToJoinSpace => 'wants to join this space';
 
   @override
   String get addMemberFieldHint => 'Name';

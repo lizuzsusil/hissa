@@ -887,7 +887,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteLater.
   ///
   /// In en, this message translates to:
-  /// **'You can invite more people later from Settings'**
+  /// **'You can invite more people later from Space → Members'**
   String get inviteLater;
 
   /// No description provided for @inviteCode.
@@ -1616,6 +1616,18 @@ abstract class AppLocalizations {
   /// **'Members have asked you to create a group for them. Approving creates the group owned by the requester.'**
   String get pendingGroupRequestsDescription;
 
+  /// No description provided for @pendingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending approval'**
+  String get pendingApproval;
+
+  /// No description provided for @yourGroupRequestPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Your group request is pending approval. You\'ll be notified once the space owner decides.'**
+  String get yourGroupRequestPending;
+
   /// No description provided for @noPendingGroupRequests.
   ///
   /// In en, this message translates to:
@@ -1927,6 +1939,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Share this code so friends and roommates can join your space.'**
   String get shareInviteHint;
+
+  /// No description provided for @inviteMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a member'**
+  String get inviteMember;
+
+  /// No description provided for @inviteMemberHint.
+  ///
+  /// In en, this message translates to:
+  /// **'person@example.com'**
+  String get inviteMemberHint;
+
+  /// No description provided for @inviteMemberHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'An invitation email is sent to the address. Invited members appear in expense splits.'**
+  String get inviteMemberHelper;
+
+  /// Toast after a member is invited by email
+  ///
+  /// In en, this message translates to:
+  /// **'{email} invited to the space'**
+  String invitedMember(String email);
+
+  /// No description provided for @inviteMemberAlreadyMember.
+  ///
+  /// In en, this message translates to:
+  /// **'That email already belongs to a member of this space'**
+  String get inviteMemberAlreadyMember;
+
+  /// No description provided for @duplicateEmailError.
+  ///
+  /// In en, this message translates to:
+  /// **'That email is already in the list'**
+  String get duplicateEmailError;
+
+  /// No description provided for @pendingJoinRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending join requests'**
+  String get pendingJoinRequests;
+
+  /// No description provided for @pendingJoinRequestsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Members have asked to join this space. Approving adds them to the space.'**
+  String get pendingJoinRequestsDescription;
+
+  /// No description provided for @joinRequestPendingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request to join this space is pending approval. You\'ll be able to enter the space once the owner approves it.'**
+  String get joinRequestPendingDescription;
+
+  /// No description provided for @joinRequestApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Join request approved'**
+  String get joinRequestApproved;
+
+  /// No description provided for @joinRequestApprovedFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to approve request'**
+  String get joinRequestApprovedFail;
+
+  /// No description provided for @joinRequestRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Join request rejected'**
+  String get joinRequestRejected;
+
+  /// No description provided for @joinRequestRejectFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to reject request'**
+  String get joinRequestRejectFail;
+
+  /// No description provided for @wantsToJoinSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'wants to join this space'**
+  String get wantsToJoinSpace;
 
   /// No description provided for @addMemberFieldHint.
   ///

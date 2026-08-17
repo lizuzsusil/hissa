@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,9 +20,26 @@ import '../logic/migration.dart';
 import '../logic/settlements.dart';
 import '../logic/splits.dart';
 import '../models/models.dart';
+import '../services/fcm_service.dart';
 
 /// Ensures [GoogleSignIn.instance] is initialized exactly once.
 bool _googleInitialized = false;
+
+/// Result of trying to join a Space with an invite code. Joining is never
+/// immediate: a request is submitted and the Space owner must approve it.
+enum SpaceJoinOutcome {
+  /// No Space matched the invite code.
+  spaceNotFound,
+
+  /// The user already belongs to the Space; it can be opened directly.
+  alreadyMember,
+
+  /// A join request for this Space is already pending the owner's decision.
+  requestPending,
+
+  /// A new join request was submitted and awaits the owner's approval.
+  requestCreated,
+}
 
 /// Central application state. Owns the repository and exposes a small,
 /// imperative API that the UI calls.
@@ -107,6 +125,7 @@ class AppState extends ChangeNotifier {
       _spaceId = restore ? spaceId : null;
       _cycleId = restore ? cycleId : null;
       await _attachRepository();
+      unawaited(registerPushToken());
     }
 
     _loaded = true;
@@ -245,6 +264,7 @@ class AppState extends ChangeNotifier {
     _spaceId = null;
     _cycleId = null;
     await _attachRepository();
+    unawaited(registerPushToken());
     await _commit();
     return true;
   }
@@ -328,6 +348,7 @@ class AppState extends ChangeNotifier {
     _spaceId = null;
     _cycleId = null;
     await _attachRepository();
+    unawaited(registerPushToken());
     if (currentUser == null) {
       await _repo.saveUser(
         User(
@@ -367,6 +388,7 @@ class AppState extends ChangeNotifier {
     _spaceId = null;
     _cycleId = null;
     await _attachRepository();
+    unawaited(registerPushToken());
     final displayName = name.trim().isEmpty
         ? _capitalize(normalized.split('@').first)
         : name.trim();
@@ -396,6 +418,19 @@ class AppState extends ChangeNotifier {
       // Local session is cleared regardless.
     }
     await _commit();
+  }
+
+  /// Registers the current device's FCM token for the signed-in user so the
+  /// backend can push group request lifecycle notifications to them. Best
+  /// effort: failures never block the auth flow.
+  Future<void> registerPushToken() async {
+    final uid = _currentUserId;
+    if (uid == null) return;
+    try {
+      await FcmMessagingService.register(userId: uid);
+    } catch (_) {
+      // Best-effort.
+    }
   }
 
   Future<void> updateProfile(String name) async {
@@ -504,7 +539,7 @@ class AppState extends ChangeNotifier {
   Future<bool> createSpace({
     required String name,
     required String currency,
-    required List<String> memberNames,
+    required List<String> memberEmails,
     required SpaceMode mode,
   }) async {
     final user = currentUser;
@@ -535,24 +570,26 @@ class AppState extends ChangeNotifier {
     );
     await _repo.saveSpace(space);
 
-    for (final memberName in memberNames) {
-      final trimmed = memberName.trim();
+    for (final email in memberEmails) {
+      final trimmed = email.trim().toLowerCase();
       if (trimmed.isEmpty) continue;
-      if (_repo.members.any((m) => m.name == trimmed)) continue;
+      final known = _repo.users.any((u) => u.email.toLowerCase() == trimmed);
+      if (known) continue;
       final newUser = User(
         id: 'u_${genId(8)}',
-        name: trimmed,
-        email:
-            '${trimmed.toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@hissa.app',
+        name: _nameFromEmail(trimmed),
+        email: trimmed,
         createdAt: DateTime.now(),
       );
       await _repo.saveUser(newUser);
       await _repo.saveMember(
         SpaceMember(
           userId: newUser.id,
-          name: trimmed,
+          name: newUser.name,
           role: MemberRole.member,
           joinedAt: DateTime.now(),
+          invitedEmail: trimmed,
+          invitedByUserId: user.id,
         ),
         spaceId,
       );
@@ -570,30 +607,151 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> joinSpace(String code) async {
+  /// Attempts to join the Space matching [code]. Joining is never immediate:
+  /// the Space owner must approve the request (mirroring the member group
+  /// flow). Returns an [SpaceJoinOutcome] describing what happened.
+  Future<SpaceJoinOutcome> requestSpaceJoin(String code) async {
     final user = currentUser;
-    if (user == null) return false;
+    if (user == null) return SpaceJoinOutcome.spaceNotFound;
     final normalized = code.trim().toUpperCase();
     final space = await _repo.findSpaceByInviteCode(normalized);
-    if (space == null) return false;
+    if (space == null) return SpaceJoinOutcome.spaceNotFound;
 
-    if (!_repo.members.any((m) => m.userId == user.id)) {
-      await _repo.saveMember(
-        SpaceMember(
-          userId: user.id,
-          name: user.name,
-          role: MemberRole.member,
-          joinedAt: DateTime.now(),
-          avatarUrl: user.avatarUrl,
-        ),
-        space.id,
-      );
+    // Already a member: open the Space directly. Skip the re-attach when the
+    // repository is already attached to this Space.
+    if (_repo.members.any((m) => m.userId == user.id)) {
+      if (_spaceId != space.id) {
+        _spaceId = space.id;
+        _cycleId = null;
+        await _attachRepository();
+      }
+      await _commit();
+      return SpaceJoinOutcome.alreadyMember;
     }
-    _spaceId = space.id;
-    _cycleId = null;
-    await _attachRepository();
+
+    // A request is already pending for this Space: keep the pending state.
+    final existing =
+        await _repo.findPendingSpaceJoinRequest(space.id, user.id);
+    if (existing != null) return SpaceJoinOutcome.requestPending;
+
+    await _repo.saveSpaceJoinRequest(
+      SpaceJoinRequest(
+        id: 'j_${genId(8)}',
+        spaceId: space.id,
+        requesterUserId: user.id,
+        requesterName: user.name,
+        createdAt: DateTime.now(),
+      ),
+    );
+    return SpaceJoinOutcome.requestCreated;
+  }
+
+  /// Resolves a Space by its invite code. Used by the join screen to display
+  /// the pending state (space name) after a request is submitted. Returns null
+  /// when no Space matches.
+  Future<Space?> findSpaceByCode(String code) =>
+      _repo.findSpaceByInviteCode(code.trim().toUpperCase());
+
+  /// Invites [email] to the current Space: creates (or reuses) a profile for
+  /// the address, adds them as a member and triggers the backend invite email.
+  ///
+  /// Returns false when the email already belongs to a member of the Space.
+  Future<bool> inviteMember(String email) async {
+    final s = space;
+    final user = currentUser;
+    if (s == null || user == null) return false;
+    final trimmed = email.trim().toLowerCase();
+    if (trimmed.isEmpty) return false;
+    if (_repo.members.any(
+      (m) => m.userId == user.id &&
+          user.email.toLowerCase() == trimmed,
+    )) {
+      return false;
+    }
+    if (_repo.members.any(
+      (m) => m.userId != user.id &&
+          (_repo.users
+                  .where((u) => u.id == m.userId)
+                  .firstOrNull
+                  ?.email
+                  .toLowerCase() ==
+              trimmed),
+    )) {
+      return false;
+    }
+
+    var newUser = _repo.users
+        .where((u) => u.email.toLowerCase() == trimmed)
+        .firstOrNull;
+    newUser ??= User(
+      id: 'u_${genId(8)}',
+      name: _nameFromEmail(trimmed),
+      email: trimmed,
+      createdAt: DateTime.now(),
+    );
+    await _repo.saveUser(newUser);
+    await _repo.saveMember(
+      SpaceMember(
+        userId: newUser.id,
+        name: newUser.name,
+        role: MemberRole.member,
+        joinedAt: DateTime.now(),
+        avatarUrl: newUser.avatarUrl,
+        invitedEmail: trimmed,
+        invitedByUserId: user.id,
+      ),
+      s.id,
+    );
     await _commit();
     return true;
+  }
+
+  /// Approves a pending Space join request: the requester becomes a member of
+  /// the Space (the backend notifies them by email and push). Owner only.
+  Future<void> approveSpaceJoinRequest(String requestId) async {
+    final request = _repo.spaceJoinRequests
+        .where((r) => r.id == requestId)
+        .firstOrNull;
+    if (request == null ||
+        request.status != SpaceJoinRequestStatus.pending) {
+      return;
+    }
+    if (!isOwner) return;
+    final requester =
+        _repo.users.where((u) => u.id == request.requesterUserId).firstOrNull;
+    await _repo.saveMember(
+      SpaceMember(
+        userId: request.requesterUserId,
+        name: requester?.name ?? request.requesterName,
+        role: MemberRole.member,
+        joinedAt: DateTime.now(),
+        avatarUrl: requester?.avatarUrl,
+      ),
+      request.spaceId,
+    );
+    await _repo.updateSpaceJoinRequestStatus(
+      requestId,
+      SpaceJoinRequestStatus.approved,
+    );
+    await _commit();
+  }
+
+  /// Rejects a pending Space join request. The requester is notified by email
+  /// and push. Owner only.
+  Future<void> rejectSpaceJoinRequest(String requestId) async {
+    final request = _repo.spaceJoinRequests
+        .where((r) => r.id == requestId)
+        .firstOrNull;
+    if (request == null ||
+        request.status != SpaceJoinRequestStatus.pending) {
+      return;
+    }
+    if (!isOwner) return;
+    await _repo.updateSpaceJoinRequestStatus(
+      requestId,
+      SpaceJoinRequestStatus.rejected,
+    );
+    await _commit();
   }
 
   Future<void> renameSpace(String name) async {
@@ -612,34 +770,16 @@ class AppState extends ChangeNotifier {
     await _commit();
   }
 
-  Future<void> addMember(String name) async {
-    final s = space;
-    if (s == null) return;
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) return;
-    if (_repo.members.any(
-      (m) => m.name.toLowerCase() == trimmed.toLowerCase(),
-    )) {
-      return;
-    }
-    final newUser = User(
-      id: 'u_${genId(8)}',
-      name: trimmed,
-      email:
-          '${trimmed.toLowerCase().replaceAll(RegExp(r'\s+'), '.')}@hissa.app',
-      createdAt: DateTime.now(),
-    );
-    await _repo.saveUser(newUser);
-    await _repo.saveMember(
-      SpaceMember(
-        userId: newUser.id,
-        name: trimmed,
-        role: MemberRole.member,
-        joinedAt: DateTime.now(),
-      ),
-      s.id,
-    );
-    await _commit();
+  /// Derives a readable display name from an email address's local part, e.g.
+  /// `john.doe@example.com` -> `John Doe`.
+  static String _nameFromEmail(String email) {
+    final local = email.split('@').first;
+    final parts =
+        local.split(RegExp(r'[._\-+]+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return local;
+    return parts
+        .map((p) => p[0].toUpperCase() + p.substring(1))
+        .join(' ');
   }
 
   Future<void> removeMember(String userId) async {
@@ -1147,6 +1287,17 @@ class AppState extends ChangeNotifier {
         .toList();
   }
 
+  /// Pending Space join requests in the currently selected Space. Only the
+  /// Space owner sees these (and only they may approve/reject).
+  List<SpaceJoinRequest> get pendingSpaceJoinRequests {
+    final sid = _spaceId;
+    if (sid == null) return const [];
+    return _repo.spaceJoinRequests
+        .where((r) =>
+            r.spaceId == sid && r.status == SpaceJoinRequestStatus.pending)
+        .toList();
+  }
+
   /// Every user ID (owner + members) represented by any active Member Group in
   /// the current Space. Used to prevent double counting and to exclude grouped
   /// users from being treated as individual split participants (Rule 8).
@@ -1196,12 +1347,14 @@ class AppState extends ChangeNotifier {
 
   /// Whether the current user is eligible to submit a group creation request:
   /// they must be a non-owner in a Space with at least three members, must not
-  /// already belong to an active group, and must have at least one other
-  /// ungrouped member they can group with.
+  /// already belong to an active group, must not already have a pending
+  /// request, and must have at least one other ungrouped member they can group
+  /// with.
   bool get canRequestGroup =>
       !isOwner &&
       memberGroupsApplicable &&
       !groupedUserIds.contains(currentUser?.id) &&
+      !hasPendingGroupRequest(currentUser?.id ?? '') &&
       requestableGroupMembers.isNotEmpty;
 
   /// Members the current user could still add to a requested group. Excludes

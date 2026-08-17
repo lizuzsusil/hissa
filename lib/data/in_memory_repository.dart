@@ -18,6 +18,7 @@ class InMemoryRepository implements ExpenseRepository {
   final List<MemberGroup> _memberGroups = [];
   final List<MemberGroupMember> _memberGroupMembers = [];
   final List<GroupRequest> _groupRequests = [];
+  final List<SpaceJoinRequest> _spaceJoinRequests = [];
 
   @override
   List<User> get users => List.unmodifiable(_users);
@@ -52,6 +53,10 @@ class InMemoryRepository implements ExpenseRepository {
 
   @override
   List<GroupRequest> get groupRequests => List.unmodifiable(_groupRequests);
+
+  @override
+  List<SpaceJoinRequest> get spaceJoinRequests =>
+      List.unmodifiable(_spaceJoinRequests);
 
   @override
   Future<void> saveUser(User user) async {
@@ -186,6 +191,38 @@ class InMemoryRepository implements ExpenseRepository {
     if (i >= 0) {
       _groupRequests[i] = _groupRequests[i].copyWith(status: status);
     }
+  }
+
+  @override
+  Future<void> saveSpaceJoinRequest(SpaceJoinRequest request) async {
+    _spaceJoinRequests.removeWhere((r) => r.id == request.id);
+    _spaceJoinRequests.add(request);
+  }
+
+  @override
+  Future<void> updateSpaceJoinRequestStatus(
+    String requestId,
+    SpaceJoinRequestStatus status,
+  ) async {
+    final i = _spaceJoinRequests.indexWhere((r) => r.id == requestId);
+    if (i >= 0) {
+      _spaceJoinRequests[i] = _spaceJoinRequests[i].copyWith(status: status);
+    }
+  }
+
+  @override
+  Future<SpaceJoinRequest?> findPendingSpaceJoinRequest(
+    String spaceId,
+    String userId,
+  ) async {
+    for (final r in _spaceJoinRequests) {
+      if (r.spaceId == spaceId &&
+          r.requesterUserId == userId &&
+          r.status == SpaceJoinRequestStatus.pending) {
+        return r;
+      }
+    }
+    return null;
   }
 
   @override

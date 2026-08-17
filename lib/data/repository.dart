@@ -16,6 +16,7 @@ abstract class ExpenseRepository {
   List<MemberGroup> get memberGroups;
   List<MemberGroupMember> get memberGroupMembers;
   List<GroupRequest> get groupRequests;
+  List<SpaceJoinRequest> get spaceJoinRequests;
 
   Future<void> saveUser(User user);
   Future<void> saveSpace(Space space);
@@ -45,6 +46,23 @@ abstract class ExpenseRepository {
 
   /// Updates a group creation request's status (owner approves/rejects).
   Future<void> updateGroupRequestStatus(String requestId, GroupRequestStatus status);
+
+  /// Records a user's request to join a Space with an invite code. Joining is
+  /// never immediate: the Space owner must approve the request first.
+  Future<void> saveSpaceJoinRequest(SpaceJoinRequest request);
+
+  /// Updates a Space join request's status (Space owner approves/rejects).
+  Future<void> updateSpaceJoinRequestStatus(
+    String requestId,
+    SpaceJoinRequestStatus status,
+  );
+
+  /// The still-pending join request for [userId] in [spaceId], if any. Used by
+  /// the join screen to keep the requester in a pending state on re-entry.
+  Future<SpaceJoinRequest?> findPendingSpaceJoinRequest(
+    String spaceId,
+    String userId,
+  );
 
   /// Marks [groupId] inactive (deleted) without touching historical expenses.
   Future<void> deleteMemberGroup(String groupId);

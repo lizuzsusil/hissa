@@ -32,6 +32,7 @@ class FirestoreRepository implements ExpenseRepository {
   final List<MemberGroup> _memberGroups = [];
   final List<MemberGroupMember> _memberGroupMembers = [];
   final List<GroupRequest> _groupRequests = [];
+  final List<SpaceJoinRequest> _spaceJoinRequests = [];
 
   final List<StreamSubscription<dynamic>> _subs = [];
   final Map<String, StreamSubscription<dynamic>> _userDocSubs = {};
@@ -124,6 +125,10 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('groupRequests')
           .where('spaceId', isEqualTo: spaceId)
           .get();
+      final spaceJoinRequestsF = _db
+          .collection('spaceJoinRequests')
+          .where('spaceId', isEqualTo: spaceId)
+          .get();
 
       final spaceSnap = await spaceF;
       _spaces.clear();
@@ -197,6 +202,13 @@ class FirestoreRepository implements ExpenseRepository {
       _groupRequests
         ..clear()
         ..addAll(groupRequests.docs.map((d) => GroupRequest.fromJson(d.data())));
+
+      final spaceJoinRequests = await spaceJoinRequestsF;
+      _spaceJoinRequests
+        ..clear()
+        ..addAll(
+          spaceJoinRequests.docs.map((d) => SpaceJoinRequest.fromJson(d.data())),
+        );
     } catch (_) {
       // Permission denied or missing data: degrade to an empty cache rather
       // than failing the whole attach flow.
@@ -395,6 +407,24 @@ class FirestoreRepository implements ExpenseRepository {
         onError: (_) {},
       ),
     );
+
+    _subs.add(
+      _db
+          .collection('spaceJoinRequests')
+          .where('spaceId', isEqualTo: spaceId)
+          .snapshots()
+          .listen(
+        (snap) {
+          _spaceJoinRequests
+            ..clear()
+            ..addAll(
+              snap.docs.map((d) => SpaceJoinRequest.fromJson(d.data())),
+            );
+          _notify();
+        },
+        onError: (_) {},
+      ),
+    );
   }
 
   void _syncMemberUserDocs(Iterable<String> userIds) {
@@ -441,6 +471,7 @@ class FirestoreRepository implements ExpenseRepository {
     _memberGroups.clear();
     _memberGroupMembers.clear();
     _groupRequests.clear();
+    _spaceJoinRequests.clear();
   }
 
   // ---- reads ----
@@ -478,6 +509,10 @@ class FirestoreRepository implements ExpenseRepository {
 
   @override
   List<GroupRequest> get groupRequests => List.unmodifiable(_groupRequests);
+
+  @override
+  List<SpaceJoinRequest> get spaceJoinRequests =>
+      List.unmodifiable(_spaceJoinRequests);
 
   @override
   List<ExpenseShare> sharesForExpense(String expenseId) {
@@ -701,6 +736,50 @@ class FirestoreRepository implements ExpenseRepository {
         .collection('groupRequests')
         .doc('${existing.spaceId}_$requestId')
         .update({'status': status.name});
+  }
+
+  @override
+  Future<void> saveSpaceJoinRequest(SpaceJoinRequest request) async {
+    _upsert(_spaceJoinRequests, request, (r) => r.id);
+    await _db
+        .collection('spaceJoinRequests')
+        .doc('${request.spaceId}_${request.id}')
+        .set(request.toJson());
+  }
+
+  @override
+  Future<void> updateSpaceJoinRequestStatus(
+    String requestId,
+    SpaceJoinRequestStatus status,
+  ) async {
+    final existing =
+        _spaceJoinRequests.where((r) => r.id == requestId).firstOrNull;
+    if (existing == null) return;
+    final updated = existing.copyWith(status: status);
+    _upsert(_spaceJoinRequests, updated, (r) => r.id);
+    await _db
+        .collection('spaceJoinRequests')
+        .doc('${existing.spaceId}_$requestId')
+        .update({'status': status.name});
+  }
+
+  @override
+  Future<SpaceJoinRequest?> findPendingSpaceJoinRequest(
+    String spaceId,
+    String userId,
+  ) async {
+    final snap = await _db
+        .collection('spaceJoinRequests')
+        .where('requesterUserId', isEqualTo: userId)
+        .get();
+    for (final d in snap.docs) {
+      final request = SpaceJoinRequest.fromJson(d.data());
+      if (request.spaceId == spaceId &&
+          request.status == SpaceJoinRequestStatus.pending) {
+        return request;
+      }
+    }
+    return null;
   }
 
   // ---- queries ----
