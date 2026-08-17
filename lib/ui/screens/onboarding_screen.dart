@@ -21,19 +21,19 @@ class IntroSlide {
 const List<IntroSlide> kIntroSlides = [
   IntroSlide(
     icon: Icons.home_work_outlined,
-    gradient: [Color(0xFF3B86A5), Color(0xFF005F86)],
+    gradient: [Color(0xFF45A8D8), Color(0xFF1373A8)],
   ),
   IntroSlide(
     icon: Icons.receipt_long_outlined,
-    gradient: [Color(0xFFE5853B), Color(0xFFBF5700)],
+    gradient: [Color(0xFFED6B1E), Color(0xFFC44F07)],
   ),
   IntroSlide(
     icon: Icons.swap_horiz_rounded,
-    gradient: [Color(0xFFF7BD3A), Color(0xFFF2A900)],
+    gradient: [Color(0xFFF8CC4A), Color(0xFFF5A623)],
   ),
   IntroSlide(
     icon: Icons.donut_small_outlined,
-    gradient: [Color(0xFF5A7F70), Color(0xFF43695B)],
+    gradient: [Color(0xFF34C07E), Color(0xFF158A4F)],
   ),
 ];
 

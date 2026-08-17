@@ -315,7 +315,8 @@ class _MonthlyBarChart extends StatelessWidget {
                         BarChartRodData(
                           toY: data[i].total.major,
                           width: 22,
-                          gradient: AppColors.heroGradient,
+                          gradient: AppGradients.barChart[
+                              i % AppGradients.barChart.length],
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(8),
                           ),
@@ -327,13 +328,23 @@ class _MonthlyBarChart extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          for (final d in data)
+          for (final entry in data.asMap().entries)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
+                  Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      gradient: AppGradients.barChart[
+                          entry.key % AppGradients.barChart.length],
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 7),
                   Text(
-                    d.label,
+                    entry.value.label,
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark
@@ -343,7 +354,7 @@ class _MonthlyBarChart extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    formatMoneyCompact(d.total),
+                    formatMoneyCompact(entry.value.total),
                     style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
@@ -488,8 +499,8 @@ class _MemberPaidRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fraction = total <= 0 ? 0.0 : paid.paisa / total;
+    final color = avatarColorFor(name);
     return Row(
       children: [
         MemberAvatar(name: name, size: 34),
@@ -523,10 +534,8 @@ class _MemberPaidRow extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: fraction,
                   minHeight: 8,
-                  backgroundColor: isDark
-                      ? AppColors.surfaceAltDark
-                      : AppColors.surfaceAlt,
-                  color: AppColors.primary,
+                  backgroundColor: color.withValues(alpha: 0.15),
+                  color: color,
                 ),
               ),
             ],
@@ -563,15 +572,15 @@ class _SummaryRow extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary.withValues(alpha: 0.10),
-            AppColors.primary.withValues(alpha: 0.04),
+            AppColors.tertiary.withValues(alpha: 0.10),
+            AppColors.tertiary.withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.25)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.10),
+            color: AppColors.tertiary.withValues(alpha: 0.10),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

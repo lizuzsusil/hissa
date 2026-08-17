@@ -435,11 +435,11 @@ class _AddExpenseButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          gradient: AppColors.heroGradient,
+          gradient: AppGradients.accent,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.25),
+              color: AppColors.secondaryDark.withValues(alpha: 0.30),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),

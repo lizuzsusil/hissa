@@ -399,7 +399,14 @@ class _FilterChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? AppColors.primary : AppColors.surfaceAlt,
+            gradient: selected
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.primaryBright, AppColors.primary],
+                  )
+                : null,
+            color: selected ? null : AppColors.surfaceAlt,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Text(

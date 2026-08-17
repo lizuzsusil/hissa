@@ -102,11 +102,11 @@ class _OutstandingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: AppColors.heroGradient,
+        gradient: AppGradients.accent,
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
+            color: AppColors.secondaryDark.withValues(alpha: 0.40),
             blurRadius: 26,
             offset: const Offset(0, 12),
           ),

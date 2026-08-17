@@ -472,7 +472,7 @@ class _MiniStat extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
+              gradient: AppGradients.tint(color),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 17, color: color),
@@ -527,7 +527,7 @@ class _QuickActions extends StatelessWidget {
               child: _ActionButton(
                 icon: Icons.add_rounded,
                 label: l10n.addExpense,
-                gradient: true,
+                gradient: AppColors.heroGradient,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -542,7 +542,7 @@ class _QuickActions extends StatelessWidget {
               child: _ActionButton(
                 icon: Icons.swap_horiz_rounded,
                 label: l10n.settleUp,
-                gradient: false,
+                gradient: AppGradients.accent,
                 onTap: () => context.read<ShellTabController>().switchTo(2),
               ),
             ),
@@ -593,7 +593,7 @@ class _QuickActions extends StatelessWidget {
 class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final bool gradient;
+  final LinearGradient? gradient;
   final VoidCallback onTap;
 
   const _ActionButton({
@@ -606,7 +606,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final foreground = gradient ? Colors.white : AppColors.primary;
+    final foreground = gradient != null ? Colors.white : AppColors.primary;
     final bgColor = isDark ? AppColors.surfaceDark : Colors.white;
     return Material(
       color: Colors.transparent,
@@ -616,10 +616,10 @@ class _ActionButton extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            gradient: gradient ? AppColors.heroGradient : null,
-            color: gradient ? null : bgColor,
+            gradient: gradient,
+            color: gradient != null ? null : bgColor,
             borderRadius: BorderRadius.circular(18),
-            border: gradient
+            border: gradient != null
                 ? null
                 : Border.all(
                     color: isDark ? AppColors.borderDark : AppColors.border,
@@ -666,7 +666,7 @@ class _GroupBalanceCard extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
+              gradient: AppGradients.tint(AppColors.primary),
               shape: BoxShape.circle,
             ),
             child: const Icon(

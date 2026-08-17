@@ -2,59 +2,127 @@ import 'package:flutter/material.dart';
 
 import '../widgets/motion.dart' show HissaPageTransitionsBuilder;
 
-/// Central design tokens for Hissa, derived from the University of Texas
-/// brand palette (UT blue primary, burnt orange, iron grey, forest green,
-/// gold, cocoa and cream).
+/// Central design tokens for Hissa. Built on the original University of
+/// Texas palette (UT blue, burnt orange, gold, forest green) but refreshed
+/// into a brighter, more vibrant set of hues so the app reads modern and
+/// premium instead of a single flat blue. Neutrals keep the warm, paper-like
+/// feel while the brand, semantic and accent colours carry the dynamics.
 class AppColors {
   AppColors._();
 
-  // Brand
-  static const primary = Color(0xFF005F86); // UT Blue
-  static const primaryDark = Color(0xFF005070);
-  static const primaryDeep = Color(0xFF00435F);
-  static const secondary = Color(0xFFBF5700); // Burnt Orange
-  static const secondaryDark = Color(0xFFA34A00);
-  static const accent = Color(0xFFF2A900); // UT Gold
-  static const gradientTop = Color(0xFF3B86A5);
-  static const gradientBottom = Color(0xFF005F86);
+  // Brand — vivid ocean blue with a brighter highlight for gradients
+  static const primary = Color(0xFF1373A8);
+  static const primaryDark = Color(0xFF0E5E8D);
+  static const primaryDeep = Color(0xFF0A4A70);
+  static const primaryBright = Color(0xFF45A8D8);
+  static const secondary = Color(0xFFF26B1D); // Burnt Orange (brighter)
+  static const secondaryDark = Color(0xFFD4530A);
+  static const secondarySoft = Color(0xFFFDECDF);
+  static const accent = Color(0xFFF5A623); // Gold
+  static const tertiary = Color(0xFF7C5CDB); // Violet accent
+  static const tertiarySoft = Color(0xFFF0EBFC);
+  static const info = Color(0xFF3D9BE9);
+  static const infoSoft = Color(0xFFE7F2FC);
+  static const gradientTop = Color(0xFF3EA6DA);
+  static const gradientBottom = Color(0xFF0B5B90);
 
-  // Semantic
-  static const positive = Color(0xFF43695B); // Forest Green
-  static const positiveSoft = Color(0xFFE5EDE9);
-  static const negative = Color(0xFFC14A32);
-  static const negativeSoft = Color(0xFFF9E7E1);
-  static const warning = Color(0xFFF2A900); // Gold
-  static const warningSoft = Color(0xFFFCF3DD);
+  // Semantic — vibrant but still contrast-safe with white/dark foregrounds
+  static const positive = Color(0xFF158A4F); // Forest Green (vivid)
+  static const positiveSoft = Color(0xFFE1F4E8);
+  static const negative = Color(0xFFD93A40);
+  static const negativeSoft = Color(0xFFFDE7E8);
+  static const warning = Color(0xFFF5A623); // Gold
+  static const warningSoft = Color(0xFFFDF3DE);
 
   // Surfaces (light) — warm cream, paper-like
-  static const bg = Color(0xFFFBF9F5);
+  static const bg = Color(0xFFF7F5F1);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceAlt = Color(0xFFF2EEE4); // Cream tint
-  static const border = Color(0xFFE5E0D2);
-  static const textPrimary = Color(0xFF333F48); // Iron Grey
-  static const textSecondary = Color(0xFF5D6770);
-  static const textMuted = Color(0xFF8B9399);
+  static const surfaceAlt = Color(0xFFF0ECE3); // Cream tint
+  static const border = Color(0xFFE5E0D4);
+  static const textPrimary = Color(0xFF2B333B); // Iron Grey
+  static const textSecondary = Color(0xFF5B6470);
+  static const textMuted = Color(0xFF8A939E);
 
-  // Surfaces (dark) — warm near-black, cocoa-based
-  static const bgDark = Color(0xFF161513);
-  static const surfaceDark = Color(0xFF201E1C);
-  static const surfaceAltDark = Color(0xFF2B2826);
-  static const borderDark = Color(0xFF3A3735);
-  static const textPrimaryDark = Color(0xFFF3F0E8);
-  static const textSecondaryDark = Color(0xFFB6B2A9);
-  static const textMutedDark = Color(0xFF7B776F);
+  // Surfaces (dark) — deep blue-black for a richer night mode
+  static const bgDark = Color(0xFF0E1116);
+  static const surfaceDark = Color(0xFF171B22);
+  static const surfaceAltDark = Color(0xFF21262F);
+  static const borderDark = Color(0xFF323A48);
+  static const textPrimaryDark = Color(0xFFF2F4F7);
+  static const textSecondaryDark = Color(0xFFACB5C1);
+  static const textMutedDark = Color(0xFF6E7785);
 
   static const heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [gradientTop, gradientBottom],
+    colors: [gradientTop, Color(0xFF1780B8), gradientBottom],
   );
 
   static const shimmerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF4E95B8), Color(0xFF0E6E9C), Color(0xFF005070)],
+    colors: [Color(0xFF5FB6E2), Color(0xFF1E86BE), Color(0xFF0B5E93)],
   );
+}
+
+/// Reusable gradients that give the UI its colour dynamics. Hero surfaces stay
+/// on the brand blues while action, summary and chart surfaces borrow the warm
+/// and accent gradients so no screen feels like a single flat hue.
+class AppGradients {
+  AppGradients._();
+
+  /// Warm amber-orange, used for money/settle actions.
+  static const accent = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFED6B1E), Color(0xFFDF570A), Color(0xFFB5490A)],
+  );
+
+  /// Emerald green for settled/positive moments.
+  static const success = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF34C07E), Color(0xFF12925A)],
+  );
+
+  /// Sky blue for info surfaces.
+  static const info = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF63C4F5), Color(0xFF1E88D4)],
+  );
+
+  /// Violet for premium summary cards.
+  static const violet = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF9B7EF0), Color(0xFF6C4FCB)],
+  );
+
+  /// Amber for highlights.
+  static const warning = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFF8CC4A), Color(0xFFF2A900)],
+  );
+
+  /// Cycling palette for bar charts so each bar/month reads as distinct.
+  static const barChart = <LinearGradient>[
+    AppColors.heroGradient,
+    accent,
+    success,
+    violet,
+    info,
+    warning,
+  ];
+
+  /// Builds a soft diagonal sheen from a solid [color] for icon wells.
+  static LinearGradient tint(Color color, {double alpha = 0.16}) =>
+      LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [color.withValues(alpha: alpha), color.withValues(alpha: 0.06)],
+      );
 }
 
 class AppTheme {
@@ -193,7 +261,7 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark
             ? AppColors.surfaceAltDark
-            : const Color(0xFF2A2725),
+            : const Color(0xFF22313F),
         contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -363,7 +431,7 @@ class AppTheme {
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceAltDark : const Color(0xFF333F48),
+          color: isDark ? AppColors.surfaceAltDark : const Color(0xFF2B333B),
           borderRadius: BorderRadius.circular(8),
         ),
         textStyle: const TextStyle(color: Colors.white, fontSize: 12),

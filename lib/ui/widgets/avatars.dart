@@ -5,14 +5,14 @@ import '../../core/formatters.dart';
 import '../../state/app_state.dart';
 
 const List<Color> _avatarColors = [
-  Color(0xFFBF5700), // burnt orange
-  Color(0xFF005F86), // UT blue
-  Color(0xFF43695B), // forest green
-  Color(0xFF333F48), // iron grey
-  Color(0xFF382F2D), // cocoa
-  Color(0xFF7A3800), // deep orange
-  Color(0xFF2E6E79), // teal blue
-  Color(0xFF5D6770), // warm grey
+  Color(0xFF3D7DE0), // royal blue
+  Color(0xFFF26B1D), // amber orange
+  Color(0xFF2FA362), // emerald green
+  Color(0xFF7C5CDB), // violet
+  Color(0xFFE5484D), // coral red
+  Color(0xFF14B8A6), // teal
+  Color(0xFFF5A623), // gold
+  Color(0xFF6366F1), // indigo
 ];
 
 Color avatarColorFor(String seed) {
@@ -138,8 +138,8 @@ class AvatarStack extends StatelessWidget {
                 height: size,
                 decoration: BoxDecoration(
                   color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF2B2826)
-                      : const Color(0xFFF2EEE4),
+                      ? const Color(0xFF21262F)
+                      : const Color(0xFFF0ECE3),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Theme.of(context).colorScheme.surface,
@@ -153,8 +153,8 @@ class AvatarStack extends StatelessWidget {
                     fontSize: size * 0.32,
                     fontWeight: FontWeight.w700,
                     color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF7B776F)
-                        : const Color(0xFF5D6770),
+                        ? const Color(0xFF6E7785)
+                        : const Color(0xFF5B6470),
                   ),
                 ),
               ),

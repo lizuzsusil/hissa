@@ -26,15 +26,22 @@ class PrimaryButton extends StatelessWidget {
       duration: const Duration(milliseconds: 180),
       height: 48,
       decoration: BoxDecoration(
+        gradient: disabled
+            ? null
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.primaryBright, AppColors.primary],
+              ),
         color: disabled
             ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08)
-            : AppColors.primary,
+            : null,
         borderRadius: BorderRadius.circular(13),
         boxShadow: disabled
             ? null
             : [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.22),
+                  color: AppColors.primaryDeep.withValues(alpha: 0.30),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),

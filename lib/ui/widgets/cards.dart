@@ -130,7 +130,7 @@ class StatRow extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.22),
+            gradient: AppGradients.tint(color, alpha: 0.24),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, size: 20, color: color),
@@ -189,7 +189,7 @@ class MetricCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.14),
+                  gradient: AppGradients.tint(color),
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Icon(icon, size: 21, color: color),

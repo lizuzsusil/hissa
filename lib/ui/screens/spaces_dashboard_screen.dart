@@ -223,7 +223,7 @@ class _SpaceCard extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFF5B8A6E),
+                          Color(0xFF34C07E),
                           AppColors.positive,
                         ],
                       ),

@@ -132,11 +132,33 @@ class _FloatingAddButton extends StatelessWidget {
           context,
         ).push(MaterialPageRoute(builder: (_) => const ExpenseFormScreen()));
       },
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
-      elevation: 6,
+      elevation: 0,
+      backgroundColor: Colors.transparent,
       shape: const CircleBorder(),
-      child: const Icon(Icons.add_rounded, size: 30),
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryBright,
+              AppColors.primary,
+              AppColors.primaryDeep,
+            ],
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryDeep.withValues(alpha: 0.45),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.add_rounded, size: 30, color: Colors.white),
+      ),
     );
   }
 }
