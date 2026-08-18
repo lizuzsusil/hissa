@@ -29,6 +29,15 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   final _descriptionController = TextEditingController();
   final _noteController = TextEditingController();
 
+  // Persistent per-party controllers for the percentage / custom amount
+  // inputs. Recreating a controller on every rebuild makes the TextField drop
+  // focus after each keystroke, so these are created once per party and
+  // reused (and disposed) alongside the input fields.
+  final Map<String, TextEditingController> _pctControllers = {};
+  final Map<String, FocusNode> _pctFocusNodes = {};
+  final Map<String, TextEditingController> _amtControllers = {};
+  final Map<String, FocusNode> _amtFocusNodes = {};
+
   String? _categoryId;
   Money _amount = Money.zero();
   DateTime _date = DateTime.now();
@@ -183,7 +192,57 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   void dispose() {
     _descriptionController.dispose();
     _noteController.dispose();
+    for (final c in _pctControllers.values) {
+      c.dispose();
+    }
+    for (final f in _pctFocusNodes.values) {
+      f.dispose();
+    }
+    for (final c in _amtControllers.values) {
+      c.dispose();
+    }
+    for (final f in _amtFocusNodes.values) {
+      f.dispose();
+    }
     super.dispose();
+  }
+
+  /// Returns a stable controller for a split input. The controller is created
+  /// once and reused across rebuilds so typing never drops focus. External
+  /// value changes are pushed into the field text only while it isn't focused.
+  TextEditingController _reuseController(
+    Map<String, TextEditingController> controllers,
+    Map<String, FocusNode> focusNodes,
+    String id,
+    String text,
+  ) {
+    final controller = controllers[id];
+    if (controller != null) {
+      final node = focusNodes[id];
+      if (node != null && !node.hasFocus && controller.text != text) {
+        controller.text = text;
+      }
+      return controller;
+    }
+    final created = TextEditingController(text: text);
+    controllers[id] = created;
+    focusNodes[id] = FocusNode();
+    return created;
+  }
+
+  /// Disposes controllers/nodes for parties that are no longer in the split,
+  /// so a re-added party starts from its current (often zeroed) value.
+  void _pruneControllers(
+    Map<String, TextEditingController> controllers,
+    Map<String, FocusNode> focusNodes,
+    Set<String> liveIds,
+  ) {
+    controllers.removeWhere((id, controller) {
+      if (liveIds.contains(id)) return false;
+      controller.dispose();
+      focusNodes.remove(id)?.dispose();
+      return true;
+    });
   }
 
   @override
@@ -987,6 +1046,16 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     required List<SplitParty> parties,
   }) {
     final sum = _percentages.values.fold<double>(0, (a, b) => a + b);
+    final livePctIds = parties.map((p) => p.id).toSet();
+    _pruneControllers(_pctControllers, _pctFocusNodes, livePctIds);
+    for (final p in parties) {
+      _reuseController(
+        _pctControllers,
+        _pctFocusNodes,
+        p.id,
+        (_percentages[p.id] ?? 0).toStringAsFixed(0),
+      );
+    }
     return Column(
       children: [
         for (final p in parties)
@@ -1006,14 +1075,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   width: 78,
                   child: TextField(
                     key: ValueKey('pct_${p.id}'),
+                    focusNode: _pctFocusNodes[p.id]!,
                     enabled: !_saving,
                     keyboardType: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
-                    controller: TextEditingController(
-                      text: (_percentages[p.id] ?? 0).toStringAsFixed(0),
-                    ),
+                    controller: _pctControllers[p.id]!,
                     textAlign: TextAlign.right,
                     onChanged: (v) {
                       final val = double.tryParse(v) ?? 0;
@@ -1063,6 +1131,16 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       assigned += (_customAmounts[p.id] ?? Money.zero()).paisa;
     }
     final ok = assigned == _amount.paisa;
+    final liveAmtIds = parties.map((p) => p.id).toSet();
+    _pruneControllers(_amtControllers, _amtFocusNodes, liveAmtIds);
+    for (final p in parties) {
+      _reuseController(
+        _amtControllers,
+        _amtFocusNodes,
+        p.id,
+        _customAmountText(_customAmounts[p.id]),
+      );
+    }
     return Column(
       children: [
         for (final p in parties)
@@ -1082,6 +1160,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   width: 120,
                   child: TextField(
                     key: ValueKey('amt_${p.id}'),
+                    focusNode: _amtFocusNodes[p.id]!,
                     enabled: !_saving,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -1089,9 +1168,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
-                    controller: TextEditingController(
-                      text: _customAmountText(_customAmounts[p.id]),
-                    ),
+                    controller: _amtControllers[p.id]!,
                     textAlign: TextAlign.right,
                     onChanged: (v) {
                       final val = double.tryParse(v.replaceAll(',', '')) ?? 0;
