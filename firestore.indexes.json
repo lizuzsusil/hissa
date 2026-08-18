@@ -12,23 +12,9 @@
       "collectionGroup": "memberGroups",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "spaceId", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "memberGroups",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "spaceId", "order": "ASCENDING" },
         { "fieldPath": "ownerUserId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "memberGroupMembers",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "spaceId", "order": "ASCENDING" }
       ]
     },
     {
@@ -37,13 +23,6 @@
       "fields": [
         { "fieldPath": "spaceId", "order": "ASCENDING" },
         { "fieldPath": "role", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "groupRequests",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "spaceId", "order": "ASCENDING" }
       ]
     }
   ],

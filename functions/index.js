@@ -24,12 +24,19 @@
  * Recipient devices are resolved through the `fcmTokens/{userId}` collection,
  * which the app keeps fresh on every sign-in and token rotation. Emails are
  * sent through Gmail SMTP (nodemailer) using the `SMTP_USER` / `SMTP_PASS`
- * environment variables; when these are unset, email sending is skipped and
- * the functions still deliver push notifications.
+ * secrets (see `firebase functions:secrets:set`); when these are unset, email
+ * sending is skipped and the functions still deliver push notifications.
+ * Locally the emulator fills the same values from `functions/.env`.
  */
+const { defineSecret } = require('firebase-functions/params');
 const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
+
+admin.initializeApp();
+
+const smtpUser = defineSecret('SMTP_USER');
+const smtpPass = defineSecret('SMTP_PASS');
 
 admin.initializeApp();
 
@@ -98,13 +105,13 @@ function emailBody(text) {
 
 /**
  * Sends a transactional email through Gmail SMTP. Requires the SMTP_USER /
- * SMTP_PASS environment variables; when they are not configured, sending is
- * skipped entirely so the functions degrade gracefully.
+ * SMTP_PASS secrets; when they are not configured, sending is skipped
+ * entirely so the functions degrade gracefully.
  */
 async function sendEmail({ to, subject, html }) {
   if (!to) return;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = smtpUser.value();
+  const pass = smtpPass.value();
   if (!user || !pass) return;
   try {
     const transport = nodemailer.createTransport({
@@ -234,6 +241,7 @@ exports.sendGroupRequestDecisionNotifications = onDocumentUpdated(
  */
 exports.sendMemberInviteEmail = onDocumentCreated(
   'spaceMembers/{memberId}',
+  { secrets: [smtpUser, smtpPass] },
   async (event) => {
     const member = event.data.data();
     const email = member?.invitedEmail;
@@ -268,6 +276,7 @@ exports.sendMemberInviteEmail = onDocumentCreated(
  */
 exports.sendSpaceJoinRequestNotifications = onDocumentCreated(
   'spaceJoinRequests/{requestId}',
+  { secrets: [smtpUser, smtpPass] },
   async (event) => {
     const request = event.data.data();
     if (!request || !request.spaceId || !request.requesterUserId) return;
@@ -318,6 +327,7 @@ exports.sendSpaceJoinRequestNotifications = onDocumentCreated(
  */
 exports.sendSpaceJoinRequestDecisionNotifications = onDocumentUpdated(
   'spaceJoinRequests/{requestId}',
+  { secrets: [smtpUser, smtpPass] },
   async (event) => {
     const before = event.data.before.data();
     const after = event.data.after.data();

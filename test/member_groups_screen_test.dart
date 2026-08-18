@@ -172,7 +172,7 @@ void main() {
 
     // The request is resolved: no pending card, and the group now exists.
     expect(find.text('Pending approval'), findsNothing);
-    expect(find.text('B, C'), findsOneWidget);
+    expect(find.text("B's Group"), findsOneWidget);
   });
 
   testWidgets('rejecting a request clears the pending state for the requester',

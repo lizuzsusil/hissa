@@ -1482,10 +1482,7 @@ class AppState extends ChangeNotifier {
       id: genId(8),
       spaceId: request.spaceId,
       ownerUserId: request.requesterUserId,
-      name: _groupNameForMembers(
-        request.requesterUserId,
-        request.memberUserIds,
-      ),
+      name: _ownerGroupName(request.requesterUserId),
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -1512,13 +1509,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _groupNameForMembers(String requesterId, List<String> memberIds) {
-    final names = <String>[];
-    for (final id in [requesterId, ...memberIds]) {
-      final name = members.where((m) => m.userId == id).firstOrNull?.name;
-      if (name != null) names.add(name);
-    }
-    return names.join(', ');
+  String _ownerGroupName(String ownerId) {
+    final ownerName = memberName(ownerId);
+    return ownerName == null || ownerName.isEmpty
+        ? "Owner's Group"
+        : "$ownerName's Group";
   }
 
   /// The profile photo for [userId], resolved from the user profile first and
