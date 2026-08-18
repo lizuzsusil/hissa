@@ -31,6 +31,9 @@ class FirestoreRepository implements ExpenseRepository {
   final List<Settlement> _settlements = [];
   final List<Category> _categories = [];
   final List<MemberGroup> _memberGroups = [];
+  final List<AppNotification> _notifications = [];
+  @override
+  List<AppNotification> get notifications => _notifications;
   final List<MemberGroupMember> _memberGroupMembers = [];
   final List<GroupRequest> _groupRequests = [];
   final List<SpaceJoinRequest> _spaceJoinRequests = [];
@@ -72,6 +75,24 @@ class FirestoreRepository implements ExpenseRepository {
         _users.removeWhere((u) => u.id == uid);
         if (snap.exists) _users.add(User.fromJson(snap.data()!));
         _notify();
+      }, onError: (_) {}),
+    );
+
+    _subs.add(
+      _db
+          .collection('notifications')
+          .where('userId', isEqualTo: uid)
+          .snapshots()
+          .listen((snap) {
+        for (final doc in snap.docs) {
+          final n = AppNotification.fromJson(doc.data());
+          if (n.userId == uid) {
+            // Only keep notifications for the signed-in user.
+            _notifications.removeWhere((note) => note.id == n.id);
+            _notifications.add(n);
+            _notify();
+          }
+        }
       }, onError: (_) {}),
     );
 
@@ -939,6 +960,12 @@ class FirestoreRepository implements ExpenseRepository {
       }
     }
     await _db.collection('spaceMembers').doc(ownerDocId).delete();
+  }
+
+  @override
+  Future<void> saveNotification(AppNotification notification) async {
+    final id = '${_ownUid}_${notification.eventKey}';
+    await _db.collection('notifications').doc(id).set(notification.toJson());
   }
 
   Future<void> _deleteScoped(String collection, String spaceId) async {

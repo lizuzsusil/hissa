@@ -102,4 +102,15 @@ abstract class ExpenseRepository {
   /// (memberships, cycles, expenses, shares, settlements, categories, member
   /// groups and join/group requests). Only the Space owner may call this.
   Future<void> deleteSpace(String spaceId);
+
+  /// Saves a notification to the inbox of [userId]. The writer must be a
+  /// co-member of the referenced [spaceId] (or the requester of a pending
+  /// join/group request). Notification docs are never deleted by
+  /// [deleteSpace].
+  Future<void> saveNotification(AppNotification notification);
+
+  /// All notifications for the current user (across all Spaces). Listened to
+  /// in real-time from the moment the user signs in, independent of Space
+  /// selection. Returns only notifications where [userId] == current user.
+  List<AppNotification> get notifications;
 }

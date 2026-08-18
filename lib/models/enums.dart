@@ -193,3 +193,38 @@ enum SpaceJoinRequestStatus {
     }
   }
 }
+
+enum NotificationType {
+  expenseAdded,
+  expenseUpdated,
+  settlementRecorded,
+  spaceJoinRequested,
+  spaceJoinApproved,
+  spaceJoinRejected,
+  groupRequested,
+  groupApproved,
+  groupRejected;
+
+  String get l10nKey {
+    switch (this) {
+      case NotificationType.expenseAdded:
+        return 'notification_expense_added';
+      case NotificationType.expenseUpdated:
+        return 'notification_expense_updated';
+      case NotificationType.settlementRecorded:
+        return 'notification_settlement_recorded';
+      case NotificationType.spaceJoinRequested:
+        return 'notification_space_join_requested';
+      case NotificationType.spaceJoinApproved:
+        return 'notification_space_join_approved';
+      case NotificationType.spaceJoinRejected:
+        return 'notification_space_join_rejected';
+      case NotificationType.groupRequested:
+        return 'notification_group_requested';
+      case NotificationType.groupApproved:
+        return 'notification_group_approved';
+      case NotificationType.groupRejected:
+        return 'notification_group_rejected';
+    }
+  }
+}

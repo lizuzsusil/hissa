@@ -938,3 +938,60 @@ class GroupSnapshot {
         memberUserIds: (json['memberUserIds'] as List).cast<String>(),
       );
 }
+
+/// A notification that a user has received, scoped to their [userId] and
+/// optionally tied to a [spaceId]. Created by the actor's client via the
+/// notification inbox after a domain event (expense, settlement, join
+/// request, group request, etc.).
+///
+/// The [id] is deterministic: `{userId}_{eventKey}` for dedupe. The [type]
+/// determines the deep-link target and localized message body.
+class AppNotification {
+  final String id;
+  final String userId; // recipient
+  final String? spaceId;
+  final NotificationType type;
+  final String eventKey; // domain doc id (expenseId, settlementId, requestId, etc.)
+  final String actorUserId;
+  final String actorName;
+  final DateTime createdAt;
+  final Map<String, dynamic> extra; // spaceId, expenseId, settlementId, requestId...
+
+  AppNotification({
+    required this.id,
+    required this.userId,
+    this.spaceId,
+    required this.type,
+    required this.eventKey,
+    required this.actorUserId,
+    required this.actorName,
+    required this.createdAt,
+    this.extra = const {},
+  });
+
+  String get displayActor => actorName.isNotEmpty ? actorName : 'A member';
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'userId': userId,
+        'spaceId': spaceId,
+        'type': type.name,
+        'eventKey': eventKey,
+        'actorUserId': actorUserId,
+        'actorName': actorName,
+        'createdAt': createdAt.toIso8601String(),
+        'extra': extra,
+      };
+
+  factory AppNotification.fromJson(Map<String, dynamic> json) => AppNotification(
+        id: json['id'] as String,
+        userId: json['userId'] as String,
+        spaceId: json['spaceId'] as String?,
+        type: NotificationType.values.byName(json['type'] as String),
+        eventKey: json['eventKey'] as String,
+        actorUserId: json['actorUserId'] as String,
+        actorName: json['actorName'] as String,
+        createdAt: DateTime.parse(json['createdAt'] as String),
+        extra: json['extra'] as Map<String, dynamic>,
+      );
+}

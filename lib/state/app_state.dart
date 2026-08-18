@@ -60,6 +60,7 @@ class AppState extends ChangeNotifier {
   String? _defaultSpaceId;
   bool _introSeen = false;
   bool _loaded = false;
+  AppNotification? pendingNotification;
   List<Space> _spaces = [];
   bool _switchingSpace = false;
   List<SpaceJoinRequest> _myPendingSpaceJoinRequests = const [];

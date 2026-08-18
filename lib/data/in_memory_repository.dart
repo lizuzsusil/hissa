@@ -20,6 +20,10 @@ class InMemoryRepository implements ExpenseRepository {
   final List<MemberGroupMember> _memberGroupMembers = [];
   final List<GroupRequest> _groupRequests = [];
   final List<SpaceJoinRequest> _spaceJoinRequests = [];
+  final List<AppNotification> _notifications = [];
+
+  @override
+  List<AppNotification> get notifications => List.unmodifiable(_notifications);
 
   @override
   List<User> get users => List.unmodifiable(_users);
@@ -218,6 +222,13 @@ class InMemoryRepository implements ExpenseRepository {
     final i = _spaceJoinRequests.indexWhere((r) => r.id == requestId);
     if (i >= 0) {
       _spaceJoinRequests[i] = _spaceJoinRequests[i].copyWith(status: status);
+    }
+  }
+
+  @override
+  Future<void> saveNotification(AppNotification notification) async {
+    if (!_notifications.any((n) => n.id == notification.id)) {
+      _notifications.add(notification);
     }
   }
 
