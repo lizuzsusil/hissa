@@ -62,6 +62,7 @@ class AppState extends ChangeNotifier {
   List<Space> _spaces = [];
   bool _switchingSpace = false;
   List<SpaceJoinRequest> _myPendingSpaceJoinRequests = const [];
+  List<Space> _pendingSpaces = const [];
 
   ExpenseRepository get repo => _repo;
   bool get isLoaded => _loaded;
@@ -412,6 +413,7 @@ class AppState extends ChangeNotifier {
     _cycleId = null;
     _spaces = [];
     _myPendingSpaceJoinRequests = const [];
+    _pendingSpaces = const [];
     try {
       await FirebaseAuth.instance.signOut();
     } on Exception {
@@ -502,6 +504,9 @@ class AppState extends ChangeNotifier {
   /// Switches to a different Space the user belongs to, re-attaching the
   /// repository so the shell reflects the newly selected Space.
   Future<void> selectSpace(String spaceId) async {
+    // A Space awaiting approval is never enterable: the user is not a member
+    // until the owner approves their join request.
+    if (isPendingSpace(spaceId)) return;
     if (!_spaces.any((s) => s.id == spaceId)) return;
     if (_spaceId == spaceId) {
       notifyListeners();
@@ -1413,9 +1418,20 @@ class AppState extends ChangeNotifier {
   List<SpaceJoinRequest> get myPendingSpaceJoinRequests =>
       _myPendingSpaceJoinRequests;
 
+  /// The Spaces the current user requested to join and is awaiting approval
+  /// for. These are NOT membership Spaces: the user cannot open them yet, so
+  /// they are kept separate from [_spaces] and must never be selectable.
+  List<Space> get pendingSpaces => _pendingSpaces;
+
+  /// Whether [spaceId] is a Space the current user is awaiting approval to
+  /// join (i.e. not enterable yet).
+  bool isPendingSpace(String spaceId) =>
+      _pendingSpaces.any((s) => s.id == spaceId);
+
   /// Re-queries the current user's pending join requests (Firestore) and
-  /// resolves each pending Space into [_spaces] so the join screen can show
-  /// Space names and navigate into a Space after an approval.
+  /// resolves each pending Space's name so the join screen and the Spaces
+  /// dashboard can show the requested Spaces without letting the user open
+  /// them before the owner approves the request.
   ///
   /// Returns the Spaces whose join request was resolved (approved) since the
   /// last refresh, so the caller can land the user inside their new Space.
@@ -1430,33 +1446,51 @@ class AppState extends ChangeNotifier {
 
       final pendingNow = requests.map((r) => r.spaceId).toSet();
       final resolved = [...before.difference(pendingNow)];
+      final pendingSpaces = <Space>[];
       for (final r in requests) {
         final space = await _repo.fetchSpaceById(r.spaceId);
-        if (space != null) _upsertSpace(space);
+        if (space != null) pendingSpaces.add(space);
       }
+      _pendingSpaces = pendingSpaces;
       notifyListeners();
 
       if (resolved.isEmpty) return const [];
       final userSpaces = await _repo.findSpacesForUser(uid);
-      return userSpaces.where((s) => resolved.contains(s.id)).toList();
+      final newlyApproved = userSpaces
+          .where((s) => resolved.contains(s.id))
+          .toList();
+      // Bring newly approved Spaces into the membership list so the Spaces
+      // dashboard and [selectSpace] can see them without a full re-sign-in.
+      if (newlyApproved.isNotEmpty) {
+        _spaces = userSpaces;
+        notifyListeners();
+      }
+      return newlyApproved;
     } catch (_) {
       notifyListeners();
       return const [];
     }
   }
 
-  /// The display name of a Space by id, resolved from the known Spaces list.
-  /// Returns null when the Space is not known.
-  String? spaceNameById(String spaceId) =>
-      _spaces.where((s) => s.id == spaceId).firstOrNull?.name;
-
-  void _upsertSpace(Space space) {
-    final i = _spaces.indexWhere((s) => s.id == space.id);
-    if (i >= 0) {
-      _spaces[i] = space;
-    } else {
-      _spaces = [..._spaces, space];
+  /// Re-queries the user's membership Spaces so the dashboard reflects newly
+  /// approved joins and removed memberships without a full re-sign-in.
+  Future<void> refreshSpaces() async {
+    final uid = _currentUserId;
+    if (uid == null) return;
+    try {
+      _spaces = await _repo.findSpacesForUser(uid);
+      notifyListeners();
+    } catch (_) {
+      // Keep the previous list on failure.
     }
+  }
+
+  /// The display name of a Space by id, resolved from the known member Spaces
+  /// first and then the Spaces awaiting approval.
+  String? spaceNameById(String spaceId) {
+    final member = _spaces.where((s) => s.id == spaceId).firstOrNull;
+    if (member != null) return member.name;
+    return _pendingSpaces.where((s) => s.id == spaceId).firstOrNull?.name;
   }
 
   /// Every user ID (owner + members) represented by any active Member Group in

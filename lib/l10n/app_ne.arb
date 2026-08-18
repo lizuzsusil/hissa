@@ -263,6 +263,7 @@
   "pendingGroupRequests": "पर्खाइमा रहेका समूह अनुरोधहरू",
   "pendingGroupRequestsDescription": "सदस्यहरूले तपाईलाई समूह बनाउन अनुरोध गरेका छन्। स्वीकृत गर्दा अनुरोधकर्ताको स्वामित्वमा समूह बन्छ।",
   "pendingApproval": "स्वीकृतिको पर्खाइमा",
+  "pendingApprovalSection": "स्वीकृतिको पर्खाइमा",
   "yourGroupRequestPending": "तपाईको समूह अनुरोध स्वीकृतिको पर्खाइमा छ। स्पेस मालिकले निर्णय गरेपछि तपाईंलाई सूचित गरिनेछ।",
   "noPendingGroupRequests": "कुनै पर्खाइमा रहेका समूह अनुरोधहरू छैनन्",
   "requestedBy": "अनुरोधकर्ता",

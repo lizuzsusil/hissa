@@ -878,6 +878,9 @@ class AppLocalizationsNe extends AppLocalizations {
   String get pendingApproval => 'स्वीकृतिको पर्खाइमा';
 
   @override
+  String get pendingApprovalSection => 'स्वीकृतिको पर्खाइमा';
+
+  @override
   String get yourGroupRequestPending =>
       'तपाईको समूह अनुरोध स्वीकृतिको पर्खाइमा छ। स्पेस मालिकले निर्णय गरेपछि तपाईंलाई सूचित गरिनेछ।';
 

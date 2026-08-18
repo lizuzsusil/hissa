@@ -37,6 +37,27 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
   Map<String, int> _counts = {};
   List<String> _loadedIds = const [];
 
+  @override
+  void initState() {
+    super.initState();
+    // Surface any Spaces the user requested to join while away from the join
+    // screen (e.g. after a fresh sign-in) as non-enterable pending cards.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPending());
+  }
+
+  Future<void> _loadPending() async {
+    await context.read<AppState>().refreshPendingSpaceJoinRequests();
+  }
+
+  /// Pull-to-refresh: re-queries membership Spaces, pending join requests and
+  /// member counts so newly approved Spaces appear without re-signing in.
+  Future<void> _refresh() async {
+    final state = context.read<AppState>();
+    await state.refreshSpaces();
+    await state.refreshPendingSpaceJoinRequests();
+    await _loadCounts();
+  }
+
   Future<void> _loadCounts() async {
     final state = context.read<AppState>();
     final counts = <String, int>{};
@@ -73,9 +94,36 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final spaces = state.spaces;
+    final pendingSpaces = state.pendingSpaces;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
     final textColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
+
+    // Spaces awaiting approval are shown (with their name) but can never be
+    // entered until the owner approves the request.
+    final pendingItems = <Widget>[
+      if (pendingSpaces.isNotEmpty) ...[
+        Row(
+          children: [
+            const Icon(
+              Icons.hourglass_top_rounded,
+              size: 15,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              l10n.pendingApprovalSection,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+        for (final pending in pendingSpaces) _PendingSpaceCard(space: pending),
+      ],
+    ];
 
     final ids = spaces.map((s) => s.id).toList();
     if (!listEquals(ids, _loadedIds)) {
@@ -131,29 +179,48 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: spaces.isEmpty
-                  ? _EmptySpaces(
-                      onCreate: widget.onCreate,
-                      onJoin: widget.onJoin,
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                      itemCount: spaces.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final space = spaces[index];
-                        return Reveal(
-                          delay: Duration(milliseconds: 60 * index),
-                          child: _SpaceCard(
-                            space: space,
-                            memberCount: _counts[space.id],
-                            onTap: () => widget.onSelect(space),
-                          ),
-                        );
-                      },
-                    ),
+              child: LayoutBuilder(
+                builder: (context, constraints) => RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: spaces.isEmpty && pendingSpaces.isEmpty
+                      // Keep the empty state vertically centred like before;
+                      // the ListView only exists to allow pull-to-refresh.
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height: constraints.maxHeight,
+                              child: _EmptySpaces(
+                                onCreate: widget.onCreate,
+                                onJoin: widget.onJoin,
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                          itemCount: pendingItems.length + spaces.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            if (index < pendingItems.length) {
+                              return pendingItems[index];
+                            }
+                            final space = spaces[index - pendingItems.length];
+                            return Reveal(
+                              delay: Duration(milliseconds: 60 * index),
+                              child: _SpaceCard(
+                                space: space,
+                                memberCount: _counts[space.id],
+                                onTap: () => widget.onSelect(space),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ),
             ),
-            if (spaces.isNotEmpty)
+            if (spaces.isNotEmpty || pendingSpaces.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 child: Column(
@@ -298,6 +365,79 @@ class _SpaceCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A Space the current user requested to join but has not been approved for
+/// yet. Shown so the requester can see their requested Space, but deliberately
+/// not tappable: the user can only open a Space once they are a member.
+class _PendingSpaceCard extends StatelessWidget {
+  final Space space;
+
+  const _PendingSpaceCard({required this.space});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
+    return Container(
+      key: ValueKey('pending_space_${space.id}'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.hourglass_top_rounded,
+              size: 24,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  space.name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.pendingApproval,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.lock_outline_rounded,
+            size: 20,
+            color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+          ),
+        ],
       ),
     );
   }

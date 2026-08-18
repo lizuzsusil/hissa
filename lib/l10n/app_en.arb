@@ -380,6 +380,7 @@
   "pendingGroupRequests": "Pending group requests",
   "pendingGroupRequestsDescription": "Members have asked you to create a group for them. Approving creates the group owned by the requester.",
   "pendingApproval": "Pending approval",
+  "pendingApprovalSection": "Waiting for approval",
   "yourGroupRequestPending": "Your group request is pending approval. You'll be notified once the space owner decides.",
   "noPendingGroupRequests": "No pending group requests",
   "requestedBy": "Requested by",

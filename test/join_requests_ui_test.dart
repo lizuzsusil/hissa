@@ -11,6 +11,7 @@ import 'package:hissa/models/models.dart';
 import 'package:hissa/state/app_state.dart';
 import 'package:hissa/ui/screens/setup_screen.dart';
 import 'package:hissa/ui/screens/space_screen.dart';
+import 'package:hissa/ui/screens/spaces_dashboard_screen.dart';
 import 'package:hissa/ui/state/biometric_controller.dart';
 import 'package:hissa/ui/state/locale_controller.dart';
 import 'package:hissa/ui/state/theme_controller.dart';
@@ -309,5 +310,155 @@ void main() {
     expect(find.text('Home'), findsNothing);
     expect(find.text('Pending approval'), findsNothing);
     expect(done, isFalse);
+  });
+
+  testWidgets('a pending space is not a member space and cannot be opened', (
+    tester,
+  ) async {
+    final state = await makeState(userId: 'u_out');
+    state.debugSetSession(userId: 'u_out', spaceId: null);
+
+    await state.requestSpaceJoin('ABCD12');
+    await state.refreshPendingSpaceJoinRequests();
+
+    // The requested Space is tracked as pending, but never as a member Space.
+    expect(state.pendingSpaces.map((s) => s.id), contains('h1'));
+    expect(state.spaces.where((s) => s.id == 'h1'), isEmpty);
+
+    // selectSpace refuses to open a pending Space.
+    await state.selectSpace('h1');
+    expect(state.space?.id, isNot('h1'));
+    expect(state.isPendingSpace('h1'), isTrue);
+  });
+
+  testWidgets('spaces dashboard shows the requested Space but never opens it',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final state = await makeState(userId: 'u_out');
+    state.debugSetSession(userId: 'u_out', spaceId: null);
+    await state.requestSpaceJoin('ABCD12');
+
+    var selected = false;
+    await tester.pumpWidget(
+      appHarness(
+        state,
+        SpacesDashboardScreen(
+          onSelect: (_) => selected = true,
+          onCreate: () {},
+          onJoin: () {},
+          onSignOut: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The pending Space shows with its name and the approval notice.
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Pending approval'), findsOneWidget);
+
+    // Tapping the pending card must not enter the Space.
+    await tester.tap(find.byKey(const ValueKey('pending_space_h1')));
+    await tester.pumpAndSettle();
+    expect(selected, isFalse);
+    expect(state.space?.id, isNot('h1'));
+  });
+
+  testWidgets(
+    'approving the request moves the Space from pending into member spaces '
+    'on refresh',
+    (tester) async {
+      final state = await makeState(userId: 'u_out');
+      state.debugSetSession(userId: 'u_out', spaceId: null);
+
+      await state.requestSpaceJoin('ABCD12');
+      await state.refreshPendingSpaceJoinRequests();
+      expect(state.isPendingSpace('h1'), isTrue);
+
+      // The owner approves and grants membership.
+      final requestId = state.repo.spaceJoinRequests.single.id;
+      await state.repo.updateSpaceJoinRequestStatus(
+        requestId,
+        SpaceJoinRequestStatus.approved,
+      );
+      await state.repo.saveMember(
+        SpaceMember(
+          userId: 'u_out',
+          name: 'Alex',
+          role: MemberRole.member,
+          joinedAt: DateTime(2026, 1, 2),
+          spaceId: 'h1',
+        ),
+        'h1',
+      );
+
+      await state.refreshPendingSpaceJoinRequests();
+
+      // No longer pending, and now a member Space the user can open.
+      expect(state.isPendingSpace('h1'), isFalse);
+      expect(state.spaces.map((s) => s.id), contains('h1'));
+      expect(state.pendingSpaces, isEmpty);
+    },
+  );
+
+  testWidgets('pull to refresh on the dashboard surfaces a newly approved Space',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final state = await makeState(userId: 'u_out');
+    state.debugSetSession(userId: 'u_out', spaceId: null);
+    await state.requestSpaceJoin('ABCD12');
+
+    var selected = false;
+    await tester.pumpWidget(
+      appHarness(
+        state,
+        SpacesDashboardScreen(
+          onSelect: (_) => selected = true,
+          onCreate: () {},
+          onJoin: () {},
+          onSignOut: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pending approval'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pending_space_h1')), findsOneWidget);
+
+    // The owner approves and grants membership while the user is on the
+    // dashboard.
+    final requestId = state.repo.spaceJoinRequests.single.id;
+    await state.repo.updateSpaceJoinRequestStatus(
+      requestId,
+      SpaceJoinRequestStatus.approved,
+    );
+    await state.repo.saveMember(
+      SpaceMember(
+        userId: 'u_out',
+        name: 'Alex',
+        role: MemberRole.member,
+        joinedAt: DateTime(2026, 1, 2),
+        spaceId: 'h1',
+      ),
+      'h1',
+    );
+
+    // Pull to refresh re-queries membership + pending requests.
+    await tester.fling(find.byType(ListView), const Offset(0, 1000), 1000);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pending approval'), findsNothing);
+    expect(find.byKey(const ValueKey('pending_space_h1')), findsNothing);
+
+    // The approved Space is now a normal, tappable member card.
+    expect(find.text('Home'), findsOneWidget);
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    expect(selected, isTrue);
   });
 }

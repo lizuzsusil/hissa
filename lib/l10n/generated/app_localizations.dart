@@ -1622,6 +1622,12 @@ abstract class AppLocalizations {
   /// **'Pending approval'**
   String get pendingApproval;
 
+  /// No description provided for @pendingApprovalSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval'**
+  String get pendingApprovalSection;
+
   /// No description provided for @yourGroupRequestPending.
   ///
   /// In en, this message translates to:

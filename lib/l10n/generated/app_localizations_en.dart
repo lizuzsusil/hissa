@@ -879,6 +879,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingApproval => 'Pending approval';
 
   @override
+  String get pendingApprovalSection => 'Waiting for approval';
+
+  @override
   String get yourGroupRequestPending =>
       'Your group request is pending approval. You\'ll be notified once the space owner decides.';
 
