@@ -61,8 +61,12 @@ class Space {
   final String inviteCode;
   final String? createdBy;
 
-  /// The mode of this Space.
+/// The mode of this Space.
   SpaceMode mode;
+
+  /// How the spending cycle is scheduled for Split Spaces. Legacy Spaces
+  /// without an explicit value default to [CycleType.monthly].
+  CycleType cycleType;
 
   final DateTime createdAt;
 
@@ -79,12 +83,14 @@ class Space {
     this.createdBy,
     this.updatedAt,
     this.mode = SpaceMode.split,
+    this.cycleType = CycleType.monthly,
   });
 
   Space copyWith({
     String? name,
     String? currency,
     SpaceMode? mode,
+    CycleType? cycleType,
     String? createdBy,
   }) {
     return Space(
@@ -96,6 +102,7 @@ class Space {
       createdAt: createdAt,
       updatedAt: DateTime.now(),
       mode: mode ?? this.mode,
+      cycleType: cycleType ?? this.cycleType,
     );
   }
 
@@ -106,6 +113,7 @@ class Space {
         'inviteCode': inviteCode,
         'createdBy': createdBy,
         'mode': mode.value,
+        'cycleType': cycleType.value,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
       };
@@ -121,6 +129,7 @@ class Space {
             ? null
             : DateTime.parse(json['updatedAt'] as String),
         mode: _parseMode(json['mode']),
+        cycleType: _parseCycleType(json['cycleType']),
       );
 
   static SpaceMode _parseMode(Object? value) {
@@ -130,6 +139,15 @@ class Space {
       }
     }
     return SpaceMode.split;
+  }
+
+  static CycleType _parseCycleType(Object? value) {
+    if (value is String) {
+      for (final t in CycleType.values) {
+        if (t.value == value) return t;
+      }
+    }
+    return CycleType.monthly;
   }
 }
 

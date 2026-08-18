@@ -1159,7 +1159,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get closeCycleMessage =>
-      'The cycle becomes read-only and historical. A new cycle will start next month.';
+      'The cycle becomes read-only and historical. A new cycle can be started afterwards.';
 
   @override
   String get data => 'Data';
@@ -1279,4 +1279,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseSharesError => 'Enter at least one share unit.';
+
+  @override
+  String get chooseCycleType => 'Spending cycle';
+
+  @override
+  String get monthlyCycle => 'Monthly';
+
+  @override
+  String get monthlyCycleDescription =>
+      'Tracks the running month automatically';
+
+  @override
+  String get customCycle => 'Custom';
+
+  @override
+  String get customCycleDescription => 'An open-ended cycle you manage';
+
+  @override
+  String get renameCycle => 'Rename cycle';
+
+  @override
+  String get renameCycleTitle => 'Rename cycle';
+
+  @override
+  String get cycleName => 'Cycle name';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get cycleRenamed => 'Cycle renamed';
+
+  @override
+  String get previousCycles => 'Previous cycles';
+
+  @override
+  String previousCyclesCount(int count) {
+    return '$count closed cycles';
+  }
+
+  @override
+  String get cycleDetails => 'Cycle details';
+
+  @override
+  String get spentLabel => 'spent';
+
+  @override
+  String get expensesCount => 'Expenses';
+
+  @override
+  String get noExpensesInCycle => 'No expenses recorded in this cycle.';
+
+  @override
+  String get noPreviousCycles => 'No previous cycles yet.';
+
+  @override
+  String get cycleStatusActive => 'Active';
+
+  @override
+  String get cycleStatusReadyToSettle => 'Ready to settle';
+
+  @override
+  String get cycleStatusSettled => 'Settled';
+
+  @override
+  String get cycleStatusClosed => 'Closed';
 }

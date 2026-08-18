@@ -18,6 +18,25 @@ enum CycleStatus {
   }
 }
 
+/// How the spending cycle of a Split Space is scheduled.
+///
+/// [CycleType.monthly] spaces always track the running calendar month: the
+/// cycle starts on the 1st and closes at the end of the month. [CycleType
+/// .custom] spaces keep a single open-ended cycle that the owner closes and
+/// reopens manually, so it may span any length of time.
+enum CycleType {
+  monthly('MONTHLY', 'Monthly'),
+  custom('CUSTOM', 'Custom');
+
+  const CycleType(this.value, this.label);
+
+  /// Stable internal value used for persistence.
+  final String value;
+
+  /// User-facing label for the cycle type.
+  final String label;
+}
+
 enum SettlementStatus {
   pending,
   partiallyPaid,

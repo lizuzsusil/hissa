@@ -2147,7 +2147,7 @@ abstract class AppLocalizations {
   /// No description provided for @closeCycleMessage.
   ///
   /// In en, this message translates to:
-  /// **'The cycle becomes read-only and historical. A new cycle will start next month.'**
+  /// **'The cycle becomes read-only and historical. A new cycle can be started afterwards.'**
   String get closeCycleMessage;
 
   /// No description provided for @data.
@@ -2383,6 +2383,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter at least one share unit.'**
   String get expenseSharesError;
+
+  /// No description provided for @chooseCycleType.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending cycle'**
+  String get chooseCycleType;
+
+  /// No description provided for @monthlyCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get monthlyCycle;
+
+  /// No description provided for @monthlyCycleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracks the running month automatically'**
+  String get monthlyCycleDescription;
+
+  /// No description provided for @customCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get customCycle;
+
+  /// No description provided for @customCycleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'An open-ended cycle you manage'**
+  String get customCycleDescription;
+
+  /// No description provided for @renameCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename cycle'**
+  String get renameCycle;
+
+  /// No description provided for @renameCycleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename cycle'**
+  String get renameCycleTitle;
+
+  /// No description provided for @cycleName.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle name'**
+  String get cycleName;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @cycleRenamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle renamed'**
+  String get cycleRenamed;
+
+  /// No description provided for @previousCycles.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous cycles'**
+  String get previousCycles;
+
+  /// No description provided for @previousCyclesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} closed cycles'**
+  String previousCyclesCount(int count);
+
+  /// No description provided for @cycleDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle details'**
+  String get cycleDetails;
+
+  /// No description provided for @spentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'spent'**
+  String get spentLabel;
+
+  /// No description provided for @expensesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get expensesCount;
+
+  /// No description provided for @noExpensesInCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses recorded in this cycle.'**
+  String get noExpensesInCycle;
+
+  /// No description provided for @noPreviousCycles.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous cycles yet.'**
+  String get noPreviousCycles;
+
+  /// No description provided for @cycleStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get cycleStatusActive;
+
+  /// No description provided for @cycleStatusReadyToSettle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to settle'**
+  String get cycleStatusReadyToSettle;
+
+  /// No description provided for @cycleStatusSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled'**
+  String get cycleStatusSettled;
+
+  /// No description provided for @cycleStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get cycleStatusClosed;
 }
 
 class _AppLocalizationsDelegate

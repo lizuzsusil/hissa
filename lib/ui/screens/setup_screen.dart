@@ -44,6 +44,7 @@ class _SetupScreenState extends State<SetupScreen> {
   final List<String> _members = [];
 
   SpaceMode _mode = SpaceMode.split;
+  CycleType _cycleType = CycleType.monthly;
   String? _nameError;
   String? _codeError;
   String? _memberError;
@@ -108,6 +109,7 @@ class _SetupScreenState extends State<SetupScreen> {
       currency: kDefaultCurrency,
       memberEmails: _members,
       mode: _mode,
+      cycleType: _cycleType,
     );
     if (mounted) {
       setState(() => _loading = false);
@@ -292,6 +294,47 @@ class _SetupScreenState extends State<SetupScreen> {
           ],
         ),
         if (_mode == SpaceMode.split) ...[
+          const SizedBox(height: 18),
+          Text(
+            l10n.chooseCycleType,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _ModeCard(
+                  key: const ValueKey('cycle_monthly'),
+                  icon: Icons.calendar_month_outlined,
+                  title: l10n.monthlyCycle,
+                  subtitle: l10n.monthlyCycleDescription,
+                  selected: _cycleType == CycleType.monthly,
+                  onTap: _loading
+                      ? null
+                      : () => setState(() => _cycleType = CycleType.monthly),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ModeCard(
+                  key: const ValueKey('cycle_custom'),
+                  icon: Icons.tune_outlined,
+                  title: l10n.customCycle,
+                  subtitle: l10n.customCycleDescription,
+                  selected: _cycleType == CycleType.custom,
+                  onTap: _loading
+                      ? null
+                      : () => setState(() => _cycleType = CycleType.custom),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 18),
           Text(
             l10n.whoLivesHere,
@@ -521,6 +564,7 @@ class _ModeCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const _ModeCard({
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,

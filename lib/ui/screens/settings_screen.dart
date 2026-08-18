@@ -13,6 +13,7 @@ import '../widgets/avatars.dart';
 import '../widgets/misc.dart';
 import '../widgets/toasts.dart';
 import 'categories_screen.dart';
+import 'cycle_detail_screen.dart';
 import 'export_screen.dart';
 import 'space_screen.dart';
 import 'profile_screen.dart';
@@ -79,6 +80,14 @@ class SettingsScreen extends StatelessWidget {
                   ? null
                   : () => _showCycleDialog(context, state),
             ),
+            if (state.closedCycles.isNotEmpty) ...[
+              _SettingTile(
+                icon: Icons.history_rounded,
+                title: l10n.previousCycles,
+                subtitle: l10n.previousCyclesCount(state.closedCycles.length),
+                onTap: () => _push(context, PreviousCyclesScreen()),
+              ),
+            ],
             if (state.isOwner) ...[
               _SettingTile(
                 icon: Icons.lock_outline_rounded,
@@ -248,15 +257,14 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showCycleDialog(BuildContext context, AppState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
+      backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) => SafeArea(
+      builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -283,15 +291,38 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   title: Text(c.name),
                   subtitle: Text(_cycleStatusLabel(context.l10n, c.status)),
-                  trailing: Text(
-                    formatMonthRange(c),
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (state.isOwner &&
+                          state.space?.cycleType == CycleType.custom) ...[
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          tooltip: context.l10n.renameCycle,
+                          onPressed: () =>
+                              _renameCycle(sheetContext, state, c),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Text(
+                        _cycleDateRange(c),
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
                   onTap: () {
-                    state.selectCycle(c.id);
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
+                    _push(context, CycleDetailScreen(cycleId: c.id));
                   },
                 ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(sheetContext),
+                child: Text(context.l10n.done),
+              ),
             ],
           ),
         ),
@@ -299,8 +330,43 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  String formatMonthRange(Cycle c) {
+  String _cycleDateRange(Cycle c) {
     return '${c.startDate.month}/${c.startDate.year}';
+  }
+
+  Future<void> _renameCycle(
+    BuildContext context,
+    AppState state,
+    Cycle cycle,
+  ) async {
+    final l10n = context.l10n;
+    final controller = TextEditingController(text: cycle.name);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.renameCycleTitle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(labelText: l10n.cycleName),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+    if (newName == null || newName.trim().isEmpty) return;
+    final ok = await state.renameCycle(cycle.id, newName);
+    if (!ok || !context.mounted) return;
+    showToast(context, l10n.cycleRenamed, type: ToastType.success);
   }
 
   void _showNotifications(BuildContext context) {

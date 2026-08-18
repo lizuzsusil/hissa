@@ -479,7 +479,7 @@
   "closeCurrentCycle": "Close current cycle",
   "startNewCycle": "Start a new cycle",
   "closeCycle": "Close cycle",
-  "closeCycleMessage": "The cycle becomes read-only and historical. A new cycle will start next month.",
+  "closeCycleMessage": "The cycle becomes read-only and historical. A new cycle can be started afterwards.",
   "data": "Data",
   "export": "Export",
   "csvOfCurrentCycle": "CSV of the current cycle",
@@ -521,5 +521,34 @@
   "expenseParticipantError": "Select at least one participant.",
   "expensePercentError": "Percentages must add up to 100%.",
   "expenseCustomError": "Custom amounts must add up to the total.",
-  "expenseSharesError": "Enter at least one share unit."
+  "expenseSharesError": "Enter at least one share unit.",
+
+  "chooseCycleType": "Spending cycle",
+  "monthlyCycle": "Monthly",
+  "monthlyCycleDescription": "Tracks the running month automatically",
+  "customCycle": "Custom",
+  "customCycleDescription": "An open-ended cycle you manage",
+  "renameCycle": "Rename cycle",
+  "renameCycleTitle": "Rename cycle",
+  "cycleName": "Cycle name",
+  "done": "Done",
+  "cycleRenamed": "Cycle renamed",
+  "previousCycles": "Previous cycles",
+  "previousCyclesCount": "{count} closed cycles",
+  "@previousCyclesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cycleDetails": "Cycle details",
+  "spentLabel": "spent",
+  "expensesCount": "Expenses",
+  "noExpensesInCycle": "No expenses recorded in this cycle.",
+  "noPreviousCycles": "No previous cycles yet.",
+  "cycleStatusActive": "Active",
+  "cycleStatusReadyToSettle": "Ready to settle",
+  "cycleStatusSettled": "Settled",
+  "cycleStatusClosed": "Closed"
 }

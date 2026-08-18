@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -215,6 +215,7 @@ class AppState extends ChangeNotifier {
     _repo = repo;
     _spaceId = nextSpaceId;
     await _runLegacyMigration(spaces);
+    await _rolloverMonthlyCycles();
     notifyListeners();
   }
 
@@ -540,6 +541,7 @@ class AppState extends ChangeNotifier {
     required String currency,
     required List<String> memberEmails,
     required SpaceMode mode,
+    CycleType cycleType = CycleType.monthly,
   }) async {
     final user = currentUser;
     if (user == null) return false;
@@ -554,6 +556,7 @@ class AppState extends ChangeNotifier {
       createdBy: user.id,
       updatedAt: DateTime.now(),
       mode: mode,
+      cycleType: cycleType,
     );
     // The owner membership is written before the Space so security rules
     // (which gate Space writes on membership) accept the create.
@@ -596,7 +599,7 @@ class AppState extends ChangeNotifier {
 
     await _seedCategories(spaceId);
     if (mode != SpaceMode.personal) {
-      await _startCycleFor(spaceId, DateTime.now());
+      await _startCycleFor(spaceId, DateTime.now(), cycleType: cycleType);
     }
 
     _spaceId = spaceId;
@@ -833,56 +836,152 @@ class AppState extends ChangeNotifier {
 
   // ---- cycles ----
 
-  Future<void> _startCycleFor(String spaceId, DateTime anchor) async {
-    final start = DateTime(anchor.year, anchor.month, 1);
-    final end = DateTime(anchor.year, anchor.month + 1, 0);
-    final existing = _repo.cycles
+  /// Closed (historical) cycles of the current Space, newest first.
+  List<Cycle> get closedCycles {
+    if (_spaceId == null) return const [];
+    return _repo.cycles
         .where(
-          (c) =>
-              c.spaceId == spaceId &&
-              c.startDate.year == start.year &&
-              c.startDate.month == start.month,
+          (c) => c.spaceId == _spaceId && c.status == CycleStatus.closed,
         )
+        .toList()
+      ..sort((a, b) => b.startDate.compareTo(a.startDate));
+  }
+
+  List<Expense> expensesForCycle(String cycleId) {
+    final list = _repo.expenses.where((e) => e.cycleId == cycleId).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    return list;
+  }
+
+  Future<void> _startCycleFor(
+    String spaceId,
+    DateTime anchor, {
+    required CycleType cycleType,
+  }) async {
+    if (cycleType == CycleType.monthly) {
+      final start = DateTime(anchor.year, anchor.month, 1);
+      final end = DateTime(anchor.year, anchor.month + 1, 0);
+      final existing = _repo.cycles
+          .where(
+            (c) =>
+                c.spaceId == spaceId &&
+                c.startDate.year == start.year &&
+                c.startDate.month == start.month,
+          )
+          .firstOrNull;
+      if (existing != null) return;
+      await _repo.saveCycle(
+        Cycle(
+          id: 'c_${genId(8)}',
+          spaceId: spaceId,
+          name: '${_monthLabel(start)} ${start.year}',
+          startDate: start,
+          endDate: end,
+          status: CycleStatus.active,
+        ),
+      );
+      return;
+    }
+
+    // Custom cycle: open-ended, named "Cycle N" by default. The end date is
+    // the same as the start until the owner closes the cycle.
+    final existingActive = _repo.cycles
+        .where((c) => c.spaceId == spaceId && c.status == CycleStatus.active)
         .firstOrNull;
-    if (existing != null) return;
+    if (existingActive != null) return;
+    final count = _repo.cycles.where((c) => c.spaceId == spaceId).length;
     await _repo.saveCycle(
       Cycle(
         id: 'c_${genId(8)}',
         spaceId: spaceId,
-        name: '${_monthLabel(start)} ${start.year}',
-        startDate: start,
-        endDate: end,
+        name: 'Cycle ${count + 1}',
+        startDate: anchor,
+        endDate: anchor,
         status: CycleStatus.active,
       ),
     );
   }
 
+  /// Closes the currently selected cycle. Only the Space owner may close a
+  /// cycle, and only when every balance is settled.
   Future<void> closeCycle() async {
+    if (!isOwner) return;
     final cycle = selectedCycle;
-    if (cycle == null) return;
+    if (cycle == null || cycle.status == CycleStatus.closed) return;
     final balances = computeBalances(cycle.id);
     final hasOutstanding = balances.any((b) => !b.remaining.isZero);
     if (hasOutstanding) return;
     await _repo.saveCycle(
-      cycle.copyWith(status: CycleStatus.closed, closedAt: DateTime.now()),
+      cycle.copyWith(
+        status: CycleStatus.closed,
+        closedAt: DateTime.now(),
+        endDate: DateTime.now(),
+      ),
     );
     await _commit();
   }
 
+  /// Starts a new cycle after the current one ends. Only the Space owner may
+  /// start a cycle. Monthly Spaces always open the running calendar month;
+  /// custom Spaces open a new "Cycle N".
   Future<void> startNewCycle() async {
+    if (!isOwner) return;
     final s = space;
     final cycle = selectedCycle;
     if (s == null) return;
     final anchor = DateTime.now();
     if (cycle != null && cycle.status == CycleStatus.active) {
       await _repo.saveCycle(
-        cycle.copyWith(status: CycleStatus.closed, closedAt: DateTime.now()),
+        cycle.copyWith(
+          status: CycleStatus.closed,
+          closedAt: DateTime.now(),
+          endDate: DateTime.now(),
+        ),
       );
     }
-    await _startCycleFor(s.id, anchor);
+    await _startCycleFor(s.id, anchor, cycleType: s.cycleType);
     _cycleId = null;
     await _commit();
   }
+
+  /// Renames [cycleId] (used for custom cycles). Only the Space owner may
+  /// rename a cycle. Returns true when the rename was applied.
+  Future<bool> renameCycle(String cycleId, String name) async {
+    if (!isOwner) return false;
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return false;
+    final cycle = _repo.cycles.where((c) => c.id == cycleId).firstOrNull;
+    if (cycle == null) return false;
+    await _repo.saveCycle(cycle.copyWith(name: trimmed));
+    notifyListeners();
+    return true;
+  }
+
+  /// For [CycleType.monthly] Spaces: when the app opens and the active cycle
+  /// belongs to a previous calendar month, close it and open the running
+  /// month's cycle. This keeps monthly Spaces in sync with the calendar even
+  /// when nobody closes a cycle on the 1st of a new month.
+  Future<void> _rolloverMonthlyCycles() async {
+    final s = space;
+    if (s == null || s.cycleType != CycleType.monthly) return;
+    final active = _repo.cycles
+        .where((c) => c.spaceId == s.id && c.status == CycleStatus.active)
+        .firstOrNull;
+    if (active == null) return;
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month, 1);
+    final activeMonth = DateTime(active.startDate.year, active.startDate.month, 1);
+    if (activeMonth.isAtSameMomentAs(currentMonth)) return;
+    await _repo.saveCycle(
+      active.copyWith(status: CycleStatus.closed, closedAt: now),
+    );
+    await _startCycleFor(s.id, now, cycleType: CycleType.monthly);
+    _cycleId = null;
+    notifyListeners();
+  }
+
+  @visibleForTesting
+  Future<void> debugRunMonthlyRollover() => _rolloverMonthlyCycles();
 
   // ---- expenses ----
 

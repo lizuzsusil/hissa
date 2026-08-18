@@ -1159,7 +1159,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get closeCycleMessage =>
-      'चक्र केवल-पढ्न मिल्ने र ऐतिहासिक हुनेछ। अर्को चक्र अर्को महिना सुरु हुनेछ।';
+      'चक्र केवल-पढ्न मिल्ने र ऐतिहासिक हुनेछ। पछि नयाँ चक्र सुरु गर्न सकिनेछ।';
 
   @override
   String get data => 'डाटा';
@@ -1280,4 +1280,69 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get expenseSharesError => 'कम्तीमा एक सेयर लेख्नुहोस्।';
+
+  @override
+  String get chooseCycleType => 'खर्च चक्र';
+
+  @override
+  String get monthlyCycle => 'मासिक';
+
+  @override
+  String get monthlyCycleDescription => 'हरेक महिना स्वतः ट्र्याक गर्छ';
+
+  @override
+  String get customCycle => 'अनुकूल';
+
+  @override
+  String get customCycleDescription => 'तपाईंले व्यवस्थापन गर्ने खुला चक्र';
+
+  @override
+  String get renameCycle => 'चक्रको नाम बदल्नुहोस्';
+
+  @override
+  String get renameCycleTitle => 'चक्रको नाम बदल्नुहोस्';
+
+  @override
+  String get cycleName => 'चक्रको नाम';
+
+  @override
+  String get done => 'सकियो';
+
+  @override
+  String get cycleRenamed => 'चक्रको नाम बदलियो';
+
+  @override
+  String get previousCycles => 'अघिल्ला चक्रहरू';
+
+  @override
+  String previousCyclesCount(int count) {
+    return '$count वटा बन्द चक्रहरू';
+  }
+
+  @override
+  String get cycleDetails => 'चक्र विवरण';
+
+  @override
+  String get spentLabel => 'खर्च';
+
+  @override
+  String get expensesCount => 'खर्चहरू';
+
+  @override
+  String get noExpensesInCycle => 'यो चक्रमा कुनै खर्च दर्ता भएको छैन।';
+
+  @override
+  String get noPreviousCycles => 'अहिलेसम्म कुनै अघिल्लो चक्र छैन।';
+
+  @override
+  String get cycleStatusActive => 'सक्रिय';
+
+  @override
+  String get cycleStatusReadyToSettle => 'बुझाउन तयार';
+
+  @override
+  String get cycleStatusSettled => 'भुक्तानी भयो';
+
+  @override
+  String get cycleStatusClosed => 'बन्द';
 }

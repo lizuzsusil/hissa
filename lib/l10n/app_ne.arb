@@ -355,7 +355,7 @@
   "closeCurrentCycle": "हालको चक्र बन्द गर्नुहोस्",
   "startNewCycle": "नयाँ चक्र सुरु गर्नुहोस्",
   "closeCycle": "चक्र बन्द गर्नुहोस्",
-  "closeCycleMessage": "चक्र केवल-पढ्न मिल्ने र ऐतिहासिक हुनेछ। अर्को चक्र अर्को महिना सुरु हुनेछ।",
+  "closeCycleMessage": "चक्र केवल-पढ्न मिल्ने र ऐतिहासिक हुनेछ। पछि नयाँ चक्र सुरु गर्न सकिनेछ।",
   "data": "डाटा",
   "export": "निर्यात",
   "csvOfCurrentCycle": "हालको चक्रको CSV",
@@ -404,5 +404,34 @@
   "biometricFailed": "बायोमेट्रिक प्रमाणीकरण असफल भयो। फेरि प्रयास गर्नुहोस्।",
   "biometricNotEnrolled": "कुनै बायोमेट्रिक दर्ता छैन। सेटिङमा Face ID / Touch ID सेटअप गर्नुहोस्।",
   "security": "सुरक्षा",
-  "usePassword": "पासवर्ड प्रयोग गर्नुहोस्"
+  "usePassword": "पासवर्ड प्रयोग गर्नुहोस्",
+
+  "chooseCycleType": "खर्च चक्र",
+  "monthlyCycle": "मासिक",
+  "monthlyCycleDescription": "हरेक महिना स्वतः ट्र्याक गर्छ",
+  "customCycle": "अनुकूल",
+  "customCycleDescription": "तपाईंले व्यवस्थापन गर्ने खुला चक्र",
+  "renameCycle": "चक्रको नाम बदल्नुहोस्",
+  "renameCycleTitle": "चक्रको नाम बदल्नुहोस्",
+  "cycleName": "चक्रको नाम",
+  "done": "सकियो",
+  "cycleRenamed": "चक्रको नाम बदलियो",
+  "previousCycles": "अघिल्ला चक्रहरू",
+  "previousCyclesCount": "{count} वटा बन्द चक्रहरू",
+  "@previousCyclesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cycleDetails": "चक्र विवरण",
+  "spentLabel": "खर्च",
+  "expensesCount": "खर्चहरू",
+  "noExpensesInCycle": "यो चक्रमा कुनै खर्च दर्ता भएको छैन।",
+  "noPreviousCycles": "अहिलेसम्म कुनै अघिल्लो चक्र छैन।",
+  "cycleStatusActive": "सक्रिय",
+  "cycleStatusReadyToSettle": "बुझाउन तयार",
+  "cycleStatusSettled": "भुक्तानी भयो",
+  "cycleStatusClosed": "बन्द"
 }
