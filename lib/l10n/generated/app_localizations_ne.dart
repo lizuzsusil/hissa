@@ -881,6 +881,17 @@ class AppLocalizationsNe extends AppLocalizations {
   String get pendingApprovalSection => 'स्वीकृतिको पर्खाइमा';
 
   @override
+  String get openByDefault => 'अर्को पटक पूर्वनिर्धारित रूपमा खोल्नुहोस्';
+
+  @override
+  String defaultSpaceSetMessage(String space) {
+    return '$space अर्को पटक पूर्वनिर्धारित रूपमा खुल्नेछ';
+  }
+
+  @override
+  String get defaultSpaceRemovedMessage => 'अब पूर्वनिर्धारित ठाउँ छैन';
+
+  @override
   String get yourGroupRequestPending =>
       'तपाईको समूह अनुरोध स्वीकृतिको पर्खाइमा छ। स्पेस मालिकले निर्णय गरेपछि तपाईंलाई सूचित गरिनेछ।';
 

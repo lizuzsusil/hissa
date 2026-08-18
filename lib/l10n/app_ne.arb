@@ -264,6 +264,16 @@
   "pendingGroupRequestsDescription": "सदस्यहरूले तपाईलाई समूह बनाउन अनुरोध गरेका छन्। स्वीकृत गर्दा अनुरोधकर्ताको स्वामित्वमा समूह बन्छ।",
   "pendingApproval": "स्वीकृतिको पर्खाइमा",
   "pendingApprovalSection": "स्वीकृतिको पर्खाइमा",
+  "openByDefault": "अर्को पटक पूर्वनिर्धारित रूपमा खोल्नुहोस्",
+  "defaultSpaceSetMessage": "{space} अर्को पटक पूर्वनिर्धारित रूपमा खुल्नेछ",
+  "@defaultSpaceSetMessage": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultSpaceRemovedMessage": "अब पूर्वनिर्धारित ठाउँ छैन",
   "yourGroupRequestPending": "तपाईको समूह अनुरोध स्वीकृतिको पर्खाइमा छ। स्पेस मालिकले निर्णय गरेपछि तपाईंलाई सूचित गरिनेछ।",
   "noPendingGroupRequests": "कुनै पर्खाइमा रहेका समूह अनुरोधहरू छैनन्",
   "requestedBy": "अनुरोधकर्ता",

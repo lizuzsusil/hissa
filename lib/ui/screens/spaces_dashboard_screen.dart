@@ -67,6 +67,27 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
     if (mounted) setState(() => _counts = counts);
   }
 
+  /// Marks [space] as the one to open automatically on the next launch, or
+  /// clears the preference when it is already the default.
+  Future<void> _toggleDefault(Space space) async {
+    final state = context.read<AppState>();
+    final l10n = context.l10n;
+    final isDefault = state.defaultSpaceId == space.id;
+    await state.setDefaultSpace(isDefault ? null : space.id);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            isDefault
+                ? l10n.defaultSpaceRemovedMessage
+                : l10n.defaultSpaceSetMessage(space.name),
+          ),
+        ),
+      );
+  }
+
   Future<void> _confirmSignOut() async {
     final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
@@ -95,6 +116,10 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
     final state = context.watch<AppState>();
     final spaces = state.spaces;
     final pendingSpaces = state.pendingSpaces;
+    final defaultSpaceId = state.defaultSpaceId;
+    // The "open by default" toggle only makes sense when there are several
+    // Spaces to choose from (a single Space is always entered automatically).
+    final showDefaultToggle = spaces.length > 1;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
     final textColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
@@ -206,15 +231,18 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
                             if (index < pendingItems.length) {
                               return pendingItems[index];
                             }
-                            final space = spaces[index - pendingItems.length];
-                            return Reveal(
-                              delay: Duration(milliseconds: 60 * index),
-                              child: _SpaceCard(
-                                space: space,
-                                memberCount: _counts[space.id],
-                                onTap: () => widget.onSelect(space),
-                              ),
-                            );
+final space = spaces[index - pendingItems.length];
+                          return Reveal(
+                            delay: Duration(milliseconds: 60 * index),
+                            child: _SpaceCard(
+                              space: space,
+                              memberCount: _counts[space.id],
+                              isDefault: space.id == defaultSpaceId,
+                              showDefaultToggle: showDefaultToggle,
+                              onToggleDefault: () => _toggleDefault(space),
+                              onTap: () => widget.onSelect(space),
+                            ),
+                          );
                           },
                         ),
                 ),
@@ -249,12 +277,18 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
 class _SpaceCard extends StatelessWidget {
   final Space space;
   final int? memberCount;
+  final bool isDefault;
+  final bool showDefaultToggle;
   final VoidCallback onTap;
+  final VoidCallback onToggleDefault;
 
   const _SpaceCard({
     required this.space,
     required this.memberCount,
+    this.isDefault = false,
+    this.showDefaultToggle = false,
     required this.onTap,
+    required this.onToggleDefault,
   });
 
   @override
@@ -274,7 +308,10 @@ class _SpaceCard extends StatelessWidget {
           color: isDark ? AppColors.surfaceDark : Colors.white,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: isDark ? AppColors.borderDark : Colors.transparent,
+            color: isDark
+                ? AppColors.borderDark
+                : (isDefault ? AppColors.primary : Colors.transparent),
+            width: isDefault ? 1.6 : 1,
           ),
           boxShadow: cardShadow(),
         ),
@@ -305,6 +342,8 @@ class _SpaceCard extends StatelessWidget {
                 children: [
                   Text(
                     space.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
@@ -343,13 +382,17 @@ class _SpaceCard extends StatelessWidget {
                       ),
                       if (memberCount != null) ...[
                         const SizedBox(width: 10),
-                        Text(
-                          l10n.spaceMembersCount(memberCount!),
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
+                        Flexible(
+                          child: Text(
+                            l10n.spaceMembersCount(memberCount!),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ],
@@ -358,6 +401,26 @@ class _SpaceCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (showDefaultToggle) ...[
+              IconButton(
+                key: ValueKey('default_toggle_${space.id}'),
+                tooltip: l10n.openByDefault,
+                onPressed: onToggleDefault,
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  isDefault
+                      ? Icons.star_rounded
+                      : Icons.star_border_rounded,
+                  size: 24,
+                  color: isDefault
+                      ? Colors.amber.shade600
+                      : (isDark
+                            ? AppColors.textMutedDark
+                            : AppColors.textMuted),
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
             Icon(
               Icons.chevron_right_rounded,
               size: 26,

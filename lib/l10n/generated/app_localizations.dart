@@ -1628,6 +1628,24 @@ abstract class AppLocalizations {
   /// **'Waiting for approval'**
   String get pendingApprovalSection;
 
+  /// No description provided for @openByDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Open by default next time'**
+  String get openByDefault;
+
+  /// No description provided for @defaultSpaceSetMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{space} will open by default next time'**
+  String defaultSpaceSetMessage(String space);
+
+  /// No description provided for @defaultSpaceRemovedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No longer the default space'**
+  String get defaultSpaceRemovedMessage;
+
   /// No description provided for @yourGroupRequestPending.
   ///
   /// In en, this message translates to:

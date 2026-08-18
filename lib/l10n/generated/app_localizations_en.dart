@@ -882,6 +882,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingApprovalSection => 'Waiting for approval';
 
   @override
+  String get openByDefault => 'Open by default next time';
+
+  @override
+  String defaultSpaceSetMessage(String space) {
+    return '$space will open by default next time';
+  }
+
+  @override
+  String get defaultSpaceRemovedMessage => 'No longer the default space';
+
+  @override
   String get yourGroupRequestPending =>
       'Your group request is pending approval. You\'ll be notified once the space owner decides.';
 

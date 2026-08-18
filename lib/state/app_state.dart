@@ -57,6 +57,7 @@ class AppState extends ChangeNotifier {
   String? _spaceId;
   String? _cycleId;
   String? _onboardingMode;
+  String? _defaultSpaceId;
   bool _introSeen = false;
   bool _loaded = false;
   List<Space> _spaces = [];
@@ -79,6 +80,10 @@ class AppState extends ChangeNotifier {
   /// The Spaces the current user belongs to (all of them, not just the one
   /// currently selected), used by the post-login Spaces dashboard.
   List<Space> get spaces => List.unmodifiable(_spaces);
+
+  /// The Space the user chose to open automatically on the next launch (when
+  /// they belong to more than one Space). Null when no default is set.
+  String? get defaultSpaceId => _defaultSpaceId;
 
   /// Test seam: sets the signed-in user and selected Space without going
   /// through Firebase Auth so widget tests can exercise the UI directly.
@@ -112,6 +117,7 @@ class AppState extends ChangeNotifier {
         userId = json['userId'] as String?;
         spaceId = json['spaceId'] as String?;
         cycleId = json['cycleId'] as String?;
+        _defaultSpaceId = json['defaultSpaceId'] as String?;
         _onboardingMode = json['mode'] as String?;
       } catch (_) {
         // Ignore a corrupt session; the user simply starts signed out.
@@ -142,6 +148,7 @@ class AppState extends ChangeNotifier {
         'userId': _currentUserId,
         'spaceId': _spaceId,
         'cycleId': _cycleId,
+        'defaultSpaceId': _defaultSpaceId,
         'mode': _onboardingMode,
       }),
     );
@@ -411,6 +418,7 @@ class AppState extends ChangeNotifier {
     _currentUserId = null;
     _spaceId = null;
     _cycleId = null;
+    _defaultSpaceId = null;
     _spaces = [];
     _myPendingSpaceJoinRequests = const [];
     _pendingSpaces = const [];
@@ -420,6 +428,39 @@ class AppState extends ChangeNotifier {
       // Local session is cleared regardless.
     }
     await _commit();
+  }
+
+  /// The Space that should open automatically on launch: the user's only
+  /// Space, or their chosen default Space when they still belong to it.
+  /// Null means the Spaces dashboard should be shown for the user to pick.
+  Space? get launchSpace {
+    if (_spaces.length == 1) return _spaces.first;
+    final defaultId = _defaultSpaceId;
+    if (defaultId != null) {
+      for (final s in _spaces) {
+        if (s.id == defaultId) return s;
+      }
+    }
+    return null;
+  }
+
+  /// Sets the Space that should open automatically on the next launch. Pass
+  /// null (or a Space the user no longer belongs to) to clear the preference.
+  /// The preference is persisted and restored together with the session.
+  Future<void> setDefaultSpace(String? spaceId) async {
+    final String? target;
+    if (spaceId == null) {
+      target = null;
+    } else if (_spaces.any((s) => s.id == spaceId)) {
+      target = spaceId;
+    } else {
+      // Not a member of that Space: keep the current preference untouched.
+      return;
+    }
+    if (_defaultSpaceId == target) return;
+    _defaultSpaceId = target;
+    notifyListeners();
+    await _persist();
   }
 
   /// Registers the current device's FCM token for the signed-in user so the

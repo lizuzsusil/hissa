@@ -381,6 +381,16 @@
   "pendingGroupRequestsDescription": "Members have asked you to create a group for them. Approving creates the group owned by the requester.",
   "pendingApproval": "Pending approval",
   "pendingApprovalSection": "Waiting for approval",
+  "openByDefault": "Open by default next time",
+  "defaultSpaceSetMessage": "{space} will open by default next time",
+  "@defaultSpaceSetMessage": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultSpaceRemovedMessage": "No longer the default space",
   "yourGroupRequestPending": "Your group request is pending approval. You'll be notified once the space owner decides.",
   "noPendingGroupRequests": "No pending group requests",
   "requestedBy": "Requested by",

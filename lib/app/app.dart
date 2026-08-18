@@ -132,41 +132,63 @@ class _RootGateState extends State<RootGate> {
     // Give the branded splash a moment to breathe.
     await Future.delayed(const Duration(milliseconds: 1100));
     if (!mounted) return;
-    setState(() {
-      if (!state.introSeen) {
-        // First launch: show the feature intro, then mode selection.
-        _step = _FlowStep.intro;
-      } else if (state.onboardingMode != null) {
-        // Returning user: skip the intro/mode screens entirely.
-        _step = state.isLoggedIn ? _signedInStep(state) : _FlowStep.auth;
-      } else {
-        // Intro seen but no mode picked yet.
-        _step = _FlowStep.onboarding;
-      }
-    });
+    final _FlowStep step;
+    if (!state.introSeen) {
+      // First launch: show the feature intro, then mode selection.
+      step = _FlowStep.intro;
+    } else if (state.onboardingMode != null) {
+      // Returning user: skip the intro/mode screens entirely.
+      step = state.isLoggedIn ? await _signedInStep(state) : _FlowStep.auth;
+    } else {
+      // Intro seen but no mode picked yet.
+      step = _FlowStep.onboarding;
+    }
+    if (!mounted) return;
+    setState(() => _step = step);
   }
 
   Future<void> _finishIntro() async {
     final state = context.read<AppState>();
     await state.markIntroSeen();
     if (!mounted) return;
-    setState(() {
-      _step = state.onboardingMode != null
-          ? (state.isLoggedIn ? _signedInStep(state) : _FlowStep.auth)
-          : _FlowStep.onboarding;
-    });
+    final _FlowStep step;
+    if (state.onboardingMode != null) {
+      step = state.isLoggedIn ? await _signedInStep(state) : _FlowStep.auth;
+    } else {
+      step = _FlowStep.onboarding;
+    }
+    if (!mounted) return;
+    setState(() => _step = step);
   }
 
   /// Where a signed-in user lands: a biometric gate when the user opted into
-  /// it, otherwise straight onto the Spaces dashboard.
-  _FlowStep _signedInStep(AppState state) {
+  /// it, otherwise straight into their only Space, their chosen default Space,
+  /// or the Spaces dashboard.
+  Future<_FlowStep> _signedInStep(AppState state) async {
     final biometrics = context.read<BiometricAuthController>();
     if (biometrics.enabled) return _FlowStep.lock;
+    return _spaceLanding(state);
+  }
+
+  /// Lands the user inside their Space when they only belong to one, or inside
+  /// their chosen default Space when they are still a member of it. In all
+  /// other cases the Spaces dashboard is shown so the user can pick.
+  Future<_FlowStep> _spaceLanding(AppState state) async {
+    final launch = state.launchSpace;
+    if (launch != null) {
+      if (launch.id != state.space?.id) {
+        await state.selectSpace(launch.id);
+      }
+      return _FlowStep.app;
+    }
     return _FlowStep.dashboard;
   }
 
-  void _enterApp() {
-    _go(_FlowStep.dashboard);
+  Future<void> _enterApp() async {
+    final state = context.read<AppState>();
+    final landing = await _spaceLanding(state);
+    if (!mounted) return;
+    _go(landing);
   }
 
   void _selectSpace(Space space) {
