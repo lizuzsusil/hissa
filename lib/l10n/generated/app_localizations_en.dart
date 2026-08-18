@@ -795,6 +795,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Everyone in this cycle is even. Nice teamwork.';
 
   @override
+  String get nothingToSettleTitle => 'Nothing to settle yet';
+
+  @override
+  String get noSettlementsMessage =>
+      'No expenses have been recorded in this cycle yet. Add your first expense and the who-owes-whom breakdown will appear here.';
+
+  @override
   String get settleAction => 'Settle';
 
   @override

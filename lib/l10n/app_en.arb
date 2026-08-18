@@ -353,6 +353,8 @@
   "settlementHistory": "Settlement history",
   "allSettled": "All settled up!",
   "allSettledMessage": "Everyone in this cycle is even. Nice teamwork.",
+  "nothingToSettleTitle": "Nothing to settle yet",
+  "noSettlementsMessage": "No expenses have been recorded in this cycle yet. Add your first expense and the who-owes-whom breakdown will appear here.",
   "settleAction": "Settle",
 
   "profile": "Profile",

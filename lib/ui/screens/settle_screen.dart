@@ -23,6 +23,7 @@ class SettleScreen extends StatelessWidget {
     final balances = state.computeBalances();
     final proposals = state.settlementProposals();
     final history = state.settlementsInCycle;
+    final hasExpenses = state.expensesInCycle.isNotEmpty;
     final totalOutstanding = balances.fold<int>(
         0, (sum, b) => sum + (b.remaining.isNegative ? -b.remaining.paisa : 0));
     final l10n = context.l10n;
@@ -33,7 +34,12 @@ class SettleScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
         children: [
           if (proposals.isEmpty)
-            _AllSettledCard(totalOutstanding: Money(totalOutstanding))
+            // With no expenses at all there is nothing to settle, so a plain
+            // "All settled up!" would be misleading.
+            if (hasExpenses)
+              _AllSettledCard(totalOutstanding: Money(totalOutstanding))
+            else
+              const _NothingToSettleCard()
           else ...[
             _OutstandingCard(totalOutstanding: Money(totalOutstanding)),
             const SizedBox(height: 20),
@@ -206,6 +212,67 @@ class _AllSettledCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               color: AppColors.positive.withValues(alpha: 0.85),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Friendly empty state for a Space with no expenses recorded yet: settling
+/// "up" doesn't make sense when there is nothing to split or owe.
+class _NothingToSettleCard extends StatelessWidget {
+  const _NothingToSettleCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.border,
+        ),
+        boxShadow: cardShadow(),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.account_balance_wallet_outlined,
+              color: AppColors.primary,
+              size: 34,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            l10n.nothingToSettleTitle,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.noSettlementsMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.4,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
             ),
           ),
         ],

@@ -794,6 +794,13 @@ class AppLocalizationsNe extends AppLocalizations {
   String get allSettledMessage => 'यो चक्रमा सबैजना बराबर छन्। राम्रो सहकार्य।';
 
   @override
+  String get nothingToSettleTitle => 'अहिले मिलान गर्नुपर्ने केही छैन';
+
+  @override
+  String get noSettlementsMessage =>
+      'यस चक्रमा अहिलेसम्म कुनै खर्च रेकर्ड भएको छैन। पहिलो खर्च थप्नुहोस् र कसले कसलाई तिर्न बाँकी छ भन्ने विवरण यहाँ देखा पर्नेछ।';
+
+  @override
   String get settleAction => 'मिलान';
 
   @override

@@ -1472,6 +1472,18 @@ abstract class AppLocalizations {
   /// **'Everyone in this cycle is even. Nice teamwork.'**
   String get allSettledMessage;
 
+  /// No description provided for @nothingToSettleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to settle yet'**
+  String get nothingToSettleTitle;
+
+  /// No description provided for @noSettlementsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses have been recorded in this cycle yet. Add your first expense and the who-owes-whom breakdown will appear here.'**
+  String get noSettlementsMessage;
+
   /// No description provided for @settleAction.
   ///
   /// In en, this message translates to:
