@@ -9,6 +9,7 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 import 'package:hissa/l10n/generated/app_localizations.dart';
 import 'package:hissa/models/models.dart';
 import 'package:hissa/state/app_state.dart';
+import 'package:hissa/ui/screens/pending_join_screen.dart';
 import 'package:hissa/ui/screens/setup_screen.dart';
 import 'package:hissa/ui/screens/space_screen.dart';
 import 'package:hissa/ui/screens/spaces_dashboard_screen.dart';
@@ -461,4 +462,43 @@ void main() {
     await tester.pumpAndSettle();
     expect(selected, isTrue);
   });
+
+  testWidgets(
+    'the pending screen shows the awaiting-approval state and stays put '
+    'while the request is unresolved',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final state = await makeState(userId: 'u_out');
+      state.debugSetSession(userId: 'u_out', spaceId: null);
+      await state.requestSpaceJoin('ABCD12');
+      await state.refreshPendingSpaceJoinRequests();
+
+      await tester.pumpWidget(
+        appHarness(state, const PendingJoinScreen(spaceId: 'h1')),
+      );
+      await tester.pumpAndSettle();
+
+      // The requester sees the Space name, the pending chip and the
+      // awaiting-approval description — never the Space contents.
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Pending approval'), findsOneWidget);
+      expect(
+        find.textContaining('Your request to join this space is pending'),
+        findsOneWidget,
+      );
+      expect(state.space?.id, isNot('h1'));
+
+      // Pull to refresh while the request is still pending re-checks the
+      // request and keeps the pending screen (no crash, no navigation).
+      await tester.fling(find.byType(ListView), const Offset(0, 1000), 1000);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pending approval'), findsOneWidget);
+      expect(state.space?.id, isNot('h1'));
+      expect(state.isPendingSpace('h1'), isTrue);
+    },
+  );
 }

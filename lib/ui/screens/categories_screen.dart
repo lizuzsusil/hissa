@@ -32,19 +32,23 @@ class CategoriesScreen extends StatelessWidget {
           const SizedBox(width: 12),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-        children: [
-          SectionHeader(title: l10n.defaultCategories),
-          _CategoryGrid(
-            categories: categories.where((c) => c.isDefault).toList(),
-          ),
-          if (custom.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            SectionHeader(title: l10n.customCategories),
-            _CategoryGrid(categories: custom),
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          children: [
+            SectionHeader(title: l10n.defaultCategories),
+            _CategoryGrid(
+              categories: categories.where((c) => c.isDefault).toList(),
+            ),
+            if (custom.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              SectionHeader(title: l10n.customCategories),
+              _CategoryGrid(categories: custom),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

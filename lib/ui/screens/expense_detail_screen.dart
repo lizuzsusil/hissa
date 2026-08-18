@@ -58,215 +58,220 @@ class ExpenseDetailScreen extends StatelessWidget {
           ],
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              gradient: AppColors.heroGradient,
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Main content is completely independent of
-                // the category pill and stays centered.
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        expense.description ?? l10n.expense,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Main content is completely independent of
+                  // the category pill and stays centered.
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          expense.description ?? l10n.expense,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      AnimatedMoney(
-                        paisa: expense.amount.paisa,
-                        formatter: (p) => formatMoney(Money(p)),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 34,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.8,
+                        const SizedBox(height: 10),
+                        AnimatedMoney(
+                          paisa: expense.amount.paisa,
+                          formatter: (p) => formatMoney(Money(p)),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.8,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        formatFullDate(expense.date),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 13,
+                        const SizedBox(height: 6),
+                        Text(
+                          formatFullDate(expense.date),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
 
-                // Absolutely positioned category pill.
-                Positioned(
-                  top: -12,
-                  right: -12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.22),
+                  // Absolutely positioned category pill.
+                  Positioned(
+                    top: -12,
+                    right: -12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.22),
+                        ),
+                      ),
+                      child: Text(
+                        category?.name ?? l10n.general,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                    child: Text(
-                      category?.name ?? l10n.general,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          SurfaceCard(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _InfoRow(
-                  icon: Icons.person_outline,
-                  label: l10n.paidBy,
-                  value: payer,
-                ),
-                if (!isPersonal) ...[
-                  const SizedBox(height: 14),
-                  _InfoRow(
-                    icon: Icons.receipt_long_outlined,
-                    label: l10n.split,
-                    value: l10n.splitPersons(shares.length),
-                  ),
-                ],
-                if (expense.note != null) ...[
-                  const SizedBox(height: 14),
-                  _InfoRow(
-                    icon: Icons.sticky_note_2_outlined,
-                    label: l10n.note,
-                    value: expense.note!,
-                  ),
-                ],
-                if (expense.receiptUrl != null) ...[
-                  const SizedBox(height: 14),
-                  _InfoRow(
-                    icon: Icons.receipt_outlined,
-                    label: l10n.receipt,
-                    value: l10n.attached,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (!isPersonal) ...[
             const SizedBox(height: 20),
-            SectionHeaderLocal(l10n.whoPaysWhat),
-            const SizedBox(height: 8),
             SurfaceCard(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // New model: GROUP participant (single share with memberGroupId + snapshot)
-                  for (final share in shares)
-                    if (share.isGroup) ...[
-                      _GroupSnapshotRow(
-                        share: share,
+                  _InfoRow(
+                    icon: Icons.person_outline,
+                    label: l10n.paidBy,
+                    value: payer,
+                  ),
+                  if (!isPersonal) ...[
+                    const SizedBox(height: 14),
+                    _InfoRow(
+                      icon: Icons.receipt_long_outlined,
+                      label: l10n.split,
+                      value: l10n.splitPersons(shares.length),
+                    ),
+                  ],
+                  if (expense.note != null) ...[
+                    const SizedBox(height: 14),
+                    _InfoRow(
+                      icon: Icons.sticky_note_2_outlined,
+                      label: l10n.note,
+                      value: expense.note!,
+                    ),
+                  ],
+                  if (expense.receiptUrl != null) ...[
+                    const SizedBox(height: 14),
+                    _InfoRow(
+                      icon: Icons.receipt_outlined,
+                      label: l10n.receipt,
+                      value: l10n.attached,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (!isPersonal) ...[
+              const SizedBox(height: 20),
+              SectionHeaderLocal(l10n.whoPaysWhat),
+              const SizedBox(height: 8),
+              SurfaceCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // New model: GROUP participant (single share with memberGroupId + snapshot)
+                    for (final share in shares)
+                      if (share.isGroup) ...[
+                        _GroupSnapshotRow(
+                          share: share,
+                          memberName: (uid) => state.memberName(uid) ?? '?',
+                          paidByUserId: expense.paidByUserId,
+                        ),
+                      ],
+                    // Old Phase-6 model: expense-scoped participant groups
+                    for (final g in expense.participantGroups) ...[
+                      _GroupPartyRow(
+                        group: g,
+                        shares: shares
+                            .where((s) => s.expenseGroupId == g.id)
+                            .toList(),
                         memberName: (uid) => state.memberName(uid) ?? '?',
                         paidByUserId: expense.paidByUserId,
                       ),
                     ],
-                  // Old Phase-6 model: expense-scoped participant groups
-                  for (final g in expense.participantGroups) ...[
-                    _GroupPartyRow(
-                      group: g,
-                      shares: shares
-                          .where((s) => s.expenseGroupId == g.id)
-                          .toList(),
-                      memberName: (uid) =>
-                          state.memberName(uid) ?? '?',
-                      paidByUserId: expense.paidByUserId,
-                    ),
-                  ],
-                  // Individual participants (USER type)
-                  for (final share in shares)
-                    if (!share.isGroup && share.userId != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          children: [
-                            MemberAvatar(
-                              name: state.memberName(share.userId!) ?? '?',
-                              size: 36,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                state.memberName(share.userId!) ?? '?',
-                                style: const TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                    // Individual participants (USER type)
+                    for (final share in shares)
+                      if (!share.isGroup && share.userId != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            children: [
+                              MemberAvatar(
+                                name: state.memberName(share.userId!) ?? '?',
+                                size: 36,
                               ),
-                            ),
-                            if (share.userId == expense.paidByUserId)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 10),
+                              const SizedBox(width: 12),
+                              Expanded(
                                 child: Text(
-                                  l10n.paid,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.positive,
+                                  state.memberName(share.userId!) ?? '?',
+                                  style: const TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
-                            Text(
-                              formatMoney(share.amount),
-                              style: const TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w800,
+                              if (share.userId == expense.paidByUserId)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: Text(
+                                    l10n.paid,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.positive,
+                                    ),
+                                  ),
+                                ),
+                              Text(
+                                formatMoney(share.amount),
+                                style: const TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                ],
-              ),
-            ),
-          ],
-          if (!canEdit) ...[
-            const SizedBox(height: 20),
-            Center(
-              child: Text(
-                expense.createdBy == null
-                    ? l10n.legacyExpenseHint
-                    : l10n.cycleClosedHint,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                  ],
                 ),
               ),
-            ),
+            ],
+            if (!canEdit) ...[
+              const SizedBox(height: 20),
+              Center(
+                child: Text(
+                  expense.createdBy == null
+                      ? l10n.legacyExpenseHint
+                      : l10n.cycleClosedHint,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark
+                        ? AppColors.textMutedDark
+                        : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -314,8 +319,7 @@ class _GroupPartyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalPaisa =
-        shares.fold<int>(0, (sum, s) => sum + s.amount.paisa);
+    final totalPaisa = shares.fold<int>(0, (sum, s) => sum + s.amount.paisa);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(

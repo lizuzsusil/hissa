@@ -13,6 +13,7 @@ import 'package:hissa/state/app_state.dart';
 import 'package:hissa/ui/screens/dashboard_screen.dart';
 import 'package:hissa/ui/screens/expense_detail_screen.dart';
 import 'package:hissa/ui/screens/member_groups_screen.dart';
+import 'package:hissa/ui/screens/pending_join_screen.dart';
 import 'package:hissa/ui/screens/settle_screen.dart';
 
 void main() {
@@ -109,6 +110,52 @@ void main() {
     return NotificationRouter(navigatorKey: key, state: state);
   }
 
+  /// State for a requester (`u_out`) with a pending join request for `h1`.
+  Future<AppState> makeRequesterState() async {
+    final state = AppState();
+    final repo = state.repo;
+    await repo.saveUser(
+      User(
+        id: 'u_out',
+        name: 'Alex',
+        email: 'alex@example.com',
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+    await repo.saveUser(
+      User(
+        id: 'u_owner',
+        name: 'Owner',
+        email: 'owner@example.com',
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+    await repo.saveSpace(
+      Space(
+        id: 'h1',
+        name: 'Home',
+        currency: 'NPR',
+        inviteCode: 'ABCD12',
+        mode: SpaceMode.split,
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+    await repo.saveMember(
+      SpaceMember(
+        userId: 'u_owner',
+        name: 'Owner',
+        role: MemberRole.owner,
+        joinedAt: DateTime(2026, 1, 1),
+        spaceId: 'h1',
+      ),
+      'h1',
+    );
+    state.debugSetSession(userId: 'u_out', spaceId: null);
+    await state.requestSpaceJoin('ABCD12');
+    await state.refreshPendingSpaceJoinRequests();
+    return state;
+  }
+
   testWidgets('expenseAdded deep-links to the expense detail screen',
       (tester) async {
     final state = await makeHomeState();
@@ -188,4 +235,58 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(SettleScreen), findsOneWidget);
   });
+
+  testWidgets(
+    'a pending-space notification opens the pending screen without '
+    'selecting the space',
+    (tester) async {
+      final state = await makeRequesterState();
+      final router = await pumpRouter(tester, state);
+
+      await router.open({'type': 'spaceInvited', 'spaceId': 'h1'});
+      await tester.pumpAndSettle();
+
+      // The requester sees the pending-approval state, never the Space itself.
+      expect(find.byType(PendingJoinScreen), findsOneWidget);
+      expect(state.space?.id, isNot('h1'));
+      expect(state.isPendingSpace('h1'), isTrue);
+    },
+  );
+
+  testWidgets(
+    'a pending-space notification leaves the selected space untouched',
+    (tester) async {
+      final state = await makeRequesterState();
+      // The user already has a selected member Space (e.g. a personal Space).
+      await state.repo.saveSpace(
+        Space(
+          id: 'h2',
+          name: 'Personal',
+          currency: 'NPR',
+          inviteCode: 'XYZW78',
+          mode: SpaceMode.personal,
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      );
+      await state.repo.saveMember(
+        SpaceMember(
+          userId: 'u_out',
+          name: 'Alex',
+          role: MemberRole.owner,
+          joinedAt: DateTime(2026, 1, 1),
+          spaceId: 'h2',
+        ),
+        'h2',
+      );
+      await state.refreshSpaces();
+      state.debugSetSession(userId: 'u_out', spaceId: 'h2');
+
+      final router = await pumpRouter(tester, state);
+      await router.open({'type': 'spaceInvited', 'spaceId': 'h1'});
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PendingJoinScreen), findsOneWidget);
+      expect(state.space?.id, 'h2');
+    },
+  );
 }

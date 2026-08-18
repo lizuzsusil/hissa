@@ -47,220 +47,227 @@ class _SpaceScreenState extends State<SpaceScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.space)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              gradient: AppColors.heroGradient,
-              borderRadius: BorderRadius.circular(26),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 22,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.home_work_rounded,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.space,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  space.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Text(
-                      '${space.currency} · ${l10n.spaceMembersCount(state.members.length)}',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 13,
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.home_work_rounded,
+                        color: Colors.white,
+                        size: 22,
                       ),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.space,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    space.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
                     ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            l10n.inviteCode,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.shareInviteHint,
-            style: TextStyle(fontSize: 13, color: textSecondary),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.25),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text(
+                        '${space.currency} · ${l10n.spaceMembersCount(state.members.length)}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    space.inviteCode,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 8,
-                      color: AppColors.primary,
+            const SizedBox(height: 24),
+            Text(
+              l10n.inviteCode,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.shareInviteHint,
+              style: TextStyle(fontSize: 13, color: textSecondary),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      space.inviteCode,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 8,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
+                  InkResponse(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: space.inviteCode));
+                      showToast(
+                        context,
+                        l10n.inviteCodeCopied,
+                        type: ToastType.success,
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.copy_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Text(
+                  l10n.members,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                InkResponse(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: space.inviteCode));
-                    showToast(
-                      context,
-                      l10n.inviteCodeCopied,
-                      type: ToastType.success,
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.copy_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                const Spacer(),
+                Text(
+                  l10n.spaceMembersCount(state.members.length),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 28),
-          Row(
-            children: [
+            const SizedBox(height: 12),
+            for (final member in state.members)
+              _MemberRow(
+                member: member,
+                isYou: member.userId == state.currentUser?.id,
+                canRemove:
+                    state.isOwner && member.userId != state.currentUser?.id,
+                onRemove: () => _confirmRemove(state, member),
+              ),
+            if (!state.isPersonalMode) ...[
+              const SizedBox(height: 20),
+              _MemberGroupsTile(onTap: () => _openMemberGroups(context)),
+            ],
+            if (state.isOwner && state.pendingSpaceJoinRequests.isNotEmpty) ...[
+              const SizedBox(height: 24),
               Text(
-                l10n.members,
+                l10n.pendingJoinRequests,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 6),
               Text(
-                l10n.spaceMembersCount(state.members.length),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
+                l10n.pendingJoinRequestsDescription,
+                style: TextStyle(fontSize: 13, color: textSecondary),
               ),
+              const SizedBox(height: 12),
+              for (final request in state.pendingSpaceJoinRequests)
+                _JoinRequestCard(
+                  request: request,
+                  onApprove: () => _approveJoin(state, request),
+                  onReject: () => _rejectJoin(state, request),
+                ),
             ],
-          ),
-          const SizedBox(height: 12),
-          for (final member in state.members)
-            _MemberRow(
-              member: member,
-              isYou: member.userId == state.currentUser?.id,
-              canRemove:
-                  state.isOwner && member.userId != state.currentUser?.id,
-              onRemove: () => _confirmRemove(state, member),
-            ),
-          if (!state.isPersonalMode) ...[
             const SizedBox(height: 20),
-            _MemberGroupsTile(onTap: () => _openMemberGroups(context)),
-          ],
-          if (state.isOwner && state.pendingSpaceJoinRequests.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            Text(
-              l10n.pendingJoinRequests,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              l10n.pendingJoinRequestsDescription,
-              style: TextStyle(fontSize: 13, color: textSecondary),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _memberController,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    decoration: InputDecoration(
+                      labelText: l10n.inviteMember,
+                      hintText: l10n.inviteMemberHint,
+                      prefixIcon: const Icon(
+                        Icons.person_add_alt_1_outlined,
+                        size: 18,
+                      ),
+                      errorText: _memberError,
+                    ),
+                    onChanged: (_) {
+                      if (_memberError != null) {
+                        setState(() => _memberError = null);
+                      }
+                    },
+                    onSubmitted: (_) => _inviteMember(state),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                IconAction(
+                  icon: Icons.add_rounded,
+                  background: AppColors.primary,
+                  foreground: Colors.white,
+                  size: 50,
+                  onPressed: () => _inviteMember(state),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            for (final request in state.pendingSpaceJoinRequests)
-              _JoinRequestCard(
-                request: request,
-                onApprove: () => _approveJoin(state, request),
-                onReject: () => _rejectJoin(state, request),
-              ),
+            Text(
+              l10n.inviteMemberHelper,
+              style: TextStyle(fontSize: 12, color: textSecondary),
+            ),
           ],
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _memberController,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: l10n.inviteMember,
-                    hintText: l10n.inviteMemberHint,
-                    prefixIcon: const Icon(
-                      Icons.person_add_alt_1_outlined,
-                      size: 18,
-                    ),
-                    errorText: _memberError,
-                  ),
-                  onChanged: (_) {
-                    if (_memberError != null) {
-                      setState(() => _memberError = null);
-                    }
-                  },
-                  onSubmitted: (_) => _inviteMember(state),
-                ),
-              ),
-              const SizedBox(width: 10),
-              IconAction(
-                icon: Icons.add_rounded,
-                background: AppColors.primary,
-                foreground: Colors.white,
-                size: 50,
-                onPressed: () => _inviteMember(state),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l10n.inviteMemberHelper,
-            style: TextStyle(fontSize: 12, color: textSecondary),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -130,55 +130,69 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: filtered.isEmpty
-                ? EmptyState(
-                    icon: Icons.receipt_long_outlined,
-                    title: l10n.noMatchingExpenses,
-                    message: l10n.noMatchingMessage,
-                  )
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                    children: [
-                      for (final entry in _groupByDay(filtered).entries) ...[
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(2, 14, 2, 10),
-                          child: Row(
-                            children: [
-                              Text(
-                                formatRelativeDay(
-                                  entry.value.first.date,
-                                  l10n: l10n,
-                                ),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondary,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                _dayTotal(entry.value),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? AppColors.textMutedDark
-                                      : AppColors.textMuted,
-                                ),
-                              ),
-                            ],
+            child: RefreshIndicator(
+              onRefresh: () => context.read<AppState>().refresh(),
+              child: filtered.isEmpty
+                  ? LayoutBuilder(
+                      builder: (context, constraints) => ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: constraints.maxHeight,
+                            child: EmptyState(
+                              icon: Icons.receipt_long_outlined,
+                              title: l10n.noMatchingExpenses,
+                              message: l10n.noMatchingMessage,
+                            ),
                           ),
-                        ),
-                        for (final expense in entry.value)
+                        ],
+                      ),
+                    )
+                  : ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                      children: [
+                        for (final entry in _groupByDay(filtered).entries) ...[
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _ExpenseRow(expense: expense),
+                            padding: const EdgeInsets.fromLTRB(2, 14, 2, 10),
+                            child: Row(
+                              children: [
+                                Text(
+                                  formatRelativeDay(
+                                    entry.value.first.date,
+                                    l10n: l10n,
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  _dayTotal(entry.value),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.textMutedDark
+                                        : AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                          for (final expense in entry.value)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _ExpenseRow(expense: expense),
+                            ),
+                        ],
                       ],
-                    ],
-                  ),
+                    ),
+            ),
           ),
         ],
       ),
@@ -478,10 +492,7 @@ class _ExpenseRow extends StatelessWidget {
             ),
             Text(
               formatMoney(expense.amount),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
           ],
         ),

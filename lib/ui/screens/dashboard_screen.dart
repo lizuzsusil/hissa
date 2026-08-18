@@ -43,100 +43,103 @@ class DashboardScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          expandedHeight: 248,
-          backgroundColor: isDark ? AppColors.bgDark : AppColors.bg,
-          flexibleSpace: FlexibleSpaceBar(
-            collapseMode: CollapseMode.pin,
-            background: _Header(
-              space: space,
-              cycle: cycle,
-              members: members,
-              totalSpent: totalSpent,
+    return RefreshIndicator(
+      onRefresh: () => context.read<AppState>().refresh(),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 248,
+            backgroundColor: isDark ? AppColors.bgDark : AppColors.bg,
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
+              background: _Header(
+                space: space,
+                cycle: cycle,
+                members: members,
+                totalSpent: totalSpent,
+              ),
             ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _YourBalanceCard(balances: balances),
-                const SizedBox(height: 16),
-                _QuickActions(proposals: proposals),
-                const SizedBox(height: 24),
-                SectionHeader(title: l10n.spaceBalances),
-                ...members.asMap().entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Reveal(
-                      delay: Duration(milliseconds: 60 * entry.key),
-                      child: _MemberBalanceCard(
-                        member: entry.value,
-                        avatarUrl: state.memberAvatarUrl(entry.value.userId),
-                        balance: balances
-                            .where((b) => b.userId == entry.value.userId)
-                            .firstOrNull,
-                        isYou: entry.value.userId == state.currentUser?.id,
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _YourBalanceCard(balances: balances),
+                  const SizedBox(height: 16),
+                  _QuickActions(proposals: proposals),
+                  const SizedBox(height: 24),
+                  SectionHeader(title: l10n.spaceBalances),
+                  ...members.asMap().entries.map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Reveal(
+                        delay: Duration(milliseconds: 60 * entry.key),
+                        child: _MemberBalanceCard(
+                          member: entry.value,
+                          avatarUrl: state.memberAvatarUrl(entry.value.userId),
+                          balance: balances
+                              .where((b) => b.userId == entry.value.userId)
+                              .firstOrNull,
+                          isYou: entry.value.userId == state.currentUser?.id,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                // Member Groups are financial participants too: surface their
-                // balance so the sheet reconciles (§37).
-                ...state.repo.memberGroups
-                    .where((g) => g.spaceId == space.id && g.isActive)
-                    .map((g) {
-                      final balance = balances
-                          .where((b) => b.userId == g.id)
-                          .firstOrNull;
-                      if (balance == null || balance.balance.isZero) {
-                        return const SizedBox.shrink();
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _GroupBalanceCard(group: g, balance: balance),
-                      );
-                    }),
-                const SizedBox(height: 16),
-                SectionHeader(
-                  title: l10n.recentExpenses,
-                  actionLabel: l10n.viewAll,
-                  onAction: () =>
-                      context.read<ShellTabController>().switchTo(1),
-                ),
-                if (expenses.isEmpty)
-                  EmptyState(
-                    icon: Icons.receipt_long_outlined,
-                    title: l10n.noExpensesYet,
-                    message: l10n.noExpensesMessage,
-                  )
-                else
-                  ...expenses
-                      .take(5)
-                      .toList()
-                      .asMap()
-                      .entries
-                      .map(
-                        (entry) => Padding(
+                  // Member Groups are financial participants too: surface their
+                  // balance so the sheet reconciles (§37).
+                  ...state.repo.memberGroups
+                      .where((g) => g.spaceId == space.id && g.isActive)
+                      .map((g) {
+                        final balance = balances
+                            .where((b) => b.userId == g.id)
+                            .firstOrNull;
+                        if (balance == null || balance.balance.isZero) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
                           padding: const EdgeInsets.only(bottom: 10),
-                          child: Reveal(
-                            delay:
-                                Duration(milliseconds: 60 * entry.key),
-                            child: _ExpenseTile(expense: entry.value),
+                          child: _GroupBalanceCard(group: g, balance: balance),
+                        );
+                      }),
+                  const SizedBox(height: 16),
+                  SectionHeader(
+                    title: l10n.recentExpenses,
+                    actionLabel: l10n.viewAll,
+                    onAction: () =>
+                        context.read<ShellTabController>().switchTo(1),
+                  ),
+                  if (expenses.isEmpty)
+                    EmptyState(
+                      icon: Icons.receipt_long_outlined,
+                      title: l10n.noExpensesYet,
+                      message: l10n.noExpensesMessage,
+                    )
+                  else
+                    ...expenses
+                        .take(5)
+                        .toList()
+                        .asMap()
+                        .entries
+                        .map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Reveal(
+                              delay: Duration(milliseconds: 60 * entry.key),
+                              child: _ExpenseTile(expense: entry.value),
+                            ),
                           ),
                         ),
-                      ),
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -558,7 +561,10 @@ class _QuickActions extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: AppColors.heroGradient,
                 borderRadius: BorderRadius.circular(18),
-                boxShadow: cardShadow(color: AppColors.primaryDeep, opacity: 0.25),
+                boxShadow: cardShadow(
+                  color: AppColors.primaryDeep,
+                  opacity: 0.25,
+                ),
               ),
               child: Row(
                 children: [
@@ -885,12 +891,9 @@ class _ExpenseTile extends StatelessWidget {
                 ],
               ),
             ),
-Text(
+            Text(
               formatMoney(expense.amount),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
           ],
         ),

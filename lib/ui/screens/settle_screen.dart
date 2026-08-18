@@ -25,73 +25,81 @@ class SettleScreen extends StatelessWidget {
     final history = state.settlementsInCycle;
     final hasExpenses = state.expensesInCycle.isNotEmpty;
     final totalOutstanding = balances.fold<int>(
-        0, (sum, b) => sum + (b.remaining.isNegative ? -b.remaining.paisa : 0));
+      0,
+      (sum, b) => sum + (b.remaining.isNegative ? -b.remaining.paisa : 0),
+    );
     final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settleUp)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-        children: [
-          if (proposals.isEmpty)
-            // With no expenses at all there is nothing to settle, so a plain
-            // "All settled up!" would be misleading.
-            if (hasExpenses)
-              _AllSettledCard(totalOutstanding: Money(totalOutstanding))
-            else
-              const _NothingToSettleCard()
-          else ...[
-            _OutstandingCard(totalOutstanding: Money(totalOutstanding)),
-            const SizedBox(height: 20),
-            SectionHeader(title: l10n.whoOwesWhom),
-            const SizedBox(height: 4),
-            for (final proposal in proposals)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Reveal(child: _ProposalCard(proposal: proposal)),
-              ),
-          ],
-          if (proposals.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.warningSoft,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.lightbulb_outline_rounded,
-                      color: AppColors.warning),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l10n.settleHint,
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: AppColors.warning,
-                        fontWeight: FontWeight.w500,
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+          children: [
+            if (proposals.isEmpty)
+              // With no expenses at all there is nothing to settle, so a plain
+              // "All settled up!" would be misleading.
+              if (hasExpenses)
+                _AllSettledCard(totalOutstanding: Money(totalOutstanding))
+              else
+                const _NothingToSettleCard()
+            else ...[
+              _OutstandingCard(totalOutstanding: Money(totalOutstanding)),
+              const SizedBox(height: 20),
+              SectionHeader(title: l10n.whoOwesWhom),
+              const SizedBox(height: 4),
+              for (final proposal in proposals)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Reveal(child: _ProposalCard(proposal: proposal)),
+                ),
+            ],
+            if (proposals.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.warningSoft,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.lightbulb_outline_rounded,
+                      color: AppColors.warning,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l10n.settleHint,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: AppColors.warning,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
+            if (history.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              SectionHeader(title: l10n.settlementHistory),
+              const SizedBox(height: 4),
+              for (final settlement in history)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _HistoryRow(settlement: settlement),
+                ),
+            ],
+            if (proposals.isEmpty && history.isEmpty)
+              const SizedBox(height: 24),
           ],
-          if (history.isNotEmpty) ...[
-            const SizedBox(height: 28),
-            SectionHeader(title: l10n.settlementHistory),
-            const SizedBox(height: 4),
-            for (final settlement in history)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _HistoryRow(settlement: settlement),
-              ),
-          ],
-          if (proposals.isEmpty && history.isEmpty)
-            const SizedBox(height: 24),
-        ],
+        ),
       ),
     );
   }
@@ -127,8 +135,11 @@ class _OutstandingCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(17),
             ),
-            child: const Icon(Icons.swap_horiz_rounded,
-                color: Colors.white, size: 28),
+            child: const Icon(
+              Icons.swap_horiz_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -193,8 +204,11 @@ class _AllSettledCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(Icons.check_rounded,
-                color: AppColors.positive, size: 40),
+            child: const Icon(
+              Icons.check_rounded,
+              color: AppColors.positive,
+              size: 40,
+            ),
           ),
           const SizedBox(height: 18),
           Text(
@@ -305,7 +319,9 @@ class _ProposalCard extends StatelessWidget {
                 Text(
                   l10n.owes(fromName, toName),
                   style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w700),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -322,8 +338,7 @@ class _ProposalCard extends StatelessWidget {
           PressableScale(
             onTap: () => _openSettlement(context, state),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
@@ -383,10 +398,7 @@ class _AvatarPair extends StatelessWidget {
       height: 42,
       child: Stack(
         children: [
-          Positioned(
-            left: 0,
-            child: MemberAvatar(name: fromName, size: 40),
-          ),
+          Positioned(left: 0, child: MemberAvatar(name: fromName, size: 40)),
           Positioned(
             right: 0,
             child: MemberAvatar(name: toName, size: 40, outline: true),
@@ -420,8 +432,11 @@ class _HistoryRow extends StatelessWidget {
               color: AppColors.positive.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: const Icon(Icons.check_circle_outline_rounded,
-                color: AppColors.positive, size: 22),
+            child: const Icon(
+              Icons.check_circle_outline_rounded,
+              color: AppColors.positive,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -431,7 +446,9 @@ class _HistoryRow extends StatelessWidget {
                 Text(
                   l10n.fromTo(fromName, toName),
                   style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w700),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(

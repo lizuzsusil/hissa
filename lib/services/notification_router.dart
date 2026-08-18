@@ -7,6 +7,7 @@ import '../ui/screens/expense_detail_screen.dart';
 import '../ui/screens/expenses_screen.dart';
 import '../ui/screens/member_groups_screen.dart';
 import '../ui/screens/notifications_screen.dart';
+import '../ui/screens/pending_join_screen.dart';
 import '../ui/screens/settle_screen.dart';
 import '../ui/screens/space_screen.dart';
 
@@ -22,10 +23,7 @@ class NotificationRouter {
   final AppState state;
   Map<String, dynamic>? _pending;
 
-  NotificationRouter({
-    required this.navigatorKey,
-    required this.state,
-  });
+  NotificationRouter({required this.navigatorKey, required this.state});
 
   /// Defers a deep link until the app flow is ready to honour it.
   void buffer(Map<String, dynamic> data) {
@@ -52,7 +50,14 @@ class NotificationRouter {
     if (type == null) return;
 
     final spaceId = data['spaceId'] as String?;
-    if (spaceId != null && state.spaces.any((s) => s.id == spaceId)) {
+    // A Space the user requested to join but is still awaiting approval is not
+    // enterable: never select it (selectSpace already refuses, but we must not
+    // even switch the dashboard's selected Space behind the scenes).
+    final pendingSpaceId =
+        spaceId != null && state.isPendingSpace(spaceId) ? spaceId : null;
+    if (spaceId != null &&
+        pendingSpaceId == null &&
+        state.spaces.any((s) => s.id == spaceId)) {
       if (state.space?.id != spaceId) {
         await state.selectSpace(spaceId);
       }
@@ -65,10 +70,20 @@ class NotificationRouter {
       return;
     }
 
+    // While the join/invitation request is still pending, the requester must
+    // see the pending-approval state for that Space — not be dropped into
+    // their currently selected Space.
+    if (pendingSpaceId != null) {
+      nav.push(
+        MaterialPageRoute<void>(
+          builder: (_) => PendingJoinScreen(spaceId: pendingSpaceId),
+        ),
+      );
+      return;
+    }
+
     nav.push(
-      MaterialPageRoute<void>(
-        builder: (_) => _targetScreen(type, data),
-      ),
+      MaterialPageRoute<void>(builder: (_) => _targetScreen(type, data)),
     );
   }
 

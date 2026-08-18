@@ -52,40 +52,44 @@ class InsightsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.insights)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-        children: [
-          if (cycles.length > 1) ...[
-            SectionHeader(title: l10n.monthlySpending),
-            _MonthlyBarChart(data: monthlyData.reversed.toList()),
-            const SizedBox(height: 24),
-          ],
-          if (cycle != null) ...[
-            SectionHeader(
-              title: l10n.cycleNameByCategory(cycle.name),
-              actionLabel: l10n.cycle,
-              onAction: () => _showCyclePicker(context, state, cycles),
-            ),
-            _CategoryPie(categories: categories, categoryData: categoryData),
-            const SizedBox(height: 24),
-            SectionHeader(title: l10n.whoPaidThisCycle),
-            const SizedBox(height: 4),
-            for (final m in members)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _MemberPaidRow(
-                  name: m.name,
-                  paid: memberPaid[m.userId] ?? Money.zero(),
-                  total: cycleBalances.fold<int>(
-                    0,
-                    (sum, b) => sum + b.paid.paisa,
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+          children: [
+            if (cycles.length > 1) ...[
+              SectionHeader(title: l10n.monthlySpending),
+              _MonthlyBarChart(data: monthlyData.reversed.toList()),
+              const SizedBox(height: 24),
+            ],
+            if (cycle != null) ...[
+              SectionHeader(
+                title: l10n.cycleNameByCategory(cycle.name),
+                actionLabel: l10n.cycle,
+                onAction: () => _showCyclePicker(context, state, cycles),
+              ),
+              _CategoryPie(categories: categories, categoryData: categoryData),
+              const SizedBox(height: 24),
+              SectionHeader(title: l10n.whoPaidThisCycle),
+              const SizedBox(height: 4),
+              for (final m in members)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _MemberPaidRow(
+                    name: m.name,
+                    paid: memberPaid[m.userId] ?? Money.zero(),
+                    total: cycleBalances.fold<int>(
+                      0,
+                      (sum, b) => sum + b.paid.paisa,
+                    ),
                   ),
                 ),
-              ),
-            const SizedBox(height: 12),
-            _SummaryRow(cycles: cycles),
+              const SizedBox(height: 12),
+              _SummaryRow(cycles: cycles),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -207,19 +211,23 @@ class _PersonalInsights extends StatelessWidget {
     final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.insights)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-        children: [
-          if (monthlyData.length > 1) ...[
-            SectionHeader(title: l10n.monthlySpending),
-            _MonthlyBarChart(data: monthlyData),
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+          children: [
+            if (monthlyData.length > 1) ...[
+              SectionHeader(title: l10n.monthlySpending),
+              _MonthlyBarChart(data: monthlyData),
+              const SizedBox(height: 24),
+            ],
+            SectionHeader(title: l10n.categoryBreakdown),
+            _CategoryPie(categories: categories, categoryData: categoryData),
             const SizedBox(height: 24),
+            const _SummaryRow(cycles: null),
           ],
-          SectionHeader(title: l10n.categoryBreakdown),
-          _CategoryPie(categories: categories, categoryData: categoryData),
-          const SizedBox(height: 24),
-          const _SummaryRow(cycles: null),
-        ],
+        ),
       ),
     );
   }
@@ -315,8 +323,8 @@ class _MonthlyBarChart extends StatelessWidget {
                         BarChartRodData(
                           toY: data[i].total.major,
                           width: 22,
-                          gradient: AppGradients.barChart[
-                              i % AppGradients.barChart.length],
+                          gradient: AppGradients
+                              .barChart[i % AppGradients.barChart.length],
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(8),
                           ),
@@ -337,8 +345,8 @@ class _MonthlyBarChart extends StatelessWidget {
                     width: 9,
                     height: 9,
                     decoration: BoxDecoration(
-                      gradient: AppGradients.barChart[
-                          entry.key % AppGradients.barChart.length],
+                      gradient: AppGradients
+                          .barChart[entry.key % AppGradients.barChart.length],
                       shape: BoxShape.circle,
                     ),
                   ),

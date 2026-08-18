@@ -37,168 +37,174 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-        children: [
-          _ProfileCard(
-            name: user?.name ?? 'User',
-            email: user?.email ?? '',
-            avatarUrl: user?.avatarUrl,
-            onTap: () => _push(context, ProfileScreen()),
-          ),
-          const SizedBox(height: 24),
-          if (onOpenSpaces != null) ...[
-            SectionHeader(title: l10n.mySpaces),
-            _SettingTile(
-              icon: Icons.workspaces_outline,
-              title: l10n.switchSpace,
-              subtitle: l10n.switchSpaceSubtitle,
-              onTap: onOpenSpaces,
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          children: [
+            _ProfileCard(
+              name: user?.name ?? 'User',
+              email: user?.email ?? '',
+              avatarUrl: user?.avatarUrl,
+              onTap: () => _push(context, ProfileScreen()),
             ),
             const SizedBox(height: 24),
-          ],
-          SectionHeader(title: l10n.space),
-          _SettingTile(
-            icon: Icons.home_work_outlined,
-            title: l10n.spaceAndMembers,
-            subtitle: space?.name ?? l10n.noSpace,
-            onTap: () => _push(context, SpaceScreen()),
-          ),
-          _SettingTile(
-            icon: Icons.category_outlined,
-            title: l10n.categories,
-            subtitle: '${state.categories.length} categories',
-            onTap: () => _push(context, CategoriesScreen()),
-          ),
-          if (!state.isPersonalMode) ...[
-            const SizedBox(height: 24),
-            SectionHeader(title: l10n.spendingCycle),
+            if (onOpenSpaces != null) ...[
+              SectionHeader(title: l10n.mySpaces),
+              _SettingTile(
+                icon: Icons.workspaces_outline,
+                title: l10n.switchSpace,
+                subtitle: l10n.switchSpaceSubtitle,
+                onTap: onOpenSpaces,
+              ),
+              const SizedBox(height: 24),
+            ],
+            SectionHeader(title: l10n.space),
             _SettingTile(
-              icon: Icons.event_available_outlined,
-              title: l10n.currentCycle,
-              subtitle: cycle?.name ?? l10n.noActiveCycle,
-              onTap: cycle == null
-                  ? null
-                  : () => _showCycleDialog(context, state),
+              icon: Icons.home_work_outlined,
+              title: l10n.spaceAndMembers,
+              subtitle: space?.name ?? l10n.noSpace,
+              onTap: () => _push(context, SpaceScreen()),
             ),
-            if (state.closedCycles.isNotEmpty) ...[
+            _SettingTile(
+              icon: Icons.category_outlined,
+              title: l10n.categories,
+              subtitle: '${state.categories.length} categories',
+              onTap: () => _push(context, CategoriesScreen()),
+            ),
+            if (!state.isPersonalMode) ...[
+              const SizedBox(height: 24),
+              SectionHeader(title: l10n.spendingCycle),
               _SettingTile(
-                icon: Icons.history_rounded,
-                title: l10n.previousCycles,
-                subtitle: l10n.previousCyclesCount(state.closedCycles.length),
-                onTap: () => _push(context, PreviousCyclesScreen()),
+                icon: Icons.event_available_outlined,
+                title: l10n.currentCycle,
+                subtitle: cycle?.name ?? l10n.noActiveCycle,
+                onTap: cycle == null
+                    ? null
+                    : () => _showCycleDialog(context, state),
               ),
+              if (state.closedCycles.isNotEmpty) ...[
+                _SettingTile(
+                  icon: Icons.history_rounded,
+                  title: l10n.previousCycles,
+                  subtitle: l10n.previousCyclesCount(state.closedCycles.length),
+                  onTap: () => _push(context, PreviousCyclesScreen()),
+                ),
+              ],
+              if (state.isOwner) ...[
+                _SettingTile(
+                  icon: Icons.lock_outline_rounded,
+                  title: cycle?.status == CycleStatus.closed
+                      ? l10n.startNewCycle
+                      : l10n.closeCurrentCycle,
+                  subtitle: l10n.ownersCanManage,
+                  onTap: () => _handleCycleAction(context, state),
+                ),
+              ],
             ],
-            if (state.isOwner) ...[
-              _SettingTile(
-                icon: Icons.lock_outline_rounded,
-                title: cycle?.status == CycleStatus.closed
-                    ? l10n.startNewCycle
-                    : l10n.closeCurrentCycle,
-                subtitle: l10n.ownersCanManage,
-                onTap: () => _handleCycleAction(context, state),
-              ),
-            ],
-          ],
-          const SizedBox(height: 24),
-          SectionHeader(title: l10n.data),
-          _SettingTile(
-            icon: Icons.download_outlined,
-            title: l10n.export,
-            subtitle: l10n.csvOfCurrentCycle,
-            onTap: () => _push(context, ExportScreen()),
-          ),
-          _SettingTile(
-            icon: Icons.notifications_outlined,
-            title: l10n.notifications,
-            subtitle: l10n.notificationsSubtitle,
-            trailing: state.unreadNotificationCount > 0
-                ? Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${state.unreadNotificationCount}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+            const SizedBox(height: 24),
+            SectionHeader(title: l10n.data),
+            _SettingTile(
+              icon: Icons.download_outlined,
+              title: l10n.export,
+              subtitle: l10n.csvOfCurrentCycle,
+              onTap: () => _push(context, ExportScreen()),
+            ),
+            _SettingTile(
+              icon: Icons.notifications_outlined,
+              title: l10n.notifications,
+              subtitle: l10n.notificationsSubtitle,
+              trailing: state.unreadNotificationCount > 0
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
                       ),
-                    ),
-                  )
-                : null,
-            onTap: () => _showNotifications(context),
-          ),
-          const SizedBox(height: 24),
-          SectionHeader(title: l10n.appearance),
-          _SettingTile(
-            icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-            title: l10n.darkMode,
-            subtitle: isDark ? l10n.onValue : l10n.offValue,
-            trailing: Switch(
-              value: isDark,
-              onChanged: (v) {
-                context.read<ThemeModeController>().setMode(
-                  v ? ThemeMode.dark : ThemeMode.light,
-                );
-              },
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${state.unreadNotificationCount}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : null,
+              onTap: () => _showNotifications(context),
             ),
-            onTap: null,
-          ),
-          _SettingTile(
-            icon: Icons.language_rounded,
-            title: l10n.language,
-            subtitle: l10n.languageSubtitle,
-            onTap: () =>
-                _showLanguagePicker(context, context.read<LocaleController>()),
-          ),
-          const SizedBox(height: 24),
-          SectionHeader(title: l10n.security),
-          if (biometrics.supported)
+            const SizedBox(height: 24),
+            SectionHeader(title: l10n.appearance),
             _SettingTile(
-              icon: Icons.fingerprint_rounded,
-              title: l10n.biometricLogin,
-              subtitle: biometrics.enabled ? l10n.onValue : l10n.offValue,
+              icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+              title: l10n.darkMode,
+              subtitle: isDark ? l10n.onValue : l10n.offValue,
               trailing: Switch(
-                value: biometrics.enabled,
-                onChanged: (v) => _toggleBiometric(context, biometrics, v),
+                value: isDark,
+                onChanged: (v) {
+                  context.read<ThemeModeController>().setMode(
+                    v ? ThemeMode.dark : ThemeMode.light,
+                  );
+                },
               ),
               onTap: null,
             ),
-          const SizedBox(height: 24),
-          _SettingTile(
-            icon: Icons.logout_rounded,
-            title: l10n.signOut,
-            subtitle: l10n.signOutSubtitle,
-            destructive: true,
-            onTap: () => _confirmSignOut(context, state),
-          ),
-          const SizedBox(height: 32),
-          Center(
-            child: Text(
-              l10n.appName,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+            _SettingTile(
+              icon: Icons.language_rounded,
+              title: l10n.language,
+              subtitle: l10n.languageSubtitle,
+              onTap: () => _showLanguagePicker(
+                context,
+                context.read<LocaleController>(),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              l10n.version,
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+            const SizedBox(height: 24),
+            SectionHeader(title: l10n.security),
+            if (biometrics.supported)
+              _SettingTile(
+                icon: Icons.fingerprint_rounded,
+                title: l10n.biometricLogin,
+                subtitle: biometrics.enabled ? l10n.onValue : l10n.offValue,
+                trailing: Switch(
+                  value: biometrics.enabled,
+                  onChanged: (v) => _toggleBiometric(context, biometrics, v),
+                ),
+                onTap: null,
+              ),
+            const SizedBox(height: 24),
+            _SettingTile(
+              icon: Icons.logout_rounded,
+              title: l10n.signOut,
+              subtitle: l10n.signOutSubtitle,
+              destructive: true,
+              onTap: () => _confirmSignOut(context, state),
+            ),
+            const SizedBox(height: 32),
+            Center(
+              child: Text(
+                l10n.appName,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Center(
+              child: Text(
+                l10n.version,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -320,8 +326,7 @@ class SettingsScreen extends StatelessWidget {
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, size: 20),
                           tooltip: context.l10n.renameCycle,
-                          onPressed: () =>
-                              _renameCycle(sheetContext, state, c),
+                          onPressed: () => _renameCycle(sheetContext, state, c),
                         ),
                         const SizedBox(width: 4),
                       ],
@@ -391,9 +396,9 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showNotifications(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
   }
 
   void _confirmSignOut(BuildContext context, AppState state) async {

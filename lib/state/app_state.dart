@@ -1024,9 +1024,7 @@ class AppState extends ChangeNotifier {
   List<Cycle> get closedCycles {
     if (_spaceId == null) return const [];
     return _repo.cycles
-        .where(
-          (c) => c.spaceId == _spaceId && c.status == CycleStatus.closed,
-        )
+        .where((c) => c.spaceId == _spaceId && c.status == CycleStatus.closed)
         .toList()
       ..sort((a, b) => b.startDate.compareTo(a.startDate));
   }
@@ -1154,7 +1152,11 @@ class AppState extends ChangeNotifier {
     if (active == null) return;
     final now = DateTime.now();
     final currentMonth = DateTime(now.year, now.month, 1);
-    final activeMonth = DateTime(active.startDate.year, active.startDate.month, 1);
+    final activeMonth = DateTime(
+      active.startDate.year,
+      active.startDate.month,
+      1,
+    );
     if (activeMonth.isAtSameMomentAs(currentMonth)) return;
     await _repo.saveCycle(
       active.copyWith(status: CycleStatus.closed, closedAt: now),
@@ -1636,8 +1638,9 @@ class AppState extends ChangeNotifier {
   DateTime get notificationsReadAt =>
       _notificationsReadAt ?? DateTime.fromMillisecondsSinceEpoch(0);
 
-  int get unreadNotificationCount =>
-      notifications.where((n) => n.createdAt.isAfter(notificationsReadAt)).length;
+  int get unreadNotificationCount => notifications
+      .where((n) => n.createdAt.isAfter(notificationsReadAt))
+      .length;
 
   /// Marks every notification currently in the inbox as read.
   Future<void> markNotificationsRead() async {
@@ -1666,8 +1669,7 @@ class AppState extends ChangeNotifier {
       return;
     }
     final me = currentUser;
-    final actorName =
-        me?.name.isNotEmpty == true
+    final actorName = me?.name.isNotEmpty == true
         ? me!.name
         : (memberName(actorId) ?? 'A member');
     // Notifications are best-effort side-effects: a denied or failed write must
@@ -1692,7 +1694,10 @@ class AppState extends ChangeNotifier {
   }
 
   /// Notifies every other Space member that an expense was added or updated.
-  Future<void> _notifyExpenseChanged(Expense expense, {required bool updated}) async {
+  Future<void> _notifyExpenseChanged(
+    Expense expense, {
+    required bool updated,
+  }) async {
     final actorId = _currentUserId;
     for (final m in members) {
       if (m.userId == actorId) continue;
@@ -1753,6 +1758,21 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       notifyListeners();
       return const [];
+    }
+  }
+
+  /// Universal pull-to-refresh entry point. Re-queries the user's membership
+  /// Spaces and pending join requests, and — when running against Firestore —
+  /// reloads the currently selected Space's data by re-attaching the
+  /// repository. Safe in tests: with an [InMemoryRepository] it only refreshes
+  /// the membership lists.
+  Future<void> refresh() async {
+    await refreshSpaces();
+    await refreshPendingSpaceJoinRequests();
+    if (_repo is FirestoreRepository &&
+        _currentUserId != null &&
+        _spaceId != null) {
+      await _attachRepository();
     }
   }
 

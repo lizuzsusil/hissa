@@ -65,66 +65,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profile)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-        children: [
-          Center(
-            child: MemberAvatar(
-              name: name,
-              avatarUrl: user?.avatarUrl,
-              size: 96,
-              outline: true,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              user?.email ?? '',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          children: [
+            Center(
+              child: MemberAvatar(
+                name: name,
+                avatarUrl: user?.avatarUrl,
+                size: 96,
+                outline: true,
               ),
             ),
-          ),
-          const SizedBox(height: 28),
-          Text(
-            l10n.displayName,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _nameController,
-            focusNode: _nameFocus,
-            enabled: !_saving,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.badge_outlined, size: 18),
-              errorText: _nameError,
+            const SizedBox(height: 16),
+            Center(
+              child: Text(
+                user?.email ?? '',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondary,
+                ),
+              ),
             ),
-            onChanged: (_) {
-              setState(() {
-                if (_nameError != null) _nameError = null;
-              });
-            },
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.displayNameHint,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+            const SizedBox(height: 28),
+            Text(
+              l10n.displayName,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
-          ),
-          const SizedBox(height: 28),
-          PrimaryButton(
-            label: l10n.saveChanges,
-            icon: Icons.save_rounded,
-            loading: _saving,
-            onPressed: _nameController.text.trim().isEmpty ? null : _save,
-          ),
-        ],
+            const SizedBox(height: 8),
+            TextField(
+              controller: _nameController,
+              focusNode: _nameFocus,
+              enabled: !_saving,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.badge_outlined, size: 18),
+                errorText: _nameError,
+              ),
+              onChanged: (_) {
+                setState(() {
+                  if (_nameError != null) _nameError = null;
+                });
+              },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.displayNameHint,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+              ),
+            ),
+            const SizedBox(height: 28),
+            PrimaryButton(
+              label: l10n.saveChanges,
+              icon: Icons.save_rounded,
+              loading: _saving,
+              onPressed: _nameController.text.trim().isEmpty ? null : _save,
+            ),
+          ],
+        ),
       ),
     );
   }

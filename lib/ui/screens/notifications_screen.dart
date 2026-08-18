@@ -31,30 +31,41 @@ class NotificationsScreen extends StatelessWidget {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.notifications),
-        centerTitle: false,
+      appBar: AppBar(title: Text(l10n.notifications), centerTitle: false),
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: notifications.isEmpty
+            ? LayoutBuilder(
+                builder: (context, constraints) => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: constraints.maxHeight,
+                      child: EmptyState(
+                        icon: Icons.notifications_none_rounded,
+                        title: l10n.noNotifications,
+                        message: l10n.noNotificationsMessage,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                itemCount: notifications.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final note = notifications[index];
+                  final unread = note.createdAt.isAfter(readAt);
+                  return _NotificationTile(
+                    notification: note,
+                    unread: unread,
+                    onTap: () => _openNotification(context, note),
+                  );
+                },
+              ),
       ),
-      body: notifications.isEmpty
-          ? EmptyState(
-              icon: Icons.notifications_none_rounded,
-              title: l10n.noNotifications,
-              message: l10n.noNotificationsMessage,
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              itemCount: notifications.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final note = notifications[index];
-                final unread = note.createdAt.isAfter(readAt);
-                return _NotificationTile(
-                  notification: note,
-                  unread: unread,
-                  onTap: () => _openNotification(context, note),
-                );
-              },
-            ),
     );
   }
 
@@ -166,9 +177,11 @@ class _NotificationTile extends StatelessWidget {
     return switch (type) {
       NotificationType.expenseAdded => l10n.notificationExpenseAdded,
       NotificationType.expenseUpdated => l10n.notificationExpenseUpdated,
-      NotificationType.settlementRecorded => l10n.notificationSettlementRecorded,
+      NotificationType.settlementRecorded =>
+        l10n.notificationSettlementRecorded,
       NotificationType.spaceInvited => l10n.notificationSpaceInvited,
-      NotificationType.spaceJoinRequested => l10n.notificationSpaceJoinRequested,
+      NotificationType.spaceJoinRequested =>
+        l10n.notificationSpaceJoinRequested,
       NotificationType.spaceJoinApproved => l10n.notificationSpaceJoinApproved,
       NotificationType.spaceJoinRejected => l10n.notificationSpaceJoinRejected,
       NotificationType.groupRequested => l10n.notificationGroupRequested,

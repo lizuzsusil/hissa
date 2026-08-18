@@ -57,87 +57,88 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          expandedHeight: 248,
-          backgroundColor: isDark ? AppColors.bgDark : AppColors.bg,
-          flexibleSpace: FlexibleSpaceBar(
-            collapseMode: CollapseMode.pin,
-            background: _Header(
-              space: space,
-              month: _month,
-              total: total,
-              delta: delta,
-              previousMonth: _previousMonth,
-              onPreviousMonth: () => setState(
-                () => _month = DateTime(_month.year, _month.month - 1, 1),
-              ),
-              onNextMonth: () => setState(
-                () => _month = DateTime(_month.year, _month.month + 1, 1),
+    return RefreshIndicator(
+      onRefresh: () => context.read<AppState>().refresh(),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 248,
+            backgroundColor: isDark ? AppColors.bgDark : AppColors.bg,
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
+              background: _Header(
+                space: space,
+                month: _month,
+                total: total,
+                delta: delta,
+                previousMonth: _previousMonth,
+                onPreviousMonth: () => setState(
+                  () => _month = DateTime(_month.year, _month.month - 1, 1),
+                ),
+                onNextMonth: () => setState(
+                  () => _month = DateTime(_month.year, _month.month + 1, 1),
+                ),
               ),
             ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _MonthSpendingCard(
-                  total: total,
-                  previous: previous,
-                  previousMonth: _previousMonth,
-                ),
-                const SizedBox(height: 16),
-                _AddExpenseButton(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ExpenseFormScreen(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-                SectionHeader(
-                  title: l10n.recentExpenses,
-                  actionLabel: l10n.viewAll,
-                  onAction: () =>
-                      context.read<ShellTabController>().switchTo(1),
-                ),
-                if (expenses.isEmpty)
-                  EmptyState(
-                    icon: Icons.receipt_long_outlined,
-                    title: l10n.noExpensesYet,
-                    message: l10n.noExpensesMessage,
-                  )
-                else
-                  ...expenses
-                      .take(8)
-                      .toList()
-                      .asMap()
-                      .entries
-                      .map(
-                        (entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Reveal(
-                            delay:
-                                Duration(milliseconds: 60 * entry.key),
-                            child: _PersonalExpenseTile(
-                              expense: entry.value,
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _MonthSpendingCard(
+                    total: total,
+                    previous: previous,
+                    previousMonth: _previousMonth,
+                  ),
+                  const SizedBox(height: 16),
+                  _AddExpenseButton(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ExpenseFormScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SectionHeader(
+                    title: l10n.recentExpenses,
+                    actionLabel: l10n.viewAll,
+                    onAction: () =>
+                        context.read<ShellTabController>().switchTo(1),
+                  ),
+                  if (expenses.isEmpty)
+                    EmptyState(
+                      icon: Icons.receipt_long_outlined,
+                      title: l10n.noExpensesYet,
+                      message: l10n.noExpensesMessage,
+                    )
+                  else
+                    ...expenses
+                        .take(8)
+                        .toList()
+                        .asMap()
+                        .entries
+                        .map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Reveal(
+                              delay: Duration(milliseconds: 60 * entry.key),
+                              child: _PersonalExpenseTile(expense: entry.value),
                             ),
                           ),
                         ),
-                      ),
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -380,7 +381,10 @@ class _MonthSpendingCard extends StatelessWidget {
                 AnimatedMoney(
                   paisa: total.paisa,
                   formatter: (p) => formatMoney(Money(p)),
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
@@ -517,10 +521,7 @@ class _PersonalExpenseTile extends StatelessWidget {
             ),
             Text(
               formatMoney(expense.amount),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
           ],
         ),

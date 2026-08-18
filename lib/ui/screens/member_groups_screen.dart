@@ -65,46 +65,50 @@ class MemberGroupsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.memberGroups)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-        children: [
-          if (pendingRequests.isNotEmpty)
-            _PendingRequestsSection(requests: pendingRequests, state: state),
-          if (activeGroups.isEmpty) ...[
-            _EmptyState(
-              onCreate: canCreate
-                  ? () => _openCreateGroupSheet(context, state)
-                  : null,
-              canCreate: canCreate,
-              groupsUnavailable: !groupsApplicable,
-              onRequest: canRequest
-                  ? () => _openRequestGroupSheet(context, state)
-                  : null,
-              canRequest: canRequest,
-              ownerAlreadyGrouped: ownerAlreadyGrouped,
-              hasPendingRequest: hasPendingRequest,
-            ),
-          ] else ...[
-            for (final group in activeGroups)
-              _GroupCard(group: group, state: state, isDark: isDark),
-            if (canCreate) ...[
-              const SizedBox(height: 20),
-              PrimaryButton(
-                label: l10n.createGroup,
-                icon: Icons.add_rounded,
-                onPressed: () => _openCreateGroupSheet(context, state),
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          children: [
+            if (pendingRequests.isNotEmpty)
+              _PendingRequestsSection(requests: pendingRequests, state: state),
+            if (activeGroups.isEmpty) ...[
+              _EmptyState(
+                onCreate: canCreate
+                    ? () => _openCreateGroupSheet(context, state)
+                    : null,
+                canCreate: canCreate,
+                groupsUnavailable: !groupsApplicable,
+                onRequest: canRequest
+                    ? () => _openRequestGroupSheet(context, state)
+                    : null,
+                canRequest: canRequest,
+                ownerAlreadyGrouped: ownerAlreadyGrouped,
+                hasPendingRequest: hasPendingRequest,
               ),
-            ],
-            if (canRequest) ...[
-              const SizedBox(height: 12),
-              PrimaryButton(
-                label: l10n.requestGroup,
-                icon: Icons.outbox_rounded,
-                onPressed: () => _openRequestGroupSheet(context, state),
-              ),
+            ] else ...[
+              for (final group in activeGroups)
+                _GroupCard(group: group, state: state, isDark: isDark),
+              if (canCreate) ...[
+                const SizedBox(height: 20),
+                PrimaryButton(
+                  label: l10n.createGroup,
+                  icon: Icons.add_rounded,
+                  onPressed: () => _openCreateGroupSheet(context, state),
+                ),
+              ],
+              if (canRequest) ...[
+                const SizedBox(height: 12),
+                PrimaryButton(
+                  label: l10n.requestGroup,
+                  icon: Icons.outbox_rounded,
+                  onPressed: () => _openRequestGroupSheet(context, state),
+                ),
+              ],
             ],
           ],
-        ],
+        ),
       ),
     );
   }
