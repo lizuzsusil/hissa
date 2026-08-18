@@ -198,25 +198,33 @@ service cloud.firestore {
       allow read: if signedIn()
         && memberOf(resource.data.spaceId);
 
-      // Only the group owner may add a member, the target user must belong to
-      // the same Space as the group, and the target must not already be a
-      // member (uniqueness is enforced by the composite doc id).
+      // The group owner or the Space owner may add a member. The Space owner
+      // needs this when approving a group request (the group is owned by the
+      // requester, not the owner), and the target must belong to the same
+      // Space as the group and must not already be a member (uniqueness is
+      // enforced by the composite doc id).
       allow create: if signedIn()
         && memberOf(request.resource.data.spaceId)
         && groupInSpace(
           request.resource.data.spaceId,
           request.resource.data.groupId
         )
-        && groupOwner(request.resource.data.groupId)
+        && (
+          groupOwner(request.resource.data.groupId)
+          || spaceOwner(request.resource.data.spaceId)
+        )
         && memberById(
           request.resource.data.spaceId,
           request.resource.data.userId
         );
 
-      // Only the group owner may remove a member.
+      // Only the group owner or the Space owner may remove a member.
       allow delete: if signedIn()
         && memberOf(resource.data.spaceId)
-        && groupOwner(resource.data.groupId);
+        && (
+          groupOwner(resource.data.groupId)
+          || spaceOwner(resource.data.spaceId)
+        );
     }
 
     match /groupRequests/{requestId} {

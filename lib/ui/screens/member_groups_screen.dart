@@ -7,10 +7,8 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
-import '../widgets/buttons.dart'
-    show PrimaryButton;
-import '../widgets/misc.dart'
-    show SectionHeader;
+import '../widgets/buttons.dart' show PrimaryButton;
+import '../widgets/misc.dart' show SectionHeader;
 import '../widgets/misc.dart';
 import '../widgets/toasts.dart';
 
@@ -31,17 +29,21 @@ class MemberGroupsScreen extends StatelessWidget {
     // Rule 3 / Rule 11: groups need at least three members to be meaningful.
     final groupsApplicable = state.memberGroupsApplicable;
 
-    final groups = state.repo.memberGroups
-        .where((g) => g.spaceId == currentSpaceId)
-        .toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final groups =
+        state.repo.memberGroups
+            .where((g) => g.spaceId == currentSpaceId)
+            .toList()
+          ..sort(
+            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+          );
 
     final activeGroups = groups.where((g) => g.isActive).toList();
 
     // The owner can create groups only when the space is big enough, and only
     // one group of their own: the owner cannot belong to multiple groups.
-    final ownerAlreadyGrouped =
-        state.groupedUserIds.contains(state.currentUserId);
+    final ownerAlreadyGrouped = state.groupedUserIds.contains(
+      state.currentUserId,
+    );
     final canCreate = isOwner && groupsApplicable && !ownerAlreadyGrouped;
 
     // Non-owners can request a group for the owner to create (Rule 4).
@@ -67,10 +69,7 @@ class MemberGroupsScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         children: [
           if (pendingRequests.isNotEmpty)
-            _PendingRequestsSection(
-              requests: pendingRequests,
-              state: state,
-            ),
+            _PendingRequestsSection(requests: pendingRequests, state: state),
           if (activeGroups.isEmpty) ...[
             _EmptyState(
               onCreate: canCreate
@@ -120,7 +119,8 @@ class MemberGroupsScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (sheetContext) => CreateGroupSheet(spaceId: state.space?.id ?? ''),
+      builder: (sheetContext) =>
+          CreateGroupSheet(spaceId: state.space?.id ?? ''),
     );
   }
 
@@ -189,7 +189,9 @@ class _EmptyState extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.primary.withValues(alpha: 0.15) : AppColors.primary.withValues(alpha: 0.08),
+              color: isDark
+                  ? AppColors.primary.withValues(alpha: 0.15)
+                  : AppColors.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -215,7 +217,9 @@ class _EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
               ),
             ),
           ),
@@ -245,10 +249,7 @@ class _PendingRequestsSection extends StatelessWidget {
   final List<GroupRequest> requests;
   final AppState state;
 
-  const _PendingRequestsSection({
-    required this.requests,
-    required this.state,
-  });
+  const _PendingRequestsSection({required this.requests, required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -288,10 +289,7 @@ class _RequestCard extends StatelessWidget {
   final GroupRequest request;
   final AppState state;
 
-  const _RequestCard({
-    required this.request,
-    required this.state,
-  });
+  const _RequestCard({required this.request, required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -373,17 +371,12 @@ class _RequestCard extends StatelessWidget {
                   for (final name in memberNames)
                     Chip(
                       avatar: MemberAvatar(name: name, size: 18),
-                      label: Text(
-                        name,
-                        style: const TextStyle(fontSize: 12.5),
-                      ),
+                      label: Text(name, style: const TextStyle(fontSize: 12.5)),
                       backgroundColor: isDark
                           ? AppColors.surfaceAltDark
                           : AppColors.surfaceAlt,
                       side: BorderSide(
-                        color: isDark
-                            ? AppColors.borderDark
-                            : AppColors.border,
+                        color: isDark ? AppColors.borderDark : AppColors.border,
                       ),
                     ),
                 ],
@@ -400,6 +393,10 @@ class _RequestCard extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.close_rounded, size: 18),
                       label: Text(l10n.reject),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.negative,
+                        side: const BorderSide(color: AppColors.negative),
+                      ),
                       onPressed: () => _reject(context, state),
                     ),
                   ),
@@ -408,6 +405,10 @@ class _RequestCard extends StatelessWidget {
                     child: FilledButton.icon(
                       icon: const Icon(Icons.check_rounded, size: 18),
                       label: Text(l10n.approve),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.positive,
+                        disabledBackgroundColor: AppColors.positive,
+                      ),
                       onPressed: () => _approve(context, state),
                     ),
                   ),
@@ -426,7 +427,9 @@ class _RequestCard extends StatelessWidget {
       if (!context.mounted) return;
       showToast(
         context,
-        group != null ? l10n.groupRequestApproved : l10n.groupRequestApprovedFail,
+        group != null
+            ? l10n.groupRequestApproved
+            : l10n.groupRequestApprovedFail,
         type: group != null ? ToastType.success : ToastType.danger,
       );
     } catch (_) {
@@ -484,10 +487,7 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
           children: [
             Text(
               l10n.requestGroupTitle,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
@@ -502,17 +502,11 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
             const SizedBox(height: 20),
             Text(
               l10n.groupOwner,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(12),
@@ -553,10 +547,7 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
             const SizedBox(height: 20),
             Text(
               l10n.selectGroupMembers,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             if (members.isEmpty)
@@ -617,7 +608,11 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
     final l10n = context.l10n;
     if (state.hasPendingGroupRequest(state.currentUserId ?? '')) {
       if (!context.mounted) return;
-      showToast(context, l10n.groupRequestAlreadyPending, type: ToastType.warning);
+      showToast(
+        context,
+        l10n.groupRequestAlreadyPending,
+        type: ToastType.warning,
+      );
       return;
     }
     try {
@@ -655,7 +650,9 @@ class _GroupCard extends StatelessWidget {
         .where((m) => m.groupId == group.id)
         .map((m) => m.userId)
         .toList();
-    final memberNames = memberIds.map((id) => state.memberName(id) ?? 'Unknown').toList();
+    final memberNames = memberIds
+        .map((id) => state.memberName(id) ?? 'Unknown')
+        .toList();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -717,7 +714,9 @@ class _GroupCard extends StatelessWidget {
                     if (isOwner)
                       Icon(
                         Icons.chevron_right_rounded,
-                        color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                        color: isDark
+                            ? AppColors.textMutedDark
+                            : AppColors.textMuted,
                       ),
                   ],
                 ),
@@ -730,7 +729,10 @@ class _GroupCard extends StatelessWidget {
                       for (final name in memberNames)
                         Chip(
                           avatar: MemberAvatar(name: name, size: 18),
-                          label: Text(name, style: const TextStyle(fontSize: 12.5)),
+                          label: Text(
+                            name,
+                            style: const TextStyle(fontSize: 12.5),
+                          ),
                           backgroundColor: isDark
                               ? AppColors.surfaceAltDark
                               : AppColors.surfaceAlt,
@@ -752,11 +754,9 @@ class _GroupCard extends StatelessWidget {
   }
 
   void _openGroupDetail(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => GroupDetailScreen(group: group),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => GroupDetailScreen(group: group)));
   }
 }
 
@@ -804,17 +804,16 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
           children: [
             Text(
               l10n.createMemberGroup,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
               l10n.createGroupDescription,
               style: TextStyle(
                 fontSize: 13,
-                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 16),
@@ -875,7 +874,9 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
                   l10n.noOtherMembersToAdd,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                    color: isDark
+                        ? AppColors.textMutedDark
+                        : AppColors.textMuted,
                   ),
                 ),
               )
@@ -1013,11 +1014,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         children: (() {
           final widgets = <Widget>[
-            _OwnerCard(
-              ownerName: ownerName,
-              isOwner: isOwner,
-              isDark: isDark,
-            ),
+            _OwnerCard(ownerName: ownerName, isOwner: isOwner, isDark: isDark),
             const SizedBox(height: 24),
             SectionHeader(title: context.l10n.members),
           ];
@@ -1030,7 +1027,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     context.l10n.noMembersInGroup,
                     style: TextStyle(
                       fontSize: 14,
-                      color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                      color: isDark
+                          ? AppColors.textMutedDark
+                          : AppColors.textMuted,
                     ),
                   ),
                 ),
@@ -1057,8 +1056,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     onDeleted: isOwner
                         ? () => _confirmRemoveMember(context, id)
                         : null,
-                    deleteButtonTooltipMessage:
-                        isOwner ? context.l10n.removeMember : null,
+                    deleteButtonTooltipMessage: isOwner
+                        ? context.l10n.removeMember
+                        : null,
                   ),
                 ),
               ),
@@ -1085,10 +1085,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     // represented by another active group.
     final alreadyGrouped = state.groupedUserIds;
     final availableMembers = state.members
-        .where((m) =>
-            m.userId != widget.group.ownerUserId &&
-            !_memberIds.contains(m.userId) &&
-            !alreadyGrouped.contains(m.userId))
+        .where(
+          (m) =>
+              m.userId != widget.group.ownerUserId &&
+              !_memberIds.contains(m.userId) &&
+              !alreadyGrouped.contains(m.userId),
+        )
         .toList();
 
     // Rule: a group can hold at most (space members - 1) users including the
@@ -1101,7 +1103,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     }
 
     if (availableMembers.isEmpty) {
-      showToast(context, context.l10n.noMembersAvailableToAdd, type: ToastType.warning);
+      showToast(
+        context,
+        context.l10n.noMembersAvailableToAdd,
+        type: ToastType.warning,
+      );
       return;
     }
 
@@ -1142,26 +1148,26 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     shrinkWrap: true,
                     itemCount: availableMembers.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 4),
-itemBuilder: (_, i) {
-                    final m = availableMembers[i];
-                    return CheckboxListTile(
-                      value: picked.contains(m.userId),
-                      title: Text(m.name),
-                      onChanged: (v) => setSheetState(() {
-                        if (v == true) {
-                          // Rule: a group can hold at most (space members - 1)
-                          // users including the owner; never exceed remaining
-                          // slots.
-                          if (picked.length >= slotsRemaining) return;
-                          picked.add(m.userId);
-                        } else {
-                          picked.remove(m.userId);
-                        }
-                      }),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                    );
-                  },
+                    itemBuilder: (_, i) {
+                      final m = availableMembers[i];
+                      return CheckboxListTile(
+                        value: picked.contains(m.userId),
+                        title: Text(m.name),
+                        onChanged: (v) => setSheetState(() {
+                          if (v == true) {
+                            // Rule: a group can hold at most (space members - 1)
+                            // users including the owner; never exceed remaining
+                            // slots.
+                            if (picked.length >= slotsRemaining) return;
+                            picked.add(m.userId);
+                          } else {
+                            picked.remove(m.userId);
+                          }
+                        }),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        dense: true,
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -1179,7 +1185,11 @@ itemBuilder: (_, i) {
     );
   }
 
-  Future<void> _addMembers(BuildContext context, AppState state, List<String> memberIds) async {
+  Future<void> _addMembers(
+    BuildContext context,
+    AppState state,
+    List<String> memberIds,
+  ) async {
     final l10n = context.l10n;
     try {
       for (final userId in memberIds) {
@@ -1253,9 +1263,9 @@ itemBuilder: (_, i) {
     if (confirmed == true && context.mounted) {
       try {
         await context.read<AppState>().repo.removeGroupMember(
-              widget.group.id,
-              userId,
-            );
+          widget.group.id,
+          userId,
+        );
         if (!context.mounted) return;
         _loadMembers();
         setState(() {});
@@ -1286,9 +1296,15 @@ class _OwnerCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: isOwner ? AppColors.heroGradient : null,
-        color: isOwner ? null : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
+        color: isOwner
+            ? null
+            : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
         borderRadius: BorderRadius.circular(20),
-        border: isOwner ? null : Border.all(color: isDark ? AppColors.borderDark : AppColors.border),
+        border: isOwner
+            ? null
+            : Border.all(
+                color: isDark ? AppColors.borderDark : AppColors.border,
+              ),
       ),
       child: Row(
         children: [
@@ -1303,7 +1319,11 @@ class _OwnerCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: isOwner ? Colors.white : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary),
+                    color: isOwner
+                        ? Colors.white
+                        : (isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimary),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1313,13 +1333,18 @@ class _OwnerCard extends StatelessWidget {
                     fontSize: 12.5,
                     color: isOwner
                         ? Colors.white.withValues(alpha: 0.8)
-                        : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondary),
+                        : (isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondary),
                   ),
                 ),
                 if (isOwner) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),

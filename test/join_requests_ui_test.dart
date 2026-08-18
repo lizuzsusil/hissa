@@ -120,8 +120,9 @@ void main() {
     );
   }
 
-  testWidgets('space owner sees pending join requests with approve/reject',
-      (tester) async {
+  testWidgets('space owner sees pending join requests with approve/reject', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(800, 2000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -139,31 +140,34 @@ void main() {
     expect(find.text('Reject'), findsOneWidget);
   });
 
-  testWidgets('approving a join request adds the member and clears the request',
-      (tester) async {
-    tester.view.physicalSize = const Size(800, 2000);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'approving a join request adds the member and clears the request',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
 
-    final state = await makeState(userId: 'u_owner');
-    await seedPendingRequest(state);
+      final state = await makeState(userId: 'u_owner');
+      await seedPendingRequest(state);
 
-    await tester.pumpWidget(appHarness(state, const SpaceScreen()));
-    await tester.pump();
+      await tester.pumpWidget(appHarness(state, const SpaceScreen()));
+      await tester.pump();
 
-    await tester.tap(find.text('Approve'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Approve'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Pending join requests'), findsNothing);
-    expect(
-      state.repo.spaceJoinRequests.single.status,
-      SpaceJoinRequestStatus.approved,
-    );
-    expect(state.members.any((m) => m.userId == 'u_out'), isTrue);
-  });
+      expect(find.text('Pending join requests'), findsNothing);
+      expect(
+        state.repo.spaceJoinRequests.single.status,
+        SpaceJoinRequestStatus.approved,
+      );
+      expect(state.members.any((m) => m.userId == 'u_out'), isTrue);
+    },
+  );
 
-  testWidgets('non-owner never sees the pending join requests section',
-      (tester) async {
+  testWidgets('non-owner never sees the pending join requests section', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(800, 2000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -178,8 +182,9 @@ void main() {
     expect(find.text('Approve'), findsNothing);
   });
 
-  testWidgets('requester is kept in a pending state on the join screen',
-      (tester) async {
+  testWidgets('requester is kept in a pending state on the join screen', (
+    tester,
+  ) async {
     final state = await makeState(userId: 'u_out');
     state.debugSetSession(userId: 'u_out', spaceId: null);
 
@@ -206,7 +211,103 @@ void main() {
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Pending approval'), findsOneWidget);
     expect(done, isFalse);
-    expect(state.repo.spaceJoinRequests.single.status,
-        SpaceJoinRequestStatus.pending);
+    expect(
+      state.repo.spaceJoinRequests.single.status,
+      SpaceJoinRequestStatus.pending,
+    );
+  });
+
+  testWidgets(
+    'join screen keeps pending requests for multiple spaces visible',
+    (tester) async {
+      final state = await makeState(userId: 'u_out');
+      state.debugSetSession(userId: 'u_out', spaceId: null);
+      await state.repo.saveSpace(
+        Space(
+          id: 'h2',
+          name: 'Villa',
+          currency: 'NPR',
+          inviteCode: 'XYZW78',
+          mode: SpaceMode.split,
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      );
+
+      var done = false;
+      await tester.pumpWidget(
+        appHarness(
+          state,
+          SetupScreen(
+            initialCreateMode: false,
+            onDone: () => done = true,
+            onBack: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.enterText(find.byType(TextField), 'ABCD12');
+      await tester.pump();
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Home'), findsOneWidget);
+
+      // A second request: the input stays available and the new pending card is
+      // added next to the first instead of replacing it.
+      await tester.enterText(find.byType(TextField), 'XYZW78');
+      await tester.pump();
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Villa'), findsOneWidget);
+      expect(find.text('Pending approval'), findsNWidgets(2));
+      expect(done, isFalse);
+    },
+  );
+
+  testWidgets('pull to refresh removes a resolved join request', (
+    tester,
+  ) async {
+    final state = await makeState(userId: 'u_out');
+    state.debugSetSession(userId: 'u_out', spaceId: null);
+
+    var done = false;
+    await tester.pumpWidget(
+      appHarness(
+        state,
+        SetupScreen(
+          initialCreateMode: false,
+          onDone: () => done = true,
+          onBack: null,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'ABCD12');
+    await tester.pump();
+    await tester.tap(find.byType(PrimaryButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Home'), findsOneWidget);
+
+    // The owner rejects the request while the requester is on the join screen.
+    final requestId = state.repo.spaceJoinRequests.single.id;
+    await state.repo.updateSpaceJoinRequestStatus(
+      requestId,
+      SpaceJoinRequestStatus.rejected,
+    );
+
+    // Pull to refresh re-queries Firestore and clears the resolved request.
+    await tester.fling(
+      find.byType(SingleChildScrollView),
+      const Offset(0, 400),
+      1000,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home'), findsNothing);
+    expect(find.text('Pending approval'), findsNothing);
+    expect(done, isFalse);
   });
 }

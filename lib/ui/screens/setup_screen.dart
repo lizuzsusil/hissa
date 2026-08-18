@@ -43,8 +43,6 @@ class _SetupScreenState extends State<SetupScreen> {
   /// Emails of the people to invite when creating the Space.
   final List<String> _members = [];
 
-  /// The Space whose join request is pending; shows the "stuck" pending state.
-  Space? _pendingSpace;
   SpaceMode _mode = SpaceMode.split;
   String? _nameError;
   String? _codeError;
@@ -54,6 +52,24 @@ class _SetupScreenState extends State<SetupScreen> {
   void initState() {
     super.initState();
     _nameFocus.addListener(_handleNameFocus);
+    if (!widget.initialCreateMode) {
+      // Re-entering the join screen shows any Space join requests that are
+      // still awaiting the owner's approval.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _refreshPending());
+    }
+  }
+
+  /// Re-queries the user's pending join requests. When any of them has been
+  /// approved since the last refresh, the user is dropped straight into their
+  /// new Space (they are now a member). Otherwise the pending list is updated
+  /// in place so the requester stays in a visible pending state.
+  Future<void> _refreshPending() async {
+    final state = context.read<AppState>();
+    final approved = await state.refreshPendingSpaceJoinRequests();
+    if (!mounted || approved.isEmpty) return;
+    await state.selectSpace(approved.first.id);
+    if (!mounted) return;
+    widget.onDone();
   }
 
   void _handleNameFocus() {
@@ -119,11 +135,11 @@ class _SetupScreenState extends State<SetupScreen> {
         widget.onDone();
       case SpaceJoinOutcome.requestPending:
       case SpaceJoinOutcome.requestCreated:
-        // The requester is kept in a pending state: they can see the Space's
-        // name but cannot enter it until the owner approves the request.
-        final space = await state.findSpaceByCode(code);
-        if (!mounted) return;
-        setState(() => _pendingSpace = space);
+        // The requester is kept in a pending state: every Space they requested
+        // stays visible until the owner approves or rejects it. Re-fetch the
+        // list so the newly submitted request appears immediately.
+        _codeController.clear();
+        await _refreshPending();
     }
   }
 
@@ -156,56 +172,60 @@ class _SetupScreenState extends State<SetupScreen> {
         : AppColors.textPrimary;
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (widget.onBack != null) ...[
-                    IconAction(
-                      icon: Icons.arrow_back_rounded,
-                      size: 46,
-                      onPressed: widget.onBack,
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(
-                    child: Text(
-                      _createMode ? l10n.createSpaceTitle : l10n.joinSpace,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.6,
-                        color: textColor,
+        child: RefreshIndicator(
+          onRefresh: _refreshPending,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (widget.onBack != null) ...[
+                      IconAction(
+                        icon: Icons.arrow_back_rounded,
+                        size: 46,
+                        onPressed: widget.onBack,
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: Text(
+                        _createMode ? l10n.createSpaceTitle : l10n.joinSpace,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.6,
+                          color: textColor,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _createMode ? l10n.createSpaceSubtitle : l10n.setUpSubtitle,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondary,
+                  ],
                 ),
-              ),
-              const SizedBox(height: 28),
-              _Segmented(
-                options: [l10n.create, l10n.join],
-                index: _createMode ? 0 : 1,
-                onChanged: _loading
-                    ? null
-                    : (i) => setState(() => _createMode = i == 0),
-              ),
-              const SizedBox(height: 28),
-              if (_createMode) _buildCreate(isDark) else _buildJoin(isDark),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  _createMode ? l10n.createSpaceSubtitle : l10n.setUpSubtitle,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                _Segmented(
+                  options: [l10n.create, l10n.join],
+                  index: _createMode ? 0 : 1,
+                  onChanged: _loading
+                      ? null
+                      : (i) => setState(() => _createMode = i == 0),
+                ),
+                const SizedBox(height: 28),
+                if (_createMode) _buildCreate(isDark) else _buildJoin(isDark),
+              ],
+            ),
           ),
         ),
       ),
@@ -361,13 +381,36 @@ class _SetupScreenState extends State<SetupScreen> {
 
   Widget _buildJoin(bool isDark) {
     final l10n = context.l10n;
-    final pending = _pendingSpace;
-    if (pending != null) {
-      return _buildJoinPending(isDark, pending);
-    }
+    final state = context.watch<AppState>();
+    final pending = state.myPendingSpaceJoinRequests;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Every Space the user requested stays visible until the owner
+        // approves or rejects it. The code input stays available so the user
+        // can request multiple Spaces at once.
+        if (pending.isNotEmpty) ...[
+          for (final request in pending) ...[
+            _PendingJoinCard(
+              spaceName: state.spaceNameById(request.spaceId) ?? '',
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+          ],
+          const SizedBox(height: 4),
+          Text(
+            l10n.joinRequestPendingDescription,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
         TextField(
           controller: _codeController,
           enabled: !_loading,
@@ -409,72 +452,63 @@ class _SetupScreenState extends State<SetupScreen> {
       ],
     );
   }
+}
 
-  /// Pending join state: the requester sees the Space's name but cannot enter
-  /// it until the owner approves the request (mirrors the group request flow).
-  Widget _buildJoinPending(bool isDark, Space space) {
+/// A pending Space join request card: the requested Space's name plus a
+/// "pending approval" status. Shown on the join screen so the requester keeps
+/// seeing every unresolved request until the owner decides.
+class _PendingJoinCard extends StatelessWidget {
+  final String spaceName;
+  final bool isDark;
+
+  const _PendingJoinCard({required this.spaceName, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.25),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.hourglass_top_rounded,
+            color: AppColors.primary,
+            size: 28,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  spaceName,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.pendingApproval,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.hourglass_top_rounded,
-                color: AppColors.primary,
-                size: 30,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      space.name,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.pendingApproval,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        Text(
-          l10n.joinRequestPendingDescription,
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.4,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondary,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

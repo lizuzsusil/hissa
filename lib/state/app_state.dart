@@ -61,6 +61,7 @@ class AppState extends ChangeNotifier {
   bool _loaded = false;
   List<Space> _spaces = [];
   bool _switchingSpace = false;
+  List<SpaceJoinRequest> _myPendingSpaceJoinRequests = const [];
 
   ExpenseRepository get repo => _repo;
   bool get isLoaded => _loaded;
@@ -363,10 +364,7 @@ class AppState extends ChangeNotifier {
       await _repo.saveUser(currentUser!.copyWith(avatarUrl: photoUrl));
       final member = members.where((m) => m.userId == uid).firstOrNull;
       if (member != null && _spaceId != null) {
-        await _repo.saveMember(
-          member.copyWith(avatarUrl: photoUrl),
-          _spaceId,
-        );
+        await _repo.saveMember(member.copyWith(avatarUrl: photoUrl), _spaceId);
       }
     }
     await _commit();
@@ -412,6 +410,7 @@ class AppState extends ChangeNotifier {
     _spaceId = null;
     _cycleId = null;
     _spaces = [];
+    _myPendingSpaceJoinRequests = const [];
     try {
       await FirebaseAuth.instance.signOut();
     } on Exception {
@@ -630,8 +629,7 @@ class AppState extends ChangeNotifier {
     }
 
     // A request is already pending for this Space: keep the pending state.
-    final existing =
-        await _repo.findPendingSpaceJoinRequest(space.id, user.id);
+    final existing = await _repo.findPendingSpaceJoinRequest(space.id, user.id);
     if (existing != null) return SpaceJoinOutcome.requestPending;
 
     await _repo.saveSpaceJoinRequest(
@@ -663,13 +661,13 @@ class AppState extends ChangeNotifier {
     final trimmed = email.trim().toLowerCase();
     if (trimmed.isEmpty) return false;
     if (_repo.members.any(
-      (m) => m.userId == user.id &&
-          user.email.toLowerCase() == trimmed,
+      (m) => m.userId == user.id && user.email.toLowerCase() == trimmed,
     )) {
       return false;
     }
     if (_repo.members.any(
-      (m) => m.userId != user.id &&
+      (m) =>
+          m.userId != user.id &&
           (_repo.users
                   .where((u) => u.id == m.userId)
                   .firstOrNull
@@ -712,13 +710,13 @@ class AppState extends ChangeNotifier {
     final request = _repo.spaceJoinRequests
         .where((r) => r.id == requestId)
         .firstOrNull;
-    if (request == null ||
-        request.status != SpaceJoinRequestStatus.pending) {
+    if (request == null || request.status != SpaceJoinRequestStatus.pending) {
       return;
     }
     if (!isOwner) return;
-    final requester =
-        _repo.users.where((u) => u.id == request.requesterUserId).firstOrNull;
+    final requester = _repo.users
+        .where((u) => u.id == request.requesterUserId)
+        .firstOrNull;
     await _repo.saveMember(
       SpaceMember(
         userId: request.requesterUserId,
@@ -742,8 +740,7 @@ class AppState extends ChangeNotifier {
     final request = _repo.spaceJoinRequests
         .where((r) => r.id == requestId)
         .firstOrNull;
-    if (request == null ||
-        request.status != SpaceJoinRequestStatus.pending) {
+    if (request == null || request.status != SpaceJoinRequestStatus.pending) {
       return;
     }
     if (!isOwner) return;
@@ -774,12 +771,12 @@ class AppState extends ChangeNotifier {
   /// `john.doe@example.com` -> `John Doe`.
   static String _nameFromEmail(String email) {
     final local = email.split('@').first;
-    final parts =
-        local.split(RegExp(r'[._\-+]+')).where((p) => p.isNotEmpty).toList();
+    final parts = local
+        .split(RegExp(r'[._\-+]+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return local;
-    return parts
-        .map((p) => p[0].toUpperCase() + p.substring(1))
-        .join(' ');
+    return parts.map((p) => p[0].toUpperCase() + p.substring(1)).join(' ');
   }
 
   Future<void> removeMember(String userId) async {
@@ -955,7 +952,9 @@ class AppState extends ChangeNotifier {
     // Old model: ad-hoc ParticipantGroup from expense form
     for (final g in groups) {
       groupedUserIds.addAll(g.userIds);
-      groupParties.add(SplitParty.group(groupId: g.id, name: g.name, userIds: g.userIds));
+      groupParties.add(
+        SplitParty.group(groupId: g.id, name: g.name, userIds: g.userIds),
+      );
     }
 
     // New model: persistent MemberGroups selected from Settings
@@ -963,7 +962,9 @@ class AppState extends ChangeNotifier {
       // Dedup against every user the group represents (owner + members) so the
       // owner cannot also be selected individually and double-counted.
       groupedUserIds.addAll(g.allUserIds);
-      groupParties.add(SplitParty.group(groupId: g.id, name: g.name, userIds: g.memberIds));
+      groupParties.add(
+        SplitParty.group(groupId: g.id, name: g.name, userIds: g.memberIds),
+      );
     }
 
     return [
@@ -977,7 +978,10 @@ class AppState extends ChangeNotifier {
   /// NOTE: intentionally a no-op for now — group snapshots (historical
   /// membership auditability) are not yet persisted. The shares still carry
   /// `memberGroupId` so historical amounts remain fixed.
-  void _attachGroupSnapshots(List<ExpenseShare> shares, List<MemberGroup> memberGroups) {}
+  void _attachGroupSnapshots(
+    List<ExpenseShare> shares,
+    List<MemberGroup> memberGroups,
+  ) {}
 
   Future<void> addExpense({
     required String description,
@@ -1244,14 +1248,18 @@ class AppState extends ChangeNotifier {
       shares: _repo.shares,
       settlements: _repo.settlements,
     );
-    return entries.map((e) => BalanceInfo(
-          userId: e.id,
-          paid: e.paid,
-          share: e.share,
-          balance: e.balance,
-          settledOut: e.settledOut,
-          settledIn: e.settledIn,
-        )).toList();
+    return entries
+        .map(
+          (e) => BalanceInfo(
+            userId: e.id,
+            paid: e.paid,
+            share: e.share,
+            balance: e.balance,
+            settledOut: e.settledOut,
+            settledIn: e.settledIn,
+          ),
+        )
+        .toList();
   }
 
   Money totalSpent([String? cycleId]) {
@@ -1293,9 +1301,63 @@ class AppState extends ChangeNotifier {
     final sid = _spaceId;
     if (sid == null) return const [];
     return _repo.spaceJoinRequests
-        .where((r) =>
-            r.spaceId == sid && r.status == SpaceJoinRequestStatus.pending)
+        .where(
+          (r) => r.spaceId == sid && r.status == SpaceJoinRequestStatus.pending,
+        )
         .toList();
+  }
+
+  /// Pending Space join requests the current user has submitted across Spaces,
+  /// including Spaces they are not a member of yet. Loaded and kept fresh by
+  /// [refreshPendingSpaceJoinRequests] so the join screen can keep the
+  /// requester in a persistent pending state until every request is resolved.
+  List<SpaceJoinRequest> get myPendingSpaceJoinRequests =>
+      _myPendingSpaceJoinRequests;
+
+  /// Re-queries the current user's pending join requests (Firestore) and
+  /// resolves each pending Space into [_spaces] so the join screen can show
+  /// Space names and navigate into a Space after an approval.
+  ///
+  /// Returns the Spaces whose join request was resolved (approved) since the
+  /// last refresh, so the caller can land the user inside their new Space.
+  /// Never throws: on any failure it keeps the previous pending list.
+  Future<List<Space>> refreshPendingSpaceJoinRequests() async {
+    final uid = _currentUserId;
+    if (uid == null) return const [];
+    final before = _myPendingSpaceJoinRequests.map((r) => r.spaceId).toSet();
+    try {
+      final requests = await _repo.fetchMyPendingSpaceJoinRequests(uid);
+      _myPendingSpaceJoinRequests = requests;
+
+      final pendingNow = requests.map((r) => r.spaceId).toSet();
+      final resolved = [...before.difference(pendingNow)];
+      for (final r in requests) {
+        final space = await _repo.fetchSpaceById(r.spaceId);
+        if (space != null) _upsertSpace(space);
+      }
+      notifyListeners();
+
+      if (resolved.isEmpty) return const [];
+      final userSpaces = await _repo.findSpacesForUser(uid);
+      return userSpaces.where((s) => resolved.contains(s.id)).toList();
+    } catch (_) {
+      notifyListeners();
+      return const [];
+    }
+  }
+
+  /// The display name of a Space by id, resolved from the known Spaces list.
+  /// Returns null when the Space is not known.
+  String? spaceNameById(String spaceId) =>
+      _spaces.where((s) => s.id == spaceId).firstOrNull?.name;
+
+  void _upsertSpace(Space space) {
+    final i = _spaces.indexWhere((s) => s.id == space.id);
+    if (i >= 0) {
+      _spaces[i] = space;
+    } else {
+      _spaces = [..._spaces, space];
+    }
   }
 
   /// Every user ID (owner + members) represented by any active Member Group in
@@ -1330,7 +1392,9 @@ class AppState extends ChangeNotifier {
   List<GroupRequest> get pendingGroupRequests {
     final sid = _spaceId;
     return _repo.groupRequests
-        .where((r) => r.spaceId == sid && r.status == GroupRequestStatus.pending)
+        .where(
+          (r) => r.spaceId == sid && r.status == GroupRequestStatus.pending,
+        )
         .toList();
   }
 
@@ -1342,8 +1406,8 @@ class AppState extends ChangeNotifier {
 
   /// Whether [userId] has a pending group creation request already. Prevents a
   /// non-owner from spamming duplicate requests.
-  bool hasPendingGroupRequest(String userId) => pendingGroupRequests
-      .any((r) => r.requesterUserId == userId);
+  bool hasPendingGroupRequest(String userId) =>
+      pendingGroupRequests.any((r) => r.requesterUserId == userId);
 
   /// Whether the current user is eligible to submit a group creation request:
   /// they must be a non-owner in a Space with at least three members, must not
@@ -1398,8 +1462,9 @@ class AppState extends ChangeNotifier {
   /// created group, or null if the request is invalid or cannot be satisfied.
   Future<MemberGroup?> approveGroupRequest(String requestId) async {
     if (!isOwner) return null;
-    final request =
-        _repo.groupRequests.where((r) => r.id == requestId).firstOrNull;
+    final request = _repo.groupRequests
+        .where((r) => r.id == requestId)
+        .firstOrNull;
     if (request == null || request.status != GroupRequestStatus.pending) {
       return null;
     }
@@ -1417,7 +1482,10 @@ class AppState extends ChangeNotifier {
       id: genId(8),
       spaceId: request.spaceId,
       ownerUserId: request.requesterUserId,
-      name: _groupNameForMembers(request.requesterUserId, request.memberUserIds),
+      name: _groupNameForMembers(
+        request.requesterUserId,
+        request.memberUserIds,
+      ),
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -1426,7 +1494,10 @@ class AppState extends ChangeNotifier {
     for (final uid in request.memberUserIds) {
       await _repo.addGroupMember(group.id, uid);
     }
-    await _repo.updateGroupRequestStatus(requestId, GroupRequestStatus.approved);
+    await _repo.updateGroupRequestStatus(
+      requestId,
+      GroupRequestStatus.approved,
+    );
     notifyListeners();
     return group;
   }
@@ -1434,7 +1505,10 @@ class AppState extends ChangeNotifier {
   /// Rejects [requestId]. Only the Space owner may reject.
   Future<void> rejectGroupRequest(String requestId) async {
     if (!isOwner) return;
-    await _repo.updateGroupRequestStatus(requestId, GroupRequestStatus.rejected);
+    await _repo.updateGroupRequestStatus(
+      requestId,
+      GroupRequestStatus.rejected,
+    );
     notifyListeners();
   }
 

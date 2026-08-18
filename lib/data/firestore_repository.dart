@@ -67,14 +67,11 @@ class FirestoreRepository implements ExpenseRepository {
     } catch (_) {}
 
     _subs.add(
-      _db.collection('users').doc(uid).snapshots().listen(
-        (snap) {
-          _users.removeWhere((u) => u.id == uid);
-          if (snap.exists) _users.add(User.fromJson(snap.data()!));
-          _notify();
-        },
-        onError: (_) {},
-      ),
+      _db.collection('users').doc(uid).snapshots().listen((snap) {
+        _users.removeWhere((u) => u.id == uid);
+        if (snap.exists) _users.add(User.fromJson(snap.data()!));
+        _notify();
+      }, onError: (_) {}),
     );
 
     if (spaceId != null) {
@@ -139,9 +136,7 @@ class FirestoreRepository implements ExpenseRepository {
       final membersSnap = await membersF;
       _members
         ..clear()
-        ..addAll(
-          membersSnap.docs.map((d) => SpaceMember.fromJson(d.data())),
-        );
+        ..addAll(membersSnap.docs.map((d) => SpaceMember.fromJson(d.data())));
       await _loadMemberUserDocs(
         membersSnap.docs.map((d) => d.data()['userId'] as String),
       );
@@ -186,9 +181,7 @@ class FirestoreRepository implements ExpenseRepository {
       // Populate memberIds for each MemberGroup from the loaded groupMembers
       final memberIdsByGroup = <String, List<String>>{};
       for (final m in _memberGroupMembers) {
-        memberIdsByGroup
-            .putIfAbsent(m.groupId, () => [])
-            .add(m.userId);
+        memberIdsByGroup.putIfAbsent(m.groupId, () => []).add(m.userId);
       }
       for (final g in _memberGroups) {
         final ids = memberIdsByGroup[g.id] ?? [];
@@ -201,13 +194,17 @@ class FirestoreRepository implements ExpenseRepository {
       final groupRequests = await groupRequestsF;
       _groupRequests
         ..clear()
-        ..addAll(groupRequests.docs.map((d) => GroupRequest.fromJson(d.data())));
+        ..addAll(
+          groupRequests.docs.map((d) => GroupRequest.fromJson(d.data())),
+        );
 
       final spaceJoinRequests = await spaceJoinRequestsF;
       _spaceJoinRequests
         ..clear()
         ..addAll(
-          spaceJoinRequests.docs.map((d) => SpaceJoinRequest.fromJson(d.data())),
+          spaceJoinRequests.docs.map(
+            (d) => SpaceJoinRequest.fromJson(d.data()),
+          ),
         );
     } catch (_) {
       // Permission denied or missing data: degrade to an empty cache rather
@@ -235,16 +232,13 @@ class FirestoreRepository implements ExpenseRepository {
 
   void _subscribeSpace(String spaceId) {
     _subs.add(
-      _db.collection('spaces').doc(spaceId).snapshots().listen(
-        (snap) {
-          if (snap.exists) {
-            final s = Space.fromJson(snap.data()!);
-            _upsert(_spaces, s, (x) => x.id);
-          }
-          _notify();
-        },
-        onError: (_) {},
-      ),
+      _db.collection('spaces').doc(spaceId).snapshots().listen((snap) {
+        if (snap.exists) {
+          final s = Space.fromJson(snap.data()!);
+          _upsert(_spaces, s, (x) => x.id);
+        }
+        _notify();
+      }, onError: (_) {}),
     );
 
     _subs.add(
@@ -252,18 +246,15 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('spaceMembers')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _members
-            ..clear()
-            ..addAll(
-              snap.docs.map((d) => SpaceMember.fromJson(d.data())),
+          .listen((snap) {
+            _members
+              ..clear()
+              ..addAll(snap.docs.map((d) => SpaceMember.fromJson(d.data())));
+            _syncMemberUserDocs(
+              snap.docs.map((d) => d.data()['userId'] as String),
             );
-          _syncMemberUserDocs(snap.docs.map((d) => d.data()['userId'] as String));
-          _notify();
-        },
-        onError: (_) {},
-      ),
+            _notify();
+          }, onError: (_) {}),
     );
 
     _subs.add(
@@ -271,15 +262,12 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('categories')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _categories
-            ..clear()
-            ..addAll(snap.docs.map((d) => Category.fromJson(d.data())));
-          _notify();
-        },
-        onError: (_) {},
-      ),
+          .listen((snap) {
+            _categories
+              ..clear()
+              ..addAll(snap.docs.map((d) => Category.fromJson(d.data())));
+            _notify();
+          }, onError: (_) {}),
     );
 
     _subs.add(
@@ -287,15 +275,12 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('cycles')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _cycles
-            ..clear()
-            ..addAll(snap.docs.map((d) => Cycle.fromJson(d.data())));
-          _notify();
-        },
-        onError: (_) {},
-      ),
+          .listen((snap) {
+            _cycles
+              ..clear()
+              ..addAll(snap.docs.map((d) => Cycle.fromJson(d.data())));
+            _notify();
+          }, onError: (_) {}),
     );
 
     _subs.add(
@@ -303,15 +288,12 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('expenses')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _expenses
-            ..clear()
-            ..addAll(snap.docs.map((d) => Expense.fromJson(d.data())));
-          _notify();
-        },
-        onError: (_) {},
-      ),
+          .listen((snap) {
+            _expenses
+              ..clear()
+              ..addAll(snap.docs.map((d) => Expense.fromJson(d.data())));
+            _notify();
+          }, onError: (_) {}),
     );
 
     _subs.add(
@@ -319,15 +301,12 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('expenseShares')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _shares
-            ..clear()
-            ..addAll(snap.docs.map((d) => ExpenseShare.fromJson(d.data())));
-          _notify();
-        },
-        onError: (_) {},
-      ),
+          .listen((snap) {
+            _shares
+              ..clear()
+              ..addAll(snap.docs.map((d) => ExpenseShare.fromJson(d.data())));
+            _notify();
+          }, onError: (_) {}),
     );
 
     _subs.add(
@@ -335,15 +314,12 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('settlements')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _settlements
-            ..clear()
-            ..addAll(snap.docs.map((d) => Settlement.fromJson(d.data())));
-          _notify();
-        },
-        onError: (_) {},
-      ),
+          .listen((snap) {
+            _settlements
+              ..clear()
+              ..addAll(snap.docs.map((d) => Settlement.fromJson(d.data())));
+            _notify();
+          }, onError: (_) {}),
     );
 
     _subs.add(
@@ -351,27 +327,22 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('memberGroups')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _memberGroups
-            ..clear()
-            ..addAll(snap.docs.map((d) => MemberGroup.fromJson(d.data())));
-          // Repopulate memberIds from current group members
-          final memberIdsByGroup = <String, List<String>>{};
-          for (final m in _memberGroupMembers) {
-            memberIdsByGroup
-                .putIfAbsent(m.groupId, () => [])
-                .add(m.userId);
-          }
-          for (var i = 0; i < _memberGroups.length; i++) {
-            final g = _memberGroups[i];
-            final ids = memberIdsByGroup[g.id] ?? [];
-            _memberGroups[i] = g.copyWith(memberIds: ids);
-          }
-          _notify();
-        },
-        onError: (_) {},
-      ),
+          .listen((snap) {
+            _memberGroups
+              ..clear()
+              ..addAll(snap.docs.map((d) => MemberGroup.fromJson(d.data())));
+            // Repopulate memberIds from current group members
+            final memberIdsByGroup = <String, List<String>>{};
+            for (final m in _memberGroupMembers) {
+              memberIdsByGroup.putIfAbsent(m.groupId, () => []).add(m.userId);
+            }
+            for (var i = 0; i < _memberGroups.length; i++) {
+              final g = _memberGroups[i];
+              final ids = memberIdsByGroup[g.id] ?? [];
+              _memberGroups[i] = g.copyWith(memberIds: ids);
+            }
+            _notify();
+          }, onError: (_) {}),
     );
 
     _subs.add(
@@ -379,17 +350,14 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('memberGroupMembers')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _memberGroupMembers
-            ..clear()
-            ..addAll(
-              snap.docs.map((d) => MemberGroupMember.fromJson(d.data())),
-            );
-          _notify();
-        },
-        onError: (_) {},
-      ),
+          .listen((snap) {
+            _memberGroupMembers
+              ..clear()
+              ..addAll(
+                snap.docs.map((d) => MemberGroupMember.fromJson(d.data())),
+              );
+            _notify();
+          }, onError: (_) {}),
     );
 
     _subs.add(
@@ -397,15 +365,12 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('groupRequests')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _groupRequests
-            ..clear()
-            ..addAll(snap.docs.map((d) => GroupRequest.fromJson(d.data())));
-          _notify();
-        },
-        onError: (_) {},
-      ),
+          .listen((snap) {
+            _groupRequests
+              ..clear()
+              ..addAll(snap.docs.map((d) => GroupRequest.fromJson(d.data())));
+            _notify();
+          }, onError: (_) {}),
     );
 
     _subs.add(
@@ -413,17 +378,14 @@ class FirestoreRepository implements ExpenseRepository {
           .collection('spaceJoinRequests')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
-          .listen(
-        (snap) {
-          _spaceJoinRequests
-            ..clear()
-            ..addAll(
-              snap.docs.map((d) => SpaceJoinRequest.fromJson(d.data())),
-            );
-          _notify();
-        },
-        onError: (_) {},
-      ),
+          .listen((snap) {
+            _spaceJoinRequests
+              ..clear()
+              ..addAll(
+                snap.docs.map((d) => SpaceJoinRequest.fromJson(d.data())),
+              );
+            _notify();
+          }, onError: (_) {}),
     );
   }
 
@@ -437,14 +399,11 @@ class FirestoreRepository implements ExpenseRepository {
     });
     for (final id in wanted) {
       if (id == _ownUid || _userDocSubs.containsKey(id)) continue;
-      final sub = _db.collection('users').doc(id).snapshots().listen(
-        (s) {
-          _users.removeWhere((u) => u.id == id);
-          if (s.exists) _users.add(User.fromJson(s.data()!));
-          _notify();
-        },
-        onError: (_) {},
-      );
+      final sub = _db.collection('users').doc(id).snapshots().listen((s) {
+        _users.removeWhere((u) => u.id == id);
+        if (s.exists) _users.add(User.fromJson(s.data()!));
+        _notify();
+      }, onError: (_) {});
       _userDocSubs[id] = sub;
     }
   }
@@ -555,10 +514,7 @@ class FirestoreRepository implements ExpenseRepository {
   @override
   Future<void> removeMember(String userId, String spaceId) async {
     _members.removeWhere((m) => m.userId == userId);
-    await _db
-        .collection('spaceMembers')
-        .doc('${spaceId}_$userId')
-        .delete();
+    await _db.collection('spaceMembers').doc('${spaceId}_$userId').delete();
   }
 
   @override
@@ -591,20 +547,18 @@ class FirestoreRepository implements ExpenseRepository {
       batch.delete(d.reference);
     }
     for (final s in shares) {
-      batch.set(
-        _db.collection('expenseShares').doc('${sid}_${s.id}'),
-        {...s.toJson(), 'spaceId': sid},
-      );
+      batch.set(_db.collection('expenseShares').doc('${sid}_${s.id}'), {
+        ...s.toJson(),
+        'spaceId': sid,
+      });
     }
     await batch.commit();
   }
 
   @override
   Future<void> deleteExpense(String expenseId) async {
-    final sid = _expenses
-            .where((e) => e.id == expenseId)
-            .firstOrNull
-            ?.spaceId ??
+    final sid =
+        _expenses.where((e) => e.id == expenseId).firstOrNull?.spaceId ??
         _currentSpaceId;
     _expenses.removeWhere((e) => e.id == expenseId);
     _shares.removeWhere((s) => s.expenseId == expenseId);
@@ -655,20 +609,15 @@ class FirestoreRepository implements ExpenseRepository {
   @override
   Future<void> saveMemberGroup(MemberGroup group) async {
     _upsert(_memberGroups, group, (g) => g.id);
-    await _db
-        .collection('memberGroups')
-        .doc(group.id)
-        .set(group.toJson());
+    await _db.collection('memberGroups').doc(group.id).set(group.toJson());
   }
 
   @override
   Future<void> addGroupMember(String groupId, String userId) async {
     // Resolve the group's Space so the member row can be space-scoped, matching
     // how the security rules and space-scoped queries expect the data.
-    final sid = _memberGroups
-            .where((g) => g.id == groupId)
-            .firstOrNull
-            ?.spaceId ??
+    final sid =
+        _memberGroups.where((g) => g.id == groupId).firstOrNull?.spaceId ??
         _currentSpaceId;
     final member = MemberGroupMember(
       groupId: groupId,
@@ -677,10 +626,9 @@ class FirestoreRepository implements ExpenseRepository {
       createdAt: DateTime.now(),
     );
     _upsert(_memberGroupMembers, member, (m) => m.id);
-    await _db
-        .collection('memberGroups')
-        .doc(groupId)
-        .update({'updatedAt': DateTime.now().toIso8601String()});
+    await _db.collection('memberGroups').doc(groupId).update({
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
     await _db
         .collection('memberGroupMembers')
         .doc(member.id)
@@ -689,11 +637,12 @@ class FirestoreRepository implements ExpenseRepository {
 
   @override
   Future<void> removeGroupMember(String groupId, String userId) async {
-    _memberGroupMembers.removeWhere((m) => m.groupId == groupId && m.userId == userId);
-    await _db
-        .collection('memberGroups')
-        .doc(groupId)
-        .update({'updatedAt': DateTime.now().toIso8601String()});
+    _memberGroupMembers.removeWhere(
+      (m) => m.groupId == groupId && m.userId == userId,
+    );
+    await _db.collection('memberGroups').doc(groupId).update({
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
     await _db
         .collection('memberGroupMembers')
         .doc('${groupId}_$userId')
@@ -752,8 +701,9 @@ class FirestoreRepository implements ExpenseRepository {
     String requestId,
     SpaceJoinRequestStatus status,
   ) async {
-    final existing =
-        _spaceJoinRequests.where((r) => r.id == requestId).firstOrNull;
+    final existing = _spaceJoinRequests
+        .where((r) => r.id == requestId)
+        .firstOrNull;
     if (existing == null) return;
     final updated = existing.copyWith(status: status);
     _upsert(_spaceJoinRequests, updated, (r) => r.id);
@@ -780,6 +730,47 @@ class FirestoreRepository implements ExpenseRepository {
       }
     }
     return null;
+  }
+
+  @override
+  Future<List<SpaceJoinRequest>> fetchMyPendingSpaceJoinRequests(
+    String userId,
+  ) async {
+    try {
+      final snap = await _db
+          .collection('spaceJoinRequests')
+          .where('requesterUserId', isEqualTo: userId)
+          .get();
+      return [
+        for (final d in snap.docs)
+          if (SpaceJoinRequest.fromJson(d.data()).status ==
+              SpaceJoinRequestStatus.pending)
+            SpaceJoinRequest.fromJson(d.data()),
+      ];
+    } catch (_) {
+      return _spaceJoinRequests
+          .where(
+            (r) =>
+                r.requesterUserId == userId &&
+                r.status == SpaceJoinRequestStatus.pending,
+          )
+          .toList();
+    }
+  }
+
+  @override
+  Future<Space?> fetchSpaceById(String spaceId) async {
+    final cached = _spaces.where((s) => s.id == spaceId).firstOrNull;
+    if (cached != null) return cached;
+    try {
+      final snap = await _db.collection('spaces').doc(spaceId).get();
+      if (!snap.exists) return null;
+      final space = Space.fromJson(snap.data()!);
+      _upsert(_spaces, space, (s) => s.id);
+      return space;
+    } catch (_) {
+      return cached;
+    }
   }
 
   // ---- queries ----

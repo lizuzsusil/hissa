@@ -159,15 +159,23 @@ class InMemoryRepository implements ExpenseRepository {
 
   @override
   Future<void> addGroupMember(String groupId, String userId) async {
-    _memberGroupMembers.removeWhere((m) => m.groupId == groupId && m.userId == userId);
+    _memberGroupMembers.removeWhere(
+      (m) => m.groupId == groupId && m.userId == userId,
+    );
     _memberGroupMembers.add(
-      MemberGroupMember(groupId: groupId, userId: userId, createdAt: DateTime.now()),
+      MemberGroupMember(
+        groupId: groupId,
+        userId: userId,
+        createdAt: DateTime.now(),
+      ),
     );
   }
 
   @override
   Future<void> removeGroupMember(String groupId, String userId) async {
-    _memberGroupMembers.removeWhere((m) => m.groupId == groupId && m.userId == userId);
+    _memberGroupMembers.removeWhere(
+      (m) => m.groupId == groupId && m.userId == userId,
+    );
   }
 
   @override
@@ -221,6 +229,27 @@ class InMemoryRepository implements ExpenseRepository {
           r.status == SpaceJoinRequestStatus.pending) {
         return r;
       }
+    }
+    return null;
+  }
+
+  @override
+  Future<List<SpaceJoinRequest>> fetchMyPendingSpaceJoinRequests(
+    String userId,
+  ) async {
+    return _spaceJoinRequests
+        .where(
+          (r) =>
+              r.requesterUserId == userId &&
+              r.status == SpaceJoinRequestStatus.pending,
+        )
+        .toList();
+  }
+
+  @override
+  Future<Space?> fetchSpaceById(String spaceId) async {
+    for (final s in _spaces) {
+      if (s.id == spaceId) return s;
     }
     return null;
   }

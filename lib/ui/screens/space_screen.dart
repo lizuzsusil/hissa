@@ -199,19 +199,13 @@ class _SpaceScreenState extends State<SpaceScreen> {
             ),
           if (!state.isPersonalMode) ...[
             const SizedBox(height: 20),
-            _MemberGroupsTile(
-              onTap: () => _openMemberGroups(context),
-            ),
+            _MemberGroupsTile(onTap: () => _openMemberGroups(context)),
           ],
-          if (state.isOwner &&
-              state.pendingSpaceJoinRequests.isNotEmpty) ...[
+          if (state.isOwner && state.pendingSpaceJoinRequests.isNotEmpty) ...[
             const SizedBox(height: 24),
             Text(
               l10n.pendingJoinRequests,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
             Text(
@@ -344,9 +338,9 @@ class _SpaceScreenState extends State<SpaceScreen> {
   }
 
   void _openMemberGroups(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const MemberGroupsScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const MemberGroupsScreen()));
   }
 }
 
@@ -554,6 +548,10 @@ class _JoinRequestCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.close_rounded, size: 18),
                     label: Text(l10n.reject),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.negative,
+                      side: const BorderSide(color: AppColors.negative),
+                    ),
                     onPressed: onReject,
                   ),
                 ),
@@ -562,6 +560,10 @@ class _JoinRequestCard extends StatelessWidget {
                   child: FilledButton.icon(
                     icon: const Icon(Icons.check_rounded, size: 18),
                     label: Text(l10n.approve),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.positive,
+                      disabledBackgroundColor: AppColors.positive,
+                    ),
                     onPressed: onApprove,
                   ),
                 ),
@@ -642,9 +644,7 @@ class _MemberGroupsTile extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: isDark
-                    ? AppColors.textMutedDark
-                    : AppColors.textMuted,
+                color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
               ),
             ],
           ),

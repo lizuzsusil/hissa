@@ -116,7 +116,7 @@ class _RootGateState extends State<RootGate> {
 
   Future<void> _bootstrap() async {
     final state = context.read<AppState>();
-    FcmMessagingService.configureTapHandling(
+    FcmMessagingService.init(
       onGroupRequestTap: () {
         widget.navigatorKey.currentState?.push(
           MaterialPageRoute(builder: (_) => const MemberGroupsScreen()),
