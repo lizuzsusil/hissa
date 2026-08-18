@@ -1658,6 +1658,60 @@ abstract class AppLocalizations {
   /// **'No longer the default space'**
   String get defaultSpaceRemovedMessage;
 
+  /// No description provided for @deleteSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteSpace;
+
+  /// No description provided for @leaveSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get leaveSpace;
+
+  /// No description provided for @leaveBlockedOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'You have an outstanding balance. Settle your dues before leaving the space.'**
+  String get leaveBlockedOutstanding;
+
+  /// No description provided for @deletingSpaceIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting {space} in {seconds}s'**
+  String deletingSpaceIn(String space, int seconds);
+
+  /// No description provided for @leavingSpaceIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaving {space} in {seconds}s'**
+  String leavingSpaceIn(String space, int seconds);
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @spaceActionCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Action cancelled. Nothing changed.'**
+  String get spaceActionCancelled;
+
+  /// No description provided for @spaceDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Space deleted.'**
+  String get spaceDeleted;
+
+  /// No description provided for @spaceLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'You left the space.'**
+  String get spaceLeft;
+
   /// No description provided for @yourGroupRequestPending.
   ///
   /// In en, this message translates to:

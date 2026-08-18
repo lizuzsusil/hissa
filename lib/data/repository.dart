@@ -1,3 +1,4 @@
+import '../core/money.dart';
 import '../models/models.dart';
 
 /// Persistence boundary. [InMemoryRepository] backs the signed-out placeholder
@@ -91,4 +92,14 @@ abstract class ExpenseRepository {
 
   /// Number of members in a Space, used for the Spaces dashboard card.
   Future<int> countMembers(String spaceId);
+
+  /// Total outstanding balance for [userId] in [spaceId] across every open
+  /// cycle, after recorded settlements. A non-zero value means the member has
+  /// outstanding dues and must settle before leaving the Space.
+  Future<Money> fetchOutstandingDues(String spaceId, String userId);
+
+  /// Permanently deletes [spaceId] and every piece of data scoped to it
+  /// (memberships, cycles, expenses, shares, settlements, categories, member
+  /// groups and join/group requests). Only the Space owner may call this.
+  Future<void> deleteSpace(String spaceId);
 }

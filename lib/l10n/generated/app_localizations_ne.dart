@@ -899,6 +899,38 @@ class AppLocalizationsNe extends AppLocalizations {
   String get defaultSpaceRemovedMessage => 'अब पूर्वनिर्धारित ठाउँ छैन';
 
   @override
+  String get deleteSpace => 'मेटाउनुहोस्';
+
+  @override
+  String get leaveSpace => 'छोड्नुहोस्';
+
+  @override
+  String get leaveBlockedOutstanding =>
+      'तपाईंको बाँकी रकम छ। ठाउँ छोड्नु अघि आफ्नो बाँकी रकम मिलाउनुहोस्।';
+
+  @override
+  String deletingSpaceIn(String space, int seconds) {
+    return '$space $seconds सेकेन्डमा मेटिँदै';
+  }
+
+  @override
+  String leavingSpaceIn(String space, int seconds) {
+    return '$space $seconds सेकेन्डमा छोडिँदै';
+  }
+
+  @override
+  String get undo => 'पूर्ववत';
+
+  @override
+  String get spaceActionCancelled => 'कार्य रद्द गरियो। केही परिवर्तन भएन।';
+
+  @override
+  String get spaceDeleted => 'ठाउँ मेटियो।';
+
+  @override
+  String get spaceLeft => 'तपाईंले ठाउँ छोड्नुभयो।';
+
+  @override
   String get yourGroupRequestPending =>
       'तपाईको समूह अनुरोध स्वीकृतिको पर्खाइमा छ। स्पेस मालिकले निर्णय गरेपछि तपाईंलाई सूचित गरिनेछ।';
 

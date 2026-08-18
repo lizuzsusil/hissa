@@ -393,6 +393,35 @@
     }
   },
   "defaultSpaceRemovedMessage": "No longer the default space",
+  "deleteSpace": "Delete",
+  "leaveSpace": "Leave",
+  "leaveBlockedOutstanding": "You have an outstanding balance. Settle your dues before leaving the space.",
+  "deletingSpaceIn": "Deleting {space} in {seconds}s",
+  "@deletingSpaceIn": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "leavingSpaceIn": "Leaving {space} in {seconds}s",
+  "@leavingSpaceIn": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "undo": "Undo",
+  "spaceActionCancelled": "Action cancelled. Nothing changed.",
+  "spaceDeleted": "Space deleted.",
+  "spaceLeft": "You left the space.",
   "yourGroupRequestPending": "Your group request is pending approval. You'll be notified once the space owner decides.",
   "noPendingGroupRequests": "No pending group requests",
   "requestedBy": "Requested by",

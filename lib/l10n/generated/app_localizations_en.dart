@@ -900,6 +900,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defaultSpaceRemovedMessage => 'No longer the default space';
 
   @override
+  String get deleteSpace => 'Delete';
+
+  @override
+  String get leaveSpace => 'Leave';
+
+  @override
+  String get leaveBlockedOutstanding =>
+      'You have an outstanding balance. Settle your dues before leaving the space.';
+
+  @override
+  String deletingSpaceIn(String space, int seconds) {
+    return 'Deleting $space in ${seconds}s';
+  }
+
+  @override
+  String leavingSpaceIn(String space, int seconds) {
+    return 'Leaving $space in ${seconds}s';
+  }
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get spaceActionCancelled => 'Action cancelled. Nothing changed.';
+
+  @override
+  String get spaceDeleted => 'Space deleted.';
+
+  @override
+  String get spaceLeft => 'You left the space.';
+
+  @override
   String get yourGroupRequestPending =>
       'Your group request is pending approval. You\'ll be notified once the space owner decides.';
 

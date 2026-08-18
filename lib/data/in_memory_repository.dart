@@ -1,3 +1,4 @@
+import '../core/money.dart';
 import '../models/models.dart';
 import 'repository.dart';
 
@@ -90,7 +91,9 @@ class InMemoryRepository implements ExpenseRepository {
 
   @override
   Future<void> removeMember(String userId, String spaceId) async {
-    _members.removeWhere((m) => m.userId == userId);
+    _members.removeWhere(
+      (m) => m.userId == userId && m.spaceId == spaceId,
+    );
   }
 
   @override
@@ -296,5 +299,64 @@ class InMemoryRepository implements ExpenseRepository {
   @override
   Future<int> countMembers(String spaceId) async {
     return _members.length;
+  }
+
+  @override
+  Future<Money> fetchOutstandingDues(String spaceId, String userId) async {
+    var total = 0;
+    for (final cycle in _cycles) {
+      if (cycle.spaceId != spaceId || cycle.status == CycleStatus.closed) {
+        continue;
+      }
+      final expenses = _expenses
+          .where((e) => e.spaceId == spaceId && e.cycleId == cycle.id)
+          .toList();
+      final expenseIds = expenses.map((e) => e.id).toSet();
+      final paid = expenses
+          .where((e) => e.paidByUserId == userId)
+          .fold<int>(0, (a, e) => a + e.amount.paisa);
+      final share = _shares
+          .where((s) => expenseIds.contains(s.expenseId) && s.userId == userId)
+          .fold<int>(0, (a, s) => a + s.amount.paisa);
+      final settledOut = _settlements
+          .where(
+            (s) =>
+                s.spaceId == spaceId &&
+                s.cycleId == cycle.id &&
+                s.status != SettlementStatus.cancelled &&
+                s.fromUserId == userId,
+          )
+          .fold<int>(0, (a, s) => a + s.amount.paisa);
+      final settledIn = _settlements
+          .where(
+            (s) =>
+                s.spaceId == spaceId &&
+                s.cycleId == cycle.id &&
+                s.status != SettlementStatus.cancelled &&
+                s.toUserId == userId,
+          )
+          .fold<int>(0, (a, s) => a + s.amount.paisa);
+      total += paid - share + settledOut - settledIn;
+    }
+    return Money(total);
+  }
+
+  @override
+  Future<void> deleteSpace(String spaceId) async {
+    _spaces.removeWhere((s) => s.id == spaceId);
+    _members.removeWhere((m) => m.spaceId == spaceId);
+    _cycles.removeWhere((c) => c.spaceId == spaceId);
+    final expenseIds =
+        _expenses.where((e) => e.spaceId == spaceId).map((e) => e.id).toSet();
+    _expenses.removeWhere((e) => e.spaceId == spaceId);
+    _shares.removeWhere((s) => expenseIds.contains(s.expenseId));
+    _settlements.removeWhere((s) => s.spaceId == spaceId);
+    _categories.removeWhere((c) => c.spaceId == spaceId);
+    final groupIds =
+        _memberGroups.where((g) => g.spaceId == spaceId).map((g) => g.id).toSet();
+    _memberGroups.removeWhere((g) => g.spaceId == spaceId);
+    _memberGroupMembers.removeWhere((m) => groupIds.contains(m.groupId));
+    _groupRequests.removeWhere((r) => r.spaceId == spaceId);
+    _spaceJoinRequests.removeWhere((r) => r.spaceId == spaceId);
   }
 }

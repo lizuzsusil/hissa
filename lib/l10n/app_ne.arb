@@ -276,6 +276,35 @@
     }
   },
   "defaultSpaceRemovedMessage": "अब पूर्वनिर्धारित ठाउँ छैन",
+  "deleteSpace": "मेटाउनुहोस्",
+  "leaveSpace": "छोड्नुहोस्",
+  "leaveBlockedOutstanding": "तपाईंको बाँकी रकम छ। ठाउँ छोड्नु अघि आफ्नो बाँकी रकम मिलाउनुहोस्।",
+  "deletingSpaceIn": "{space} {seconds} सेकेन्डमा मेटिँदै",
+  "@deletingSpaceIn": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "leavingSpaceIn": "{space} {seconds} सेकेन्डमा छोडिँदै",
+  "@leavingSpaceIn": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "undo": "पूर्ववत",
+  "spaceActionCancelled": "कार्य रद्द गरियो। केही परिवर्तन भएन।",
+  "spaceDeleted": "ठाउँ मेटियो।",
+  "spaceLeft": "तपाईंले ठाउँ छोड्नुभयो।",
   "yourGroupRequestPending": "तपाईको समूह अनुरोध स्वीकृतिको पर्खाइमा छ। स्पेस मालिकले निर्णय गरेपछि तपाईंलाई सूचित गरिनेछ।",
   "noPendingGroupRequests": "कुनै पर्खाइमा रहेका समूह अनुरोधहरू छैनन्",
   "requestedBy": "अनुरोधकर्ता",

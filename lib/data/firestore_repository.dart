@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../core/money.dart';
 import '../models/models.dart';
 import 'repository.dart';
 
@@ -832,6 +833,122 @@ class FirestoreRepository implements ExpenseRepository {
         .where('spaceId', isEqualTo: spaceId)
         .get();
     return snap.docs.length;
+  }
+
+  @override
+  Future<Money> fetchOutstandingDues(String spaceId, String userId) async {
+    final cyclesSnap = await _db
+        .collection('cycles')
+        .where('spaceId', isEqualTo: spaceId)
+        .get();
+    final openCycles = cyclesSnap.docs
+        .map((d) => Cycle.fromJson(d.data()))
+        .where((c) => c.status != CycleStatus.closed)
+        .toList();
+    if (openCycles.isEmpty) return Money.zero();
+
+    final openCycleIds = openCycles.map((c) => c.id).toSet();
+    final expensesSnap = await _db
+        .collection('expenses')
+        .where('spaceId', isEqualTo: spaceId)
+        .get();
+    final expenses = expensesSnap.docs
+        .map((d) => Expense.fromJson(d.data()))
+        .where((e) => openCycleIds.contains(e.cycleId))
+        .toList();
+    final expenseIds = expenses.map((e) => e.id).toSet();
+
+    final sharesSnap = await _db
+        .collection('expenseShares')
+        .where('spaceId', isEqualTo: spaceId)
+        .get();
+    final shares = sharesSnap.docs
+        .map((d) => ExpenseShare.fromJson(d.data()))
+        .where((s) => expenseIds.contains(s.expenseId) && s.userId == userId)
+        .toList();
+
+    final settlementsSnap = await _db
+        .collection('settlements')
+        .where('spaceId', isEqualTo: spaceId)
+        .get();
+    final settlements = settlementsSnap.docs
+        .map((d) => Settlement.fromJson(d.data()))
+        .where(
+          (s) =>
+              openCycleIds.contains(s.cycleId) &&
+              s.status != SettlementStatus.cancelled &&
+              (s.fromUserId == userId || s.toUserId == userId),
+        )
+        .toList();
+
+    final paid = expenses
+        .where((e) => e.paidByUserId == userId)
+        .fold<int>(0, (a, e) => a + e.amount.paisa);
+    final share =
+        shares.fold<int>(0, (a, s) => a + s.amount.paisa);
+    final settledOut = settlements
+        .where((s) => s.fromUserId == userId)
+        .fold<int>(0, (a, s) => a + s.amount.paisa);
+    final settledIn = settlements
+        .where((s) => s.toUserId == userId)
+        .fold<int>(0, (a, s) => a + s.amount.paisa);
+    return Money(paid - share + settledOut - settledIn);
+  }
+
+  @override
+  Future<void> deleteSpace(String spaceId) async {
+    final expenseIds =
+        _expenses.where((e) => e.spaceId == spaceId).map((e) => e.id).toSet();
+    final groupIds =
+        _memberGroups.where((g) => g.spaceId == spaceId).map((g) => g.id).toSet();
+
+    _spaces.removeWhere((s) => s.id == spaceId);
+    _members.removeWhere((m) => m.spaceId == spaceId);
+    _cycles.removeWhere((c) => c.spaceId == spaceId);
+    _expenses.removeWhere((e) => e.spaceId == spaceId);
+    _shares.removeWhere((s) => expenseIds.contains(s.expenseId));
+    _settlements.removeWhere((s) => s.spaceId == spaceId);
+    _categories.removeWhere((c) => c.spaceId == spaceId);
+    _memberGroups.removeWhere((g) => g.spaceId == spaceId);
+    _memberGroupMembers.removeWhere((m) => groupIds.contains(m.groupId));
+    _groupRequests.removeWhere((r) => r.spaceId == spaceId);
+    _spaceJoinRequests.removeWhere((r) => r.spaceId == spaceId);
+
+    // Space-scoped data first while the owner's membership (and therefore
+    // `spaceOwner` / `memberOf` rule checks) still holds, then the Space doc,
+    // then the memberships — the owner's own membership last.
+    await _deleteScoped('categories', spaceId);
+    await _deleteScoped('cycles', spaceId);
+    await _deleteScoped('expenses', spaceId);
+    await _deleteScoped('expenseShares', spaceId);
+    await _deleteScoped('settlements', spaceId);
+    await _deleteScoped('memberGroups', spaceId);
+    await _deleteScoped('memberGroupMembers', spaceId);
+    await _deleteScoped('groupRequests', spaceId);
+    await _deleteScoped('spaceJoinRequests', spaceId);
+    await _db.collection('spaces').doc(spaceId).delete();
+
+    final membersSnap = await _db
+        .collection('spaceMembers')
+        .where('spaceId', isEqualTo: spaceId)
+        .get();
+    final ownerDocId = '${spaceId}_$_ownUid';
+    for (final d in membersSnap.docs) {
+      if (d.id != ownerDocId) {
+        await d.reference.delete();
+      }
+    }
+    await _db.collection('spaceMembers').doc(ownerDocId).delete();
+  }
+
+  Future<void> _deleteScoped(String collection, String spaceId) async {
+    final snap = await _db
+        .collection(collection)
+        .where('spaceId', isEqualTo: spaceId)
+        .get();
+    for (final d in snap.docs) {
+      await d.reference.delete();
+    }
   }
 
   // ---- helpers ----

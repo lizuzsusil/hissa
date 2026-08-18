@@ -68,13 +68,16 @@ service cloud.firestore {
 
     // Space documents are readable by any signed-in user so invite-code
     // joins work. Writes (create via onboarding, later edits by the owner)
-    // require membership in the space and a valid mode.
+    // require membership in the space and a valid mode. Only the owner may
+    // delete a Space (deleting also removes all of its scoped data).
     match /spaces/{spaceId} {
       allow read: if signedIn();
 
-      allow write: if signedIn()
+      allow create, update: if signedIn()
         && memberOf(spaceId)
         && validSpaceMode();
+
+      allow delete: if signedIn() && spaceOwner(spaceId);
     }
 
     match /spaceMembers/{memberId} {
@@ -89,23 +92,33 @@ service cloud.firestore {
       );
 
       allow update, delete: if signedIn()
-        && memberOf(resource.data.spaceId);
+        && memberOf(resource.data.spaceId)
+        && (
+          resource.data.userId == request.auth.uid ||
+          spaceOwner(resource.data.spaceId)
+        );
     }
 
     match /categories/{categoryId} {
       allow read: if signedIn()
         && memberOf(resource.data.spaceId);
 
-      allow write: if signedIn()
+      allow create, update: if signedIn()
         && memberOf(request.resource.data.spaceId);
+
+      allow delete: if signedIn()
+        && spaceOwner(resource.data.spaceId);
     }
 
     match /cycles/{cycleId} {
       allow read: if signedIn()
         && memberOf(resource.data.spaceId);
 
-      allow write: if signedIn()
+      allow create, update: if signedIn()
         && memberOf(request.resource.data.spaceId);
+
+      allow delete: if signedIn()
+        && spaceOwner(resource.data.spaceId);
     }
 
     match /expenses/{expenseId} {
@@ -131,7 +144,10 @@ service cloud.firestore {
 
       allow delete: if signedIn()
         && memberOf(resource.data.spaceId)
-        && resource.data.createdBy == request.auth.uid;
+        && (
+          resource.data.createdBy == request.auth.uid ||
+          spaceOwner(resource.data.spaceId)
+        );
     }
 
     match /expenseShares/{shareId} {
@@ -142,7 +158,7 @@ service cloud.firestore {
       // persistent Member Group (GROUP). A client can never mint a share for a
       // user outside the Space, nor for a group outside the Space (Phase 8
       // security). Group shares carry a null `userId` and a `memberGroupId`.
-      allow write: if signedIn()
+      allow create, update: if signedIn()
         && memberOf(request.resource.data.spaceId)
         && (
           (request.resource.data.participantType == 'GROUP'
@@ -157,14 +173,20 @@ service cloud.firestore {
               request.resource.data.userId
             ))
         );
+
+      allow delete: if signedIn()
+        && spaceOwner(resource.data.spaceId);
     }
 
     match /settlements/{settlementId} {
       allow read: if signedIn()
         && memberOf(resource.data.spaceId);
 
-      allow write: if signedIn()
+      allow create, update: if signedIn()
         && memberOf(request.resource.data.spaceId);
+
+      allow delete: if signedIn()
+        && spaceOwner(resource.data.spaceId);
     }
 
     match /memberGroups/{groupId} {
@@ -191,7 +213,10 @@ service cloud.firestore {
 
       allow delete: if signedIn()
         && memberOf(resource.data.spaceId)
-        && resource.data.ownerUserId == request.auth.uid;
+        && (
+          resource.data.ownerUserId == request.auth.uid ||
+          spaceOwner(resource.data.spaceId)
+        );
     }
 
     match /memberGroupMembers/{memberId} {

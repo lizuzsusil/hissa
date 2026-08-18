@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
 import '../widgets/misc.dart';
 import '../widgets/motion.dart';
+import '../widgets/swipe_reveal.dart';
 
 /// Post-login landing screen. Lists every Space the user belongs to with its
 /// mode and member count, and offers Create Space, Join Space and Sign Out.
@@ -36,6 +39,25 @@ class SpacesDashboardScreen extends StatefulWidget {
 class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
   Map<String, int> _counts = {};
   List<String> _loadedIds = const [];
+
+  /// Deferred Delete/Leave: nothing is destroyed until the 10s countdown in
+  /// the confirmation SnackBar expires (or is cancelled via Undo).
+  static const int _actionCountdownSeconds = 10;
+  Timer? _actionTimer;
+  String? _pendingSpaceId;
+  bool _pendingIsDelete = false;
+  final ValueNotifier<int> _countdown = ValueNotifier(_actionCountdownSeconds);
+
+  /// Tracks which Space cards have an open swipe-reveal, so tapping a card
+  /// closes the reveal instead of entering the Space.
+  final Map<String, bool> _openReveals = {};
+
+  @override
+  void dispose() {
+    _actionTimer?.cancel();
+    _countdown.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -86,6 +108,103 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
           ),
         ),
       );
+  }
+
+  /// Entry point for the revealed Delete/Leave button. Leaving is blocked up
+  /// front when the member still has outstanding dues; deleting (owner) and
+  /// leaving (member) are otherwise deferred by a 10s undoable countdown.
+  Future<void> _onSpaceAction(Space space, {required bool isDelete}) async {
+    final state = context.read<AppState>();
+    final uid = state.currentUserId;
+    if (!isDelete && uid != null) {
+      final outstanding = await state.outstandingDuesFor(space.id, uid);
+      if (!mounted) return;
+      if (!outstanding.isZero) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text(context.l10n.leaveBlockedOutstanding)),
+          );
+        return;
+      }
+    }
+    _beginPendingAction(space, isDelete: isDelete);
+  }
+
+  /// Shows the undoable countdown SnackBar and schedules the permanent
+  /// Delete/Leave for [space] when it expires.
+  void _beginPendingAction(Space space, {required bool isDelete}) {
+    _actionTimer?.cancel();
+    _pendingSpaceId = space.id;
+    _pendingIsDelete = isDelete;
+    _countdown.value = _actionCountdownSeconds;
+    final l10n = context.l10n;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: _actionCountdownSeconds + 1),
+          content: ValueListenableBuilder<int>(
+            valueListenable: _countdown,
+            builder: (context, seconds, _) => Text(
+              isDelete
+                  ? l10n.deletingSpaceIn(space.name, seconds)
+                  : l10n.leavingSpaceIn(space.name, seconds),
+            ),
+          ),
+          action: SnackBarAction(
+            label: l10n.undo,
+            onPressed: _undoPendingAction,
+          ),
+        ),
+      );
+    _actionTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      final next = _countdown.value - 1;
+      if (next <= 0) {
+        t.cancel();
+        _countdown.value = 0;
+        _executePendingAction();
+      } else {
+        _countdown.value = next;
+      }
+    });
+  }
+
+  /// Cancels the pending Delete/Leave. Nothing was modified yet, so the Space
+  /// simply stays in its previous state.
+  void _undoPendingAction() {
+    _actionTimer?.cancel();
+    _actionTimer = null;
+    _pendingSpaceId = null;
+    _countdown.value = _actionCountdownSeconds;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(context.l10n.spaceActionCancelled)));
+  }
+
+  /// Performs the permanent Delete/Leave after the countdown expires.
+  Future<void> _executePendingAction() async {
+    final spaceId = _pendingSpaceId;
+    final isDelete = _pendingIsDelete;
+    _pendingSpaceId = null;
+    _actionTimer = null;
+    _countdown.value = _actionCountdownSeconds;
+    if (spaceId == null || !mounted) return;
+    final state = context.read<AppState>();
+    final l10n = context.l10n;
+    final succeeded = isDelete
+        ? await state.deleteSpace(spaceId)
+        : await state.leaveSpace(spaceId);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    if (succeeded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isDelete ? l10n.spaceDeleted : l10n.spaceLeft)),
+      );
+    }
+    await state.refreshSpaces();
+    if (mounted) await _loadCounts();
   }
 
   Future<void> _confirmSignOut() async {
@@ -232,15 +351,44 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
                               return pendingItems[index];
                             }
 final space = spaces[index - pendingItems.length];
+                          final isDelete = state.isOwnerOf(space.id);
                           return Reveal(
                             delay: Duration(milliseconds: 60 * index),
-                            child: _SpaceCard(
-                              space: space,
-                              memberCount: _counts[space.id],
-                              isDefault: space.id == defaultSpaceId,
-                              showDefaultToggle: showDefaultToggle,
-                              onToggleDefault: () => _toggleDefault(space),
-                              onTap: () => widget.onSelect(space),
+                            child: SwipeRevealAction(
+                              actionWidth: 88,
+                              onOpenChanged: (open) =>
+                                  _openReveals[space.id] = open,
+                              child: (dismiss) => _SpaceCard(
+                                key: ValueKey('space_card_${space.id}'),
+                                space: space,
+                                memberCount: _counts[space.id],
+                                isDefault: space.id == defaultSpaceId,
+                                showDefaultToggle: showDefaultToggle,
+                                onToggleDefault: () => _toggleDefault(space),
+                                onTap: () {
+                                  if (_openReveals[space.id] ?? false) {
+                                    dismiss();
+                                  } else {
+                                    widget.onSelect(space);
+                                  }
+                                },
+                              ),
+                              action: (dismiss) => _SpaceActionButton(
+                                key: ValueKey('space_action_${space.id}'),
+                                icon: isDelete
+                                    ? Icons.delete_outline_rounded
+                                    : Icons.logout_rounded,
+                                label: isDelete
+                                    ? l10n.deleteSpace
+                                    : l10n.leaveSpace,
+                                onPressed: () {
+                                  dismiss();
+                                  _onSpaceAction(
+                                    space,
+                                    isDelete: isDelete,
+                                  );
+                                },
+                              ),
                             ),
                           );
                           },
@@ -283,6 +431,7 @@ class _SpaceCard extends StatelessWidget {
   final VoidCallback onToggleDefault;
 
   const _SpaceCard({
+    super.key,
     required this.space,
     required this.memberCount,
     this.isDefault = false,
@@ -427,6 +576,50 @@ class _SpaceCard extends StatelessWidget {
               color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The revealed Delete/Leave button behind a swiped Space card. Fills the
+/// right edge of the reveal strip with the destructive action.
+class _SpaceActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _SpaceActionButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.negative,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onPressed,
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 22),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

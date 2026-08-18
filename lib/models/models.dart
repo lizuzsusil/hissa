@@ -11,6 +11,11 @@ class User {
   final String email;
   final String? phone;
   final String? avatarUrl;
+
+  /// The Space this user chose to open automatically on launch, when they
+  /// belong to more than one. Stored per-user in the database so the choice
+  /// follows the account across devices and logins.
+  final String? defaultSpaceId;
   final DateTime createdAt;
 
   const User({
@@ -19,16 +24,30 @@ class User {
     required this.email,
     this.phone,
     this.avatarUrl,
+    this.defaultSpaceId,
     required this.createdAt,
   });
 
-  User copyWith({String? name, String? email, String? phone, String? avatarUrl}) {
+  /// Sentinel so an explicit null clears [defaultSpaceId] instead of keeping
+  /// the previous value.
+  static const _unset = Object();
+
+  User copyWith({
+    String? name,
+    String? email,
+    String? phone,
+    String? avatarUrl,
+    Object? defaultSpaceId = _unset,
+  }) {
     return User(
       id: id,
       name: name ?? this.name,
       email: email ?? this.email,
       phone: phone ?? this.phone,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      defaultSpaceId: identical(defaultSpaceId, _unset)
+          ? this.defaultSpaceId
+          : defaultSpaceId as String?,
       createdAt: createdAt,
     );
   }
@@ -39,6 +58,7 @@ class User {
         'email': email,
         'phone': phone,
         'avatarUrl': avatarUrl,
+        'defaultSpaceId': defaultSpaceId,
         'createdAt': createdAt.toIso8601String(),
       };
 
@@ -48,6 +68,7 @@ class User {
         email: json['email'] as String,
         phone: json['phone'] as String?,
         avatarUrl: json['avatarUrl'] as String?,
+        defaultSpaceId: json['defaultSpaceId'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
       );
 }

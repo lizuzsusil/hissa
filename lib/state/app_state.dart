@@ -222,6 +222,9 @@ class AppState extends ChangeNotifier {
     }
     _repo = repo;
     _spaceId = nextSpaceId;
+    // The database profile is the source of truth for the default Space, so
+    // a fresh login on any device routes directly to the chosen Space.
+    syncDefaultSpaceFromProfile();
     await _runLegacyMigration(spaces);
     await _rolloverMonthlyCycles();
     notifyListeners();
@@ -446,7 +449,10 @@ class AppState extends ChangeNotifier {
 
   /// Sets the Space that should open automatically on the next launch. Pass
   /// null (or a Space the user no longer belongs to) to clear the preference.
-  /// The preference is persisted and restored together with the session.
+  ///
+  /// The preference is written to the user's database profile so it follows
+  /// the account across devices and logins; the session blob is only a local
+  /// fast path for the current device.
   Future<void> setDefaultSpace(String? spaceId) async {
     final String? target;
     if (spaceId == null) {
@@ -460,7 +466,72 @@ class AppState extends ChangeNotifier {
     if (_defaultSpaceId == target) return;
     _defaultSpaceId = target;
     notifyListeners();
+    final user = currentUser;
+    if (user != null) {
+      await _repo.saveUser(user.copyWith(defaultSpaceId: target));
+    }
     await _persist();
+  }
+
+  /// Copies the database-stored default Space preference into memory so a
+  /// fresh login (on any device) lands the user directly in their chosen
+  /// Space. The database is the source of truth; the local session blob is
+  /// only a fast path for the current device.
+  void syncDefaultSpaceFromProfile() {
+    _defaultSpaceId = currentUser?.defaultSpaceId;
+  }
+
+  /// Whether [userId] (default: the signed-in user) owns [spaceId]. Ownership
+  /// is derived from the Space creator, falling back to the membership role
+  /// when the Space's members are loaded.
+  bool isOwnerOf(String spaceId, [String? userId]) {
+    final uid = userId ?? _currentUserId;
+    if (uid == null) return false;
+    final s = _spaces.where((s) => s.id == spaceId).firstOrNull;
+    if (s != null && s.createdBy == uid) return true;
+    final member = _repo.members
+        .where((m) => m.spaceId == spaceId && m.userId == uid)
+        .firstOrNull;
+    return member?.role == MemberRole.owner;
+  }
+
+  /// Total outstanding balance for [userId] in [spaceId] across every open
+  /// cycle. Non-zero means the member must settle before leaving.
+  Future<Money> outstandingDuesFor(String spaceId, String userId) =>
+      _repo.fetchOutstandingDues(spaceId, userId);
+
+  /// Permanently deletes [spaceId] and all of its data. Only the owner may
+  /// delete a Space; the owner leaves by deleting instead.
+  Future<bool> deleteSpace(String spaceId) async {
+    final uid = _currentUserId;
+    if (uid == null || !isOwnerOf(spaceId)) return false;
+    await _repo.deleteSpace(spaceId);
+    if (_spaceId == spaceId) {
+      _spaceId = null;
+      _cycleId = null;
+    }
+    await refreshSpaces();
+    await _commit();
+    return true;
+  }
+
+  /// Removes the current user from [spaceId] as a member. The owner cannot
+  /// leave (they must delete the Space), and a member with any outstanding
+  /// balance must settle first. Historical transactions are never modified:
+  /// the user only stops being included in new ones.
+  Future<bool> leaveSpace(String spaceId) async {
+    final uid = _currentUserId;
+    if (uid == null || isOwnerOf(spaceId)) return false;
+    final outstanding = await _repo.fetchOutstandingDues(spaceId, uid);
+    if (!outstanding.isZero) return false;
+    await _repo.removeMember(uid, spaceId);
+    if (_spaceId == spaceId) {
+      _spaceId = null;
+      _cycleId = null;
+    }
+    await refreshSpaces();
+    await _commit();
+    return true;
   }
 
   /// Registers the current device's FCM token for the signed-in user so the

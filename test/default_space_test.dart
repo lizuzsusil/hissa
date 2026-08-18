@@ -122,6 +122,84 @@ void main() {
     expect(state.defaultSpaceId, isNull);
   });
 
+  testWidgets('the default Space is stored on the user profile in the '
+      'repository so it survives a fresh login', (tester) async {
+    final state = await makeState(spaceIds: ['h1', 'h2']);
+    await state.repo.saveUser(
+      User(
+        id: 'u1',
+        name: 'Ram',
+        email: 'ram@example.com',
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+
+    await state.setDefaultSpace('h2');
+    final saved = state.repo.users.singleWhere((u) => u.id == 'u1');
+    expect(saved.defaultSpaceId, 'h2');
+
+    // Clearing the preference also clears the stored profile value.
+    await state.setDefaultSpace(null);
+    expect(state.repo.users.singleWhere((u) => u.id == 'u1').defaultSpaceId,
+        isNull);
+  });
+
+  testWidgets('a fresh login routes directly to the profile-stored default '
+      'Space', (tester) async {
+    // A brand-new session (no local blob) whose repository holds the user
+    // profile written by the previous session.
+    final state = AppState();
+    await state.repo.saveSpace(
+      Space(
+        id: 'h1',
+        name: 'Space 1',
+        currency: 'NPR',
+        inviteCode: 'ABCD12',
+        mode: SpaceMode.split,
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+    await state.repo.saveSpace(
+      Space(
+        id: 'h2',
+        name: 'Space 2',
+        currency: 'NPR',
+        inviteCode: 'ABCD13',
+        mode: SpaceMode.split,
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+    for (final id in ['h1', 'h2']) {
+      await state.repo.saveMember(
+        SpaceMember(
+          userId: 'u1',
+          name: 'Ram',
+          role: MemberRole.owner,
+          joinedAt: DateTime(2026, 1, 1),
+        ),
+        id,
+      );
+    }
+    await state.repo.saveUser(
+      User(
+        id: 'u1',
+        name: 'Ram',
+        email: 'ram@example.com',
+        defaultSpaceId: 'h2',
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+    state.debugSetSession(userId: 'u1');
+    await state.refreshSpaces();
+
+    // The attach step loads the preference from the profile (DB source of
+    // truth) and the user is routed into their chosen Space.
+    expect(state.defaultSpaceId, isNull);
+    state.syncDefaultSpaceFromProfile();
+    expect(state.defaultSpaceId, 'h2');
+    expect(state.launchSpace?.id, 'h2');
+  });
+
   testWidgets('the dashboard toggles a default Space and shows a confirmation',
       (tester) async {
     tester.view.physicalSize = const Size(800, 2000);
