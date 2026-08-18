@@ -950,6 +950,18 @@ abstract class AppLocalizations {
   /// **'All your expense spaces in one place'**
   String get mySpacesSubtitle;
 
+  /// No description provided for @yourSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Spaces you own'**
+  String get yourSpaces;
+
+  /// No description provided for @joinedSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Spaces you\'ve joined'**
+  String get joinedSpaces;
+
   /// No description provided for @noSpacesYet.
   ///
   /// In en, this message translates to:

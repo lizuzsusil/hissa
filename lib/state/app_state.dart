@@ -82,6 +82,22 @@ class AppState extends ChangeNotifier {
   /// currently selected), used by the post-login Spaces dashboard.
   List<Space> get spaces => List.unmodifiable(_spaces);
 
+  /// Spaces the current user owns (i.e. [Space.createdBy] == current user ID).
+  List<Space> get ownedSpaces {
+    final uid = _currentUserId;
+    if (uid == null) return const [];
+    return _spaces.where((s) => s.createdBy == uid).toList();
+  }
+
+  /// Spaces the current user has joined but does not own. [spaces] already
+  /// only contains Spaces the user is a member of, so we simply exclude the
+  /// ones they created.
+  List<Space> get joinedSpaces {
+    final uid = _currentUserId;
+    if (uid == null) return const [];
+    return _spaces.where((s) => s.createdBy != uid).toList();
+  }
+
   /// The Space the user chose to open automatically on the next launch (when
   /// they belong to more than one Space). Null when no default is set.
   String? get defaultSpaceId => _defaultSpaceId;

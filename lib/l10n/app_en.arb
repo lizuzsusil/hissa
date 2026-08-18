@@ -243,6 +243,8 @@
 
   "mySpaces": "My Spaces",
   "mySpacesSubtitle": "All your expense spaces in one place",
+  "yourSpaces": "Spaces you own",
+  "joinedSpaces": "Spaces you've joined",
   "noSpacesYet": "No spaces yet",
   "noSpace": "No space",
   "noSpacesMessage": "Create a space to start tracking your expenses, or join an existing space.",

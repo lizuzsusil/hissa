@@ -110,6 +110,51 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
       );
   }
 
+  /// Builds a single Space card wrapped with its swipe-to-reveal
+  /// Delete/Leave action. Used for both owned and joined Spaces so the
+  /// "open by default" toggle key stays stable across the divided sections.
+  Widget _buildSpaceTile({
+    required AppState state,
+    required Space space,
+    required int index,
+    required bool showDefaultToggle,
+    required String? defaultSpaceId,
+  }) {
+    final l10n = context.l10n;
+    final isDelete = state.isOwnerOf(space.id);
+    return Reveal(
+      delay: Duration(milliseconds: 60 * index),
+      child: SwipeRevealAction(
+        actionWidth: 88,
+        onOpenChanged: (open) => _openReveals[space.id] = open,
+        child: (dismiss) => _SpaceCard(
+          key: ValueKey('space_card_${space.id}'),
+          space: space,
+          memberCount: _counts[space.id],
+          isDefault: space.id == defaultSpaceId,
+          showDefaultToggle: showDefaultToggle,
+          onToggleDefault: () => _toggleDefault(space),
+          onTap: () {
+            if (_openReveals[space.id] ?? false) {
+              dismiss();
+            } else {
+              widget.onSelect(space);
+            }
+          },
+        ),
+        action: (dismiss) => _SpaceActionButton(
+          key: ValueKey('space_action_${space.id}'),
+          icon: isDelete ? Icons.delete_outline_rounded : Icons.logout_rounded,
+          label: isDelete ? l10n.deleteSpace : l10n.leaveSpace,
+          onPressed: () {
+            dismiss();
+            _onSpaceAction(space, isDelete: isDelete);
+          },
+        ),
+      ),
+    );
+  }
+
   /// Entry point for the revealed Delete/Leave button. Leaving is blocked up
   /// front when the member still has outstanding dues; deleting (owner) and
   /// leaving (member) are otherwise deferred by a 10s undoable countdown.
@@ -234,11 +279,13 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final spaces = state.spaces;
+    final ownedSpaces = state.ownedSpaces;
+    final joinedSpaces = state.joinedSpaces;
     final pendingSpaces = state.pendingSpaces;
     final defaultSpaceId = state.defaultSpaceId;
     // The "open by default" toggle only makes sense when there are several
     // Spaces to choose from (a single Space is always entered automatically).
-    final showDefaultToggle = spaces.length > 1;
+    final showDefaultToggle = (ownedSpaces.length + joinedSpaces.length) > 1;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
     final textColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
@@ -269,12 +316,55 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
       ],
     ];
 
-    final ids = spaces.map((s) => s.id).toList();
+    final ids = <String>[
+      ...ownedSpaces.map((s) => s.id),
+      ...joinedSpaces.map((s) => s.id),
+    ];
     if (!listEquals(ids, _loadedIds)) {
       _loadedIds = ids;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _loadCounts();
       });
+    }
+
+    // Build a single ordered list of rows: pending approvals, then the Spaces
+    // the user owns (under a "Spaces you own" header), then the Spaces the
+    // user has joined (under a "Spaces you've joined" header).
+    final tiles = <Widget>[];
+    var cardIndex = 0;
+    for (final pending in pendingItems) {
+      tiles.add(pending);
+      cardIndex++;
+    }
+    if (ownedSpaces.isNotEmpty) {
+      tiles.add(_SectionHeader(title: l10n.yourSpaces, isDark: isDark));
+      for (final space in ownedSpaces) {
+        tiles.add(
+          _buildSpaceTile(
+            state: state,
+            space: space,
+            index: cardIndex,
+            showDefaultToggle: showDefaultToggle,
+            defaultSpaceId: defaultSpaceId,
+          ),
+        );
+        cardIndex++;
+      }
+    }
+    if (joinedSpaces.isNotEmpty) {
+      tiles.add(_SectionHeader(title: l10n.joinedSpaces, isDark: isDark));
+      for (final space in joinedSpaces) {
+        tiles.add(
+          _buildSpaceTile(
+            state: state,
+            space: space,
+            index: cardIndex,
+            showDefaultToggle: showDefaultToggle,
+            defaultSpaceId: defaultSpaceId,
+          ),
+        );
+        cardIndex++;
+      }
     }
 
     return Scaffold(
@@ -326,7 +416,7 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
               child: LayoutBuilder(
                 builder: (context, constraints) => RefreshIndicator(
                   onRefresh: _refresh,
-                  child: spaces.isEmpty && pendingSpaces.isEmpty
+                  child: (ownedSpaces.isEmpty && joinedSpaces.isEmpty && pendingSpaces.isEmpty)
                       // Keep the empty state vertically centred like before;
                       // the ListView only exists to allow pull-to-refresh.
                       ? ListView(
@@ -344,54 +434,9 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
                       : ListView.separated(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                          itemCount: pendingItems.length + spaces.length,
+                          itemCount: tiles.length,
                           separatorBuilder: (_, _) => const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            if (index < pendingItems.length) {
-                              return pendingItems[index];
-                            }
-final space = spaces[index - pendingItems.length];
-                          final isDelete = state.isOwnerOf(space.id);
-                          return Reveal(
-                            delay: Duration(milliseconds: 60 * index),
-                            child: SwipeRevealAction(
-                              actionWidth: 88,
-                              onOpenChanged: (open) =>
-                                  _openReveals[space.id] = open,
-                              child: (dismiss) => _SpaceCard(
-                                key: ValueKey('space_card_${space.id}'),
-                                space: space,
-                                memberCount: _counts[space.id],
-                                isDefault: space.id == defaultSpaceId,
-                                showDefaultToggle: showDefaultToggle,
-                                onToggleDefault: () => _toggleDefault(space),
-                                onTap: () {
-                                  if (_openReveals[space.id] ?? false) {
-                                    dismiss();
-                                  } else {
-                                    widget.onSelect(space);
-                                  }
-                                },
-                              ),
-                              action: (dismiss) => _SpaceActionButton(
-                                key: ValueKey('space_action_${space.id}'),
-                                icon: isDelete
-                                    ? Icons.delete_outline_rounded
-                                    : Icons.logout_rounded,
-                                label: isDelete
-                                    ? l10n.deleteSpace
-                                    : l10n.leaveSpace,
-                                onPressed: () {
-                                  dismiss();
-                                  _onSpaceAction(
-                                    space,
-                                    isDelete: isDelete,
-                                  );
-                                },
-                              ),
-                            ),
-                          );
-                          },
+                          itemBuilder: (context, index) => tiles[index],
                         ),
                 ),
               ),
@@ -629,6 +674,31 @@ class _SpaceActionButton extends StatelessWidget {
 /// A Space the current user requested to join but has not been approved for
 /// yet. Shown so the requester can see their requested Space, but deliberately
 /// not tappable: the user can only open a Space once they are a member.
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final bool isDark;
+
+  const _SectionHeader({required this.title, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
+          color: isDark
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
 class _PendingSpaceCard extends StatelessWidget {
   final Space space;
 

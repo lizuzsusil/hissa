@@ -503,6 +503,12 @@ class AppLocalizationsNe extends AppLocalizations {
   String get mySpacesSubtitle => 'तपाईंका सबै खर्च स्पेस एकै ठाउँमा';
 
   @override
+  String get yourSpaces => 'तपाईंका स्वामित्वका स्पेसहरू';
+
+  @override
+  String get joinedSpaces => 'तपाईंले सामेल भएका स्पेसहरू';
+
+  @override
   String get noSpacesYet => 'अहिलेसम्म कुनै स्पेस छैन';
 
   @override

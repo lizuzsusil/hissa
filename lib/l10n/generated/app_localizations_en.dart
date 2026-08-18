@@ -503,6 +503,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mySpacesSubtitle => 'All your expense spaces in one place';
 
   @override
+  String get yourSpaces => 'Spaces you own';
+
+  @override
+  String get joinedSpaces => 'Spaces you\'ve joined';
+
+  @override
   String get noSpacesYet => 'No spaces yet';
 
   @override

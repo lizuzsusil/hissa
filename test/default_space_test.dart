@@ -291,4 +291,93 @@ void main() {
     expect(find.byKey(const ValueKey('default_toggle_h2')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('dashboard divides Spaces into owned and joined sections', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final state = AppState();
+    final repo = state.repo;
+
+    // A Space the current user owns.
+    await repo.saveSpace(
+      Space(
+        id: 'own1',
+        name: 'Owned Space',
+        currency: 'NPR',
+        inviteCode: 'ABC1112',
+        mode: SpaceMode.split,
+        createdBy: 'u1',
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+    await repo.saveMember(
+      SpaceMember(
+        userId: 'u1',
+        name: 'Ram',
+        role: MemberRole.owner,
+        joinedAt: DateTime(2026, 1, 1),
+        spaceId: 'own1',
+      ),
+      'own1',
+    );
+
+    // A Space owned by someone else that the current user has joined.
+    await repo.saveSpace(
+      Space(
+        id: 'join1',
+        name: 'Joined Space',
+        currency: 'NPR',
+        inviteCode: 'ABC2212',
+        mode: SpaceMode.split,
+        createdBy: 'u2',
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+    await repo.saveMember(
+      SpaceMember(
+        userId: 'u1',
+        name: 'Ram',
+        role: MemberRole.member,
+        joinedAt: DateTime(2026, 1, 1),
+        spaceId: 'join1',
+      ),
+      'join1',
+    );
+
+    state.debugSetSession(userId: 'u1', spaceId: null);
+    await state.refreshSpaces();
+    await tester.pumpWidget(
+      appHarness(
+        state,
+        SpacesDashboardScreen(
+          onSelect: (_) {},
+          onCreate: () {},
+          onJoin: () {},
+          onSignOut: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The ownership split is correct...
+    expect(state.ownedSpaces, hasLength(1));
+    expect(state.ownedSpaces.first.id, 'own1');
+    expect(state.joinedSpaces, hasLength(1));
+    expect(state.joinedSpaces.first.id, 'join1');
+
+    // ...and both sections plus their cards are rendered.
+    expect(find.text('Spaces you own'), findsOneWidget);
+    expect(find.text("Spaces you've joined"), findsOneWidget);
+    expect(find.text('Owned Space'), findsOneWidget);
+    expect(find.text('Joined Space'), findsOneWidget);
+
+    // The owned section header sits above the joined section header.
+    final ownedHeader = tester.getTopLeft(find.text('Spaces you own'));
+    final joinedHeader = tester.getTopLeft(find.text("Spaces you've joined"));
+    expect(ownedHeader.dy, lessThan(joinedHeader.dy));
+  });
 }
