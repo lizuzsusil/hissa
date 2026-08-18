@@ -220,6 +220,74 @@ void main() {
   });
 
   testWidgets(
+    'joining via invite code while already in another Space stays on the '
+    'pending join screen',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final state = await makeState(userId: 'u_out');
+      state.debugSetSession(userId: 'u_out', spaceId: null);
+
+      // u_out already belongs to (and has selected) their own Space. Joining
+      // a *different* Space must never be treated as "already a member" — that
+      // bug dropped the user into their selected Space dashboard.
+      await state.repo.saveSpace(
+        Space(
+          id: 'h2',
+          name: 'Villa',
+          currency: 'NPR',
+          inviteCode: 'XYZW78',
+          mode: SpaceMode.split,
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      );
+      await state.repo.saveMember(
+        SpaceMember(
+          userId: 'u_out',
+          name: 'Alex',
+          role: MemberRole.owner,
+          joinedAt: DateTime(2026, 1, 1),
+          spaceId: 'h2',
+        ),
+        'h2',
+      );
+      await state.refreshSpaces();
+      state.debugSetSession(userId: 'u_out', spaceId: 'h2');
+
+      var done = false;
+      await tester.pumpWidget(
+        appHarness(
+          state,
+          SetupScreen(
+            initialCreateMode: false,
+            onDone: () => done = true,
+            onBack: null,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.enterText(find.byType(TextField), 'ABCD12');
+      await tester.pump();
+      await tester.tap(find.byType(PrimaryButton), warnIfMissed: true);
+      await tester.pumpAndSettle();
+
+      // Pending state: the requested Space shows as awaiting approval and the
+      // user is never dropped into their selected Space dashboard.
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Pending approval'), findsOneWidget);
+      expect(done, isFalse);
+      expect(state.space?.id, 'h2');
+      expect(
+        state.repo.spaceJoinRequests.single.status,
+        SpaceJoinRequestStatus.pending,
+      );
+    },
+  );
+
+  testWidgets(
     'join screen keeps pending requests for multiple spaces visible',
     (tester) async {
       final state = await makeState(userId: 'u_out');

@@ -766,9 +766,14 @@ class AppState extends ChangeNotifier {
     final space = await _repo.findSpaceByInviteCode(normalized);
     if (space == null) return SpaceJoinOutcome.spaceNotFound;
 
-    // Already a member: open the Space directly. Skip the re-attach when the
-    // repository is already attached to this Space.
-    if (_repo.members.any((m) => m.userId == user.id)) {
+    // Already a member of *this* Space: open the Space directly. Skip the
+    // re-attach when the repository is already attached to this Space.
+    // Membership is checked against the target Space (its member list), never
+    // the currently attached Space's member cache — the requester may belong
+    // to another Space and must not be treated as an instant member of the
+    // Space they are trying to join.
+    final targetMembers = await _repo.fetchSpaceMembers(space.id);
+    if (targetMembers.any((m) => m.userId == user.id)) {
       if (_spaceId != space.id) {
         _spaceId = space.id;
         _cycleId = null;
