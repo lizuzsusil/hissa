@@ -19,6 +19,13 @@ migrate_working_dir/
 # Firebase Functions
 functions/node_modules/
 
+# Push relay
+relay/node_modules/
+
+# Firebase service account keys (never commit)
+*serviceAccountKey*.json
+*/serviceAccountKey*.json
+
 # IntelliJ related
 *.iml
 *.ipr

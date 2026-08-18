@@ -345,13 +345,18 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // FCM device tokens, keyed by userId. Each user may only register their own
-    // token so they can receive push notifications for group requests; the
-    // backend Cloud Functions read these docs with the Admin SDK (which bypasses
-    // these rules).
+    // FCM device tokens, keyed by user and device. A user may have several
+    // registered devices, each its own doc under `fcmTokens/{userId}/tokens/
+    // {deviceId}`. A user may only register/read their own tokens so they can
+    // receive push notifications; the push relay reads these docs with the
+    // Admin SDK (which bypasses these rules).
     match /fcmTokens/{userId} {
       allow read: if signedIn() && request.auth.uid == userId;
       allow write: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /fcmTokens/{userId}/tokens/{deviceId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
     }
   }
 }

@@ -198,6 +198,7 @@ enum NotificationType {
   expenseAdded,
   expenseUpdated,
   settlementRecorded,
+  spaceInvited,
   spaceJoinRequested,
   spaceJoinApproved,
   spaceJoinRejected,
@@ -213,6 +214,8 @@ enum NotificationType {
         return 'notificationExpenseUpdated';
       case NotificationType.settlementRecorded:
         return 'notificationSettlementRecorded';
+      case NotificationType.spaceInvited:
+        return 'notificationSpaceInvited';
       case NotificationType.spaceJoinRequested:
         return 'notificationSpaceJoinRequested';
       case NotificationType.spaceJoinApproved:

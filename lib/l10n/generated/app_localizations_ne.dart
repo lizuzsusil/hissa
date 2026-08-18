@@ -1249,6 +1249,9 @@ class AppLocalizationsNe extends AppLocalizations {
   String get notificationSettlementRecorded => 'एउटा भुक्तानी दर्ता गरियो';
 
   @override
+  String get notificationSpaceInvited => 'तपाईंलाई एउटा स्पेसमा निम्तो गरियो';
+
+  @override
   String get notificationSpaceJoinRequested =>
       'नयाँ सामेल अनुरोध तपाईंको स्वीकृतिको पर्खाइमा';
 

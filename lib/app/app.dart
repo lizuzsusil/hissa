@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../models/models.dart';
 import '../services/fcm_service.dart';
+import '../services/notification_router.dart';
 import '../state/app_state.dart';
 import '../ui/screens/auth_screen.dart';
 import '../ui/screens/intro_screen.dart';
@@ -18,7 +19,6 @@ import '../ui/state/biometric_controller.dart';
 import '../ui/state/locale_controller.dart';
 import '../ui/state/theme_controller.dart';
 import '../ui/theme/app_theme.dart';
-import '../ui/screens/member_groups_screen.dart';
 
 class ExpenseApp extends StatelessWidget {
   const ExpenseApp({super.key});
@@ -81,6 +81,7 @@ class RootGate extends StatefulWidget {
 class _RootGateState extends State<RootGate> {
   _FlowStep _step = _FlowStep.splash;
   bool _setupCreateMode = true;
+  NotificationRouter? _router;
 
   @override
   void initState() {
@@ -116,13 +117,23 @@ class _RootGateState extends State<RootGate> {
 
   Future<void> _bootstrap() async {
     final state = context.read<AppState>();
+    _router = NotificationRouter(navigatorKey: widget.navigatorKey, state: state);
     FcmMessagingService.init(
-      onGroupRequestTap: () {
-        widget.navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (_) => const MemberGroupsScreen()),
-        );
+      onTap: (data) {
+        // Deep links arriving before the signed-in flow is ready (e.g. the app
+        // is still on splash/auth) are deferred until the flow is reachable.
+        if (_step == _FlowStep.app || _step == _FlowStep.dashboard) {
+          _router?.open(data);
+        } else {
+          _router?.buffer(data);
+        }
       },
     );
+    // A notification-message tap that launched a terminated app.
+    final initialMessage = await FcmMessagingService.getInitialMessage();
+    if (initialMessage != null && initialMessage.isNotEmpty) {
+      _router?.buffer(initialMessage);
+    }
     await Future.wait([
       state.load(),
       context.read<LocaleController>().load(),
@@ -145,6 +156,9 @@ class _RootGateState extends State<RootGate> {
     }
     if (!mounted) return;
     setState(() => _step = step);
+    if (step == _FlowStep.app || step == _FlowStep.dashboard) {
+      await _router?.flush();
+    }
   }
 
   Future<void> _finishIntro() async {

@@ -167,6 +167,7 @@ class _NotificationTile extends StatelessWidget {
       NotificationType.expenseAdded => l10n.notificationExpenseAdded,
       NotificationType.expenseUpdated => l10n.notificationExpenseUpdated,
       NotificationType.settlementRecorded => l10n.notificationSettlementRecorded,
+      NotificationType.spaceInvited => l10n.notificationSpaceInvited,
       NotificationType.spaceJoinRequested => l10n.notificationSpaceJoinRequested,
       NotificationType.spaceJoinApproved => l10n.notificationSpaceJoinApproved,
       NotificationType.spaceJoinRejected => l10n.notificationSpaceJoinRejected,

@@ -113,6 +113,13 @@ class AppState extends ChangeNotifier {
     _cycleId = null;
   }
 
+  /// Injects a repository so tests can exercise failure paths (e.g. a
+  /// notification write denied by Firestore rules) without Firebase.
+  @visibleForTesting
+  void debugSetRepo(ExpenseRepository repo) {
+    _repo = repo;
+  }
+
   /// Marks the feature-intro carousel as seen so it only shows on first run.
   Future<void> markIntroSeen() async {
     _introSeen = true;
@@ -835,6 +842,7 @@ class AppState extends ChangeNotifier {
     var newUser = _repo.users
         .where((u) => u.email.toLowerCase() == trimmed)
         .firstOrNull;
+    final hadAccount = newUser != null;
     newUser ??= User(
       id: 'u_${genId(8)}',
       name: _nameFromEmail(trimmed),
@@ -854,6 +862,17 @@ class AppState extends ChangeNotifier {
       ),
       s.id,
     );
+    // Only a registered invitee can receive a push; an unknown address is
+    // reached by email alone (no account / FCM token exists yet).
+    if (hadAccount) {
+      await _saveNotificationFor(
+        recipientId: newUser.id,
+        type: NotificationType.spaceInvited,
+        eventKey: '${s.id}_${newUser.id}',
+        spaceId: s.id,
+        extra: {'spaceId': s.id},
+      );
+    }
     await _commit();
     return true;
   }
@@ -1651,19 +1670,25 @@ class AppState extends ChangeNotifier {
         me?.name.isNotEmpty == true
         ? me!.name
         : (memberName(actorId) ?? 'A member');
-    await _repo.saveNotification(
-      AppNotification(
-        id: '${recipientId}_$eventKey',
-        userId: recipientId,
-        spaceId: spaceId ?? _spaceId,
-        type: type,
-        eventKey: eventKey,
-        actorUserId: actorId,
-        actorName: actorName,
-        createdAt: DateTime.now(),
-        extra: extra,
-      ),
-    );
+    // Notifications are best-effort side-effects: a denied or failed write must
+    // never break the action that triggered it (e.g. approving a join request).
+    try {
+      await _repo.saveNotification(
+        AppNotification(
+          id: '${recipientId}_$eventKey',
+          userId: recipientId,
+          spaceId: spaceId ?? _spaceId,
+          type: type,
+          eventKey: eventKey,
+          actorUserId: actorId,
+          actorName: actorName,
+          createdAt: DateTime.now(),
+          extra: extra,
+        ),
+      );
+    } catch (_) {
+      // Swallow: the inbox is an enhancement, not a dependency of the flow.
+    }
   }
 
   /// Notifies every other Space member that an expense was added or updated.

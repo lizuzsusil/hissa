@@ -4,6 +4,7 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 import 'package:hissa/core/money.dart';
+import 'package:hissa/data/in_memory_repository.dart';
 import 'package:hissa/models/models.dart';
 import 'package:hissa/state/app_state.dart';
 
@@ -42,6 +43,14 @@ void main() {
         id: 'u_out',
         name: 'Alex',
         email: 'alex@example.com',
+        createdAt: DateTime(2026, 1, 1),
+      ),
+    );
+    await repo.saveUser(
+      User(
+        id: 'u_c',
+        name: 'Charlie',
+        email: 'charlie@example.com',
         createdAt: DateTime(2026, 1, 1),
       ),
     );
@@ -171,6 +180,30 @@ void main() {
     });
   });
 
+  group('invitation notifications', () {
+    test('inviting a registered user notifies them, unknown emails do not',
+        () async {
+      final state = await makeHomeState();
+
+      // Charlie has an account but is not yet a member of Home.
+      await state.inviteMember('charlie@example.com');
+      final invite = state.notifications.singleWhere(
+        (n) => n.type == NotificationType.spaceInvited,
+      );
+      expect(invite.userId, 'u_c');
+      expect(invite.spaceId, 'h1');
+      expect(invite.actorUserId, 'u_owner');
+
+      // An email with no account creates no notification (email-only channel).
+      await state.inviteMember('fresh.person@example.com');
+      expect(
+        state.notifications
+            .where((n) => n.type == NotificationType.spaceInvited),
+        hasLength(1),
+      );
+    });
+  });
+
   group('join request notifications', () {
     test('requesting to join notifies the owner, approving notifies requester',
         () async {
@@ -211,6 +244,86 @@ void main() {
     });
   });
 
+  group('resilience', () {
+    test('a denied notification write never breaks approve/reject', () async {
+      // A repository whose notification inbox write is rejected (as Firestore
+      // rules do when the rules are not deployed) must not fail the action.
+      final state = AppState();
+      state.debugSetRepo(_ThrowingNotificationRepo());
+      final repo = state.repo;
+      await repo.saveUser(
+        User(
+          id: 'u_owner',
+          name: 'Owner',
+          email: 'owner@example.com',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      );
+      await repo.saveUser(
+        User(
+          id: 'u_out',
+          name: 'Alex',
+          email: 'alex@example.com',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      );
+      await repo.saveSpace(
+        Space(
+          id: 'h1',
+          name: 'Home',
+          currency: 'NPR',
+          inviteCode: 'ABCD12',
+          mode: SpaceMode.split,
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      );
+      await repo.saveMember(
+        SpaceMember(
+          userId: 'u_owner',
+          name: 'Owner',
+          role: MemberRole.owner,
+          joinedAt: DateTime(2026, 1, 1),
+          spaceId: 'h1',
+        ),
+        'h1',
+      );
+      await repo.saveSpaceJoinRequest(
+        SpaceJoinRequest(
+          id: 'j1',
+          spaceId: 'h1',
+          requesterUserId: 'u_out',
+          requesterName: 'Alex',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      );
+      state.debugSetSession(userId: 'u_owner', spaceId: 'h1');
+
+      await state.approveSpaceJoinRequest('j1');
+      expect(
+        state.repo.spaceJoinRequests.single.status,
+        SpaceJoinRequestStatus.approved,
+      );
+
+      // And a second, separate pending request can still be rejected.
+      await repo.saveSpaceJoinRequest(
+        SpaceJoinRequest(
+          id: 'j2',
+          spaceId: 'h1',
+          requesterUserId: 'u_out',
+          requesterName: 'Alex',
+          createdAt: DateTime(2026, 1, 2),
+        ),
+      );
+      await state.rejectSpaceJoinRequest('j2');
+      expect(
+        state.repo.spaceJoinRequests
+            .singleWhere((r) => r.id == 'j2')
+            .status,
+        SpaceJoinRequestStatus.rejected,
+      );
+    });
+  });
+
   group('unread tracking', () {
     test('unread count drops to zero after markNotificationsRead', () async {
       final state = await makeHomeState();
@@ -236,4 +349,13 @@ void main() {
       expect(state.unreadNotificationCount, 1);
     });
   });
+}
+
+/// Mirrors a Firestore inbox whose rules deny the write: every other
+/// repository call behaves normally, only `saveNotification` rejects.
+class _ThrowingNotificationRepo extends InMemoryRepository {
+  @override
+  Future<void> saveNotification(AppNotification notification) async {
+    throw Exception('PERMISSION_DENIED: notifications');
+  }
 }

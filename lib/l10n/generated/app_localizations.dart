@@ -2306,6 +2306,12 @@ abstract class AppLocalizations {
   /// **'A settlement was recorded'**
   String get notificationSettlementRecorded;
 
+  /// No description provided for @notificationSpaceInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'You were invited to a Space'**
+  String get notificationSpaceInvited;
+
   /// No description provided for @notificationSpaceJoinRequested.
   ///
   /// In en, this message translates to:

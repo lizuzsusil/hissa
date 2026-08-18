@@ -409,6 +409,7 @@
   "notificationExpenseAdded": "एउटा खर्च थपियो",
   "notificationExpenseUpdated": "एउटा खर्च अद्यावधिक गरियो",
   "notificationSettlementRecorded": "एउटा भुक्तानी दर्ता गरियो",
+  "notificationSpaceInvited": "तपाईंलाई एउटा स्पेसमा निम्तो गरियो",
   "notificationSpaceJoinRequested": "नयाँ सामेल अनुरोध तपाईंको स्वीकृतिको पर्खाइमा",
   "notificationSpaceJoinApproved": "तपाईंको सामेल अनुरोध स्वीकृत भयो",
   "notificationSpaceJoinRejected": "तपाईंको सामेल अनुरोध अस्वीकृत भयो",

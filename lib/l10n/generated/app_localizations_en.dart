@@ -1249,6 +1249,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationSettlementRecorded => 'A settlement was recorded';
 
   @override
+  String get notificationSpaceInvited => 'You were invited to a Space';
+
+  @override
   String get notificationSpaceJoinRequested =>
       'A new join request awaits your approval';
 

@@ -533,6 +533,7 @@
   "notificationExpenseAdded": "An expense was added",
   "notificationExpenseUpdated": "An expense was updated",
   "notificationSettlementRecorded": "A settlement was recorded",
+  "notificationSpaceInvited": "You were invited to a Space",
   "notificationSpaceJoinRequested": "A new join request awaits your approval",
   "notificationSpaceJoinApproved": "Your join request was approved",
   "notificationSpaceJoinRejected": "Your join request was declined",
