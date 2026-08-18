@@ -1237,7 +1237,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsSheet =>
-      'Push notifications arrive with Firebase Cloud Messaging in the connected build.';
+      'In-app notifications keep you up to date without needing push.';
+
+  @override
+  String get notificationExpenseAdded => 'An expense was added';
+
+  @override
+  String get notificationExpenseUpdated => 'An expense was updated';
+
+  @override
+  String get notificationSettlementRecorded => 'A settlement was recorded';
+
+  @override
+  String get notificationSpaceJoinRequested =>
+      'A new join request awaits your approval';
+
+  @override
+  String get notificationSpaceJoinApproved => 'Your join request was approved';
+
+  @override
+  String get notificationSpaceJoinRejected => 'Your join request was declined';
+
+  @override
+  String get notificationGroupRequested =>
+      'A new group request awaits your approval';
+
+  @override
+  String get notificationGroupApproved => 'Your group request was approved';
+
+  @override
+  String get notificationGroupRejected => 'Your group request was declined';
+
+  @override
+  String get noNotifications => 'No notifications yet';
+
+  @override
+  String get noNotificationsMessage =>
+      'Activity in your Spaces and requests will show up here.';
+
+  @override
+  String get inSpace => 'in a Space';
 
   @override
   String get appearance => 'Appearance';

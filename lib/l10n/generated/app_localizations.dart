@@ -2285,8 +2285,80 @@ abstract class AppLocalizations {
   /// No description provided for @notificationsSheet.
   ///
   /// In en, this message translates to:
-  /// **'Push notifications arrive with Firebase Cloud Messaging in the connected build.'**
+  /// **'In-app notifications keep you up to date without needing push.'**
   String get notificationsSheet;
+
+  /// No description provided for @notificationExpenseAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'An expense was added'**
+  String get notificationExpenseAdded;
+
+  /// No description provided for @notificationExpenseUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'An expense was updated'**
+  String get notificationExpenseUpdated;
+
+  /// No description provided for @notificationSettlementRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'A settlement was recorded'**
+  String get notificationSettlementRecorded;
+
+  /// No description provided for @notificationSpaceJoinRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'A new join request awaits your approval'**
+  String get notificationSpaceJoinRequested;
+
+  /// No description provided for @notificationSpaceJoinApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Your join request was approved'**
+  String get notificationSpaceJoinApproved;
+
+  /// No description provided for @notificationSpaceJoinRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Your join request was declined'**
+  String get notificationSpaceJoinRejected;
+
+  /// No description provided for @notificationGroupRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'A new group request awaits your approval'**
+  String get notificationGroupRequested;
+
+  /// No description provided for @notificationGroupApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Your group request was approved'**
+  String get notificationGroupApproved;
+
+  /// No description provided for @notificationGroupRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Your group request was declined'**
+  String get notificationGroupRejected;
+
+  /// No description provided for @noNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get noNotifications;
+
+  /// No description provided for @noNotificationsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity in your Spaces and requests will show up here.'**
+  String get noNotificationsMessage;
+
+  /// No description provided for @inSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'in a Space'**
+  String get inSpace;
 
   /// No description provided for @appearance.
   ///

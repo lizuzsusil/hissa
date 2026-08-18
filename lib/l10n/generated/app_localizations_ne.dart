@@ -1237,7 +1237,48 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get notificationsSheet =>
-      'कनेक्टेड बिल्डमा फायरबेस क्लाउड मेसेजिङसँग पुश सूचनाहरू आउँछन्।';
+      'इन-एप सूचनाहरूले पुश बिना नै तपाईंलाई अपडेट राख्छ।';
+
+  @override
+  String get notificationExpenseAdded => 'एउटा खर्च थपियो';
+
+  @override
+  String get notificationExpenseUpdated => 'एउटा खर्च अद्यावधिक गरियो';
+
+  @override
+  String get notificationSettlementRecorded => 'एउटा भुक्तानी दर्ता गरियो';
+
+  @override
+  String get notificationSpaceJoinRequested =>
+      'नयाँ सामेल अनुरोध तपाईंको स्वीकृतिको पर्खाइमा';
+
+  @override
+  String get notificationSpaceJoinApproved =>
+      'तपाईंको सामेल अनुरोध स्वीकृत भयो';
+
+  @override
+  String get notificationSpaceJoinRejected =>
+      'तपाईंको सामेल अनुरोध अस्वीकृत भयो';
+
+  @override
+  String get notificationGroupRequested =>
+      'नयाँ समूह अनुरोध तपाईंको स्वीकृतिको पर्खाइमा';
+
+  @override
+  String get notificationGroupApproved => 'तपाईंको समूह अनुरोध स्वीकृत भयो';
+
+  @override
+  String get notificationGroupRejected => 'तपाईंको समूह अनुरोध अस्वीकृत भयो';
+
+  @override
+  String get noNotifications => 'अहिलेसम्म कुनै सूचना छैन';
+
+  @override
+  String get noNotificationsMessage =>
+      'तपाईंका स्पेसहरू र अनुरोधहरूमा भएका गतिविधिहरू यहाँ देखिनेछन्।';
+
+  @override
+  String get inSpace => 'एउटा स्पेसमा';
 
   @override
   String get appearance => 'रूपरंग';

@@ -208,23 +208,23 @@ enum NotificationType {
   String get l10nKey {
     switch (this) {
       case NotificationType.expenseAdded:
-        return 'notification_expense_added';
+        return 'notificationExpenseAdded';
       case NotificationType.expenseUpdated:
-        return 'notification_expense_updated';
+        return 'notificationExpenseUpdated';
       case NotificationType.settlementRecorded:
-        return 'notification_settlement_recorded';
+        return 'notificationSettlementRecorded';
       case NotificationType.spaceJoinRequested:
-        return 'notification_space_join_requested';
+        return 'notificationSpaceJoinRequested';
       case NotificationType.spaceJoinApproved:
-        return 'notification_space_join_approved';
+        return 'notificationSpaceJoinApproved';
       case NotificationType.spaceJoinRejected:
-        return 'notification_space_join_rejected';
+        return 'notificationSpaceJoinRejected';
       case NotificationType.groupRequested:
-        return 'notification_group_requested';
+        return 'notificationGroupRequested';
       case NotificationType.groupApproved:
-        return 'notification_group_approved';
+        return 'notificationGroupApproved';
       case NotificationType.groupRejected:
-        return 'notification_group_rejected';
+        return 'notificationGroupRejected';
     }
   }
 }

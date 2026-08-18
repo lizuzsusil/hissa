@@ -1,23 +1,91 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
-/// Official multi-colour Google "G" logo, rendered from the brand SVG.
+/// Official multi-colour Google "G" logo, rendered via a high-performance
+/// native CustomPainter (zero external dependencies).
 class GoogleLogo extends StatelessWidget {
   final double size;
 
   const GoogleLogo({super.key, this.size = 18});
 
-  static const String _svg = '''
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-  <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-  <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-  <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-</svg>
-''';
-
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.string(_svg, width: size, height: size);
+    return CustomPaint(
+      size: Size(size, size),
+      painter: const _GoogleLogoPainter(),
+    );
   }
 }
+
+class _GoogleLogoPainter extends CustomPainter {
+  const _GoogleLogoPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.width / 48.0;
+    canvas.scale(scale, scale);
+
+    // Yellow path
+    final pathYellow = Path()
+      ..moveTo(43.611, 20.083)
+      ..lineTo(42.0, 20.083)
+      ..lineTo(42.0, 20.0)
+      ..lineTo(24.0, 20.0)
+      ..lineTo(24.0, 28.0)
+      ..lineTo(35.303, 28.0)
+      ..cubicTo(33.654, 32.657, 29.223, 36.0, 24.0, 36.0)
+      ..cubicTo(17.373, 36.0, 12.0, 30.627, 12.0, 24.0)
+      ..cubicTo(12.0, 17.373, 17.373, 12.0, 24.0, 12.0)
+      ..cubicTo(27.059, 12.0, 29.842, 13.154, 31.961, 15.039)
+      ..lineTo(37.618, 9.382)
+      ..cubicTo(34.046, 6.053, 29.268, 4.0, 24.0, 4.0)
+      ..cubicTo(12.955, 4.0, 4.0, 12.955, 4.0, 24.0)
+      ..cubicTo(4.0, 35.045, 12.955, 44.0, 24.0, 44.0)
+      ..cubicTo(34.0, 44.0, 44.0, 35.045, 44.0, 24.0)
+      ..cubicTo(44.0, 22.659, 43.862, 21.35, 43.611, 20.083)
+      ..close();
+    canvas.drawPath(pathYellow, Paint()..color = const Color(0xFFFFC107));
+
+    // Red path
+    final pathRed = Path()
+      ..moveTo(6.306, 14.691)
+      ..lineTo(12.877, 19.51)
+      ..cubicTo(14.655, 15.108, 18.961, 12.0, 24.0, 12.0)
+      ..cubicTo(27.059, 12.0, 29.842, 13.154, 31.961, 15.039)
+      ..lineTo(37.618, 9.382)
+      ..cubicTo(34.046, 6.053, 29.268, 4.0, 24.0, 4.0)
+      ..cubicTo(16.318, 4.0, 9.656, 8.337, 6.306, 14.691)
+      ..close();
+    canvas.drawPath(pathRed, Paint()..color = const Color(0xFFFF3D00));
+
+    // Green path
+    final pathGreen = Path()
+      ..moveTo(24.0, 44.0)
+      ..cubicTo(29.166, 44.0, 33.86, 42.023, 37.409, 38.808)
+      ..lineTo(31.219, 33.57)
+      ..cubicTo(29.211, 35.091, 26.715, 36.0, 24.0, 36.0)
+      ..cubicTo(18.798, 36.0, 14.381, 32.683, 12.717, 28.054)
+      ..lineTo(6.195, 33.079)
+      ..cubicTo(9.505, 39.556, 16.227, 44.0, 24.0, 44.0)
+      ..close();
+    canvas.drawPath(pathGreen, Paint()..color = const Color(0xFF4CAF50));
+
+    // Blue path
+    final pathBlue = Path()
+      ..moveTo(43.611, 20.083)
+      ..lineTo(42.0, 20.083)
+      ..lineTo(42.0, 20.0)
+      ..lineTo(24.0, 20.0)
+      ..lineTo(24.0, 28.0)
+      ..lineTo(35.303, 28.0)
+      ..cubicTo(34.511, 30.237, 33.072, 32.166, 31.216, 33.571)
+      ..lineTo(37.406, 38.809)
+      ..cubicTo(41.406, 35.045, 44.0, 29.842, 44.0, 24.0)
+      ..cubicTo(44.0, 22.659, 43.862, 21.35, 43.611, 20.083)
+      ..close();
+    canvas.drawPath(pathBlue, Paint()..color = const Color(0xFF1976D2));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+

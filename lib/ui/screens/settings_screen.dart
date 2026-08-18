@@ -15,6 +15,7 @@ import '../widgets/toasts.dart';
 import 'categories_screen.dart';
 import 'cycle_detail_screen.dart';
 import 'export_screen.dart';
+import 'notifications_screen.dart';
 import 'space_screen.dart';
 import 'profile_screen.dart';
 
@@ -111,6 +112,26 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.notifications_outlined,
             title: l10n.notifications,
             subtitle: l10n.notificationsSubtitle,
+            trailing: state.unreadNotificationCount > 0
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${state.unreadNotificationCount}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                : null,
             onTap: () => _showNotifications(context),
           ),
           const SizedBox(height: 24),
@@ -370,37 +391,8 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showNotifications(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                context.l10n.notifications,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                context.l10n.notificationsSheet,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-      ),
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
     );
   }
 

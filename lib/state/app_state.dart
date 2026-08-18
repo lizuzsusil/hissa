@@ -65,6 +65,8 @@ class AppState extends ChangeNotifier {
   bool _switchingSpace = false;
   List<SpaceJoinRequest> _myPendingSpaceJoinRequests = const [];
   List<Space> _pendingSpaces = const [];
+  static const _notificationsReadKey = 'hissa_notifications_read_v1';
+  DateTime? _notificationsReadAt;
 
   ExpenseRepository get repo => _repo;
   bool get isLoaded => _loaded;
@@ -124,6 +126,10 @@ class AppState extends ChangeNotifier {
     final prefs = SharedPreferencesAsync();
     _introSeen = await prefs.getBool(_introKey) ?? false;
     final sessionRaw = await prefs.getString(_sessionKey);
+    final notificationsReadRaw = await prefs.getString(_notificationsReadKey);
+    if (notificationsReadRaw != null) {
+      _notificationsReadAt = DateTime.tryParse(notificationsReadRaw);
+    }
 
     String? userId;
     String? spaceId;
@@ -769,15 +775,26 @@ class AppState extends ChangeNotifier {
     final existing = await _repo.findPendingSpaceJoinRequest(space.id, user.id);
     if (existing != null) return SpaceJoinOutcome.requestPending;
 
-    await _repo.saveSpaceJoinRequest(
-      SpaceJoinRequest(
-        id: 'j_${genId(8)}',
-        spaceId: space.id,
-        requesterUserId: user.id,
-        requesterName: user.name,
-        createdAt: DateTime.now(),
-      ),
+    final request = SpaceJoinRequest(
+      id: 'j_${genId(8)}',
+      spaceId: space.id,
+      requesterUserId: user.id,
+      requesterName: user.name,
+      createdAt: DateTime.now(),
     );
+    await _repo.saveSpaceJoinRequest(request);
+    // Notify the Space owner(s) so the join request shows up in their inbox
+    // even though the requester is not yet a member of the Space.
+    final owners = await _repo.fetchSpaceMembers(space.id);
+    for (final owner in owners.where((m) => m.role == MemberRole.owner)) {
+      await _saveNotificationFor(
+        recipientId: owner.userId,
+        type: NotificationType.spaceJoinRequested,
+        eventKey: request.id,
+        spaceId: space.id,
+        extra: {'spaceId': space.id},
+      );
+    }
     return SpaceJoinOutcome.requestCreated;
   }
 
@@ -868,6 +885,13 @@ class AppState extends ChangeNotifier {
       requestId,
       SpaceJoinRequestStatus.approved,
     );
+    await _saveNotificationFor(
+      recipientId: request.requesterUserId,
+      type: NotificationType.spaceJoinApproved,
+      eventKey: request.id,
+      spaceId: request.spaceId,
+      extra: {'spaceId': request.spaceId},
+    );
     await _commit();
   }
 
@@ -884,6 +908,13 @@ class AppState extends ChangeNotifier {
     await _repo.updateSpaceJoinRequestStatus(
       requestId,
       SpaceJoinRequestStatus.rejected,
+    );
+    await _saveNotificationFor(
+      recipientId: request.requesterUserId,
+      type: NotificationType.spaceJoinRejected,
+      eventKey: request.id,
+      spaceId: request.spaceId,
+      extra: {'spaceId': request.spaceId},
     );
     await _commit();
   }
@@ -1271,6 +1302,7 @@ class AppState extends ChangeNotifier {
     // Attach group snapshots for persistent MemberGroups
     _attachGroupSnapshots(shares, memberGroups);
     await _repo.saveExpense(expense, shares);
+    await _notifyExpenseChanged(expense, updated: false);
     await _commit();
   }
 
@@ -1316,6 +1348,7 @@ class AppState extends ChangeNotifier {
     );
     _attachGroupSnapshots(shares, memberGroups);
     await _repo.saveExpense(updated, shares);
+    await _notifyExpenseChanged(updated, updated: true);
     await _commit();
   }
 
@@ -1416,9 +1449,10 @@ class AppState extends ChangeNotifier {
     final s = space;
     final cycle = selectedCycle;
     if (s == null || cycle == null) return;
+    final settlementId = 's_${genId(8)}';
     await _repo.saveSettlement(
       Settlement(
-        id: 's_${genId(8)}',
+        id: settlementId,
         spaceId: s.id,
         cycleId: cycle.id,
         fromUserId: fromUserId,
@@ -1431,6 +1465,17 @@ class AppState extends ChangeNotifier {
         status: SettlementStatus.paid,
         createdAt: DateTime.now(),
       ),
+    );
+    await _saveNotificationFor(
+      recipientId: toUserId,
+      type: NotificationType.settlementRecorded,
+      eventKey: settlementId,
+      spaceId: s.id,
+      extra: {
+        'settlementId': settlementId,
+        'spaceId': s.id,
+        'amount': amount.paisa,
+      },
     );
     await _commit();
   }
@@ -1556,6 +1601,91 @@ class AppState extends ChangeNotifier {
   /// join (i.e. not enterable yet).
   bool isPendingSpace(String spaceId) =>
       _pendingSpaces.any((s) => s.id == spaceId);
+
+  // ---- in-app notification inbox ----
+
+  /// The signed-in user's notification inbox, newest first. Fed in real time by
+  /// the repository's `notifications` listener (independent of Space selection).
+  List<AppNotification> get notifications {
+    final list = _repo.notifications.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  /// The timestamp after which notifications count as unread. Persisted so the
+  /// badge survives relaunches.
+  DateTime get notificationsReadAt =>
+      _notificationsReadAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+  int get unreadNotificationCount =>
+      notifications.where((n) => n.createdAt.isAfter(notificationsReadAt)).length;
+
+  /// Marks every notification currently in the inbox as read.
+  Future<void> markNotificationsRead() async {
+    _notificationsReadAt = DateTime.now();
+    notifyListeners();
+    final prefs = SharedPreferencesAsync();
+    await prefs.setString(
+      _notificationsReadKey,
+      _notificationsReadAt!.toIso8601String(),
+    );
+  }
+
+  /// Persists a notification into [recipientId]'s inbox. No-op when there is no
+  /// signed-in actor, or when the recipient is the actor themselves. The doc id
+  /// is deterministic (`recipientId + eventKey`) so a re-run of the same event
+  /// overwrites instead of stacking duplicates.
+  Future<void> _saveNotificationFor({
+    required String recipientId,
+    required NotificationType type,
+    required String eventKey,
+    String? spaceId,
+    Map<String, dynamic> extra = const {},
+  }) async {
+    final actorId = _currentUserId;
+    if (actorId == null || recipientId.isEmpty || recipientId == actorId) {
+      return;
+    }
+    final me = currentUser;
+    final actorName =
+        me?.name.isNotEmpty == true
+        ? me!.name
+        : (memberName(actorId) ?? 'A member');
+    await _repo.saveNotification(
+      AppNotification(
+        id: '${recipientId}_$eventKey',
+        userId: recipientId,
+        spaceId: spaceId ?? _spaceId,
+        type: type,
+        eventKey: eventKey,
+        actorUserId: actorId,
+        actorName: actorName,
+        createdAt: DateTime.now(),
+        extra: extra,
+      ),
+    );
+  }
+
+  /// Notifies every other Space member that an expense was added or updated.
+  Future<void> _notifyExpenseChanged(Expense expense, {required bool updated}) async {
+    final actorId = _currentUserId;
+    for (final m in members) {
+      if (m.userId == actorId) continue;
+      await _saveNotificationFor(
+        recipientId: m.userId,
+        type: updated
+            ? NotificationType.expenseUpdated
+            : NotificationType.expenseAdded,
+        eventKey: expense.id,
+        spaceId: expense.spaceId,
+        extra: {
+          'expenseId': expense.id,
+          'spaceId': expense.spaceId,
+          'amount': expense.amount.paisa,
+        },
+      );
+    }
+  }
 
   /// Re-queries the current user's pending join requests (Firestore) and
   /// resolves each pending Space's name so the join screen and the Spaces
@@ -1715,6 +1845,17 @@ class AppState extends ChangeNotifier {
       createdAt: DateTime.now(),
     );
     await _repo.saveGroupRequest(request);
+    // Notify the Space owner(s) that a group creation request awaits their
+    // decision.
+    for (final owner in members.where((m) => m.role == MemberRole.owner)) {
+      await _saveNotificationFor(
+        recipientId: owner.userId,
+        type: NotificationType.groupRequested,
+        eventKey: request.id,
+        spaceId: sid,
+        extra: {'spaceId': sid},
+      );
+    }
     notifyListeners();
     return request;
   }
@@ -1757,6 +1898,13 @@ class AppState extends ChangeNotifier {
       requestId,
       GroupRequestStatus.approved,
     );
+    await _saveNotificationFor(
+      recipientId: request.requesterUserId,
+      type: NotificationType.groupApproved,
+      eventKey: request.id,
+      spaceId: request.spaceId,
+      extra: {'spaceId': request.spaceId},
+    );
     notifyListeners();
     return group;
   }
@@ -1764,10 +1912,22 @@ class AppState extends ChangeNotifier {
   /// Rejects [requestId]. Only the Space owner may reject.
   Future<void> rejectGroupRequest(String requestId) async {
     if (!isOwner) return;
+    final request = _repo.groupRequests
+        .where((r) => r.id == requestId)
+        .firstOrNull;
     await _repo.updateGroupRequestStatus(
       requestId,
       GroupRequestStatus.rejected,
     );
+    if (request != null) {
+      await _saveNotificationFor(
+        recipientId: request.requesterUserId,
+        type: NotificationType.groupRejected,
+        eventKey: request.id,
+        spaceId: request.spaceId,
+        extra: {'spaceId': request.spaceId},
+      );
+    }
     notifyListeners();
   }
 

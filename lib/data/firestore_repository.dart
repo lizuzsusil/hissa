@@ -84,15 +84,16 @@ class FirestoreRepository implements ExpenseRepository {
           .where('userId', isEqualTo: uid)
           .snapshots()
           .listen((snap) {
-        for (final doc in snap.docs) {
-          final n = AppNotification.fromJson(doc.data());
-          if (n.userId == uid) {
-            // Only keep notifications for the signed-in user.
-            _notifications.removeWhere((note) => note.id == n.id);
-            _notifications.add(n);
-            _notify();
-          }
-        }
+        // Rebuild from the snapshot so documents that disappear (e.g. cleared
+        // inboxes) are reflected, not just newly added ones.
+        _notifications
+          ..clear()
+          ..addAll(
+            snap.docs
+                .map((d) => AppNotification.fromJson(d.data()))
+                .where((n) => n.userId == uid),
+          );
+        _notify();
       }, onError: (_) {}),
     );
 
@@ -795,6 +796,19 @@ class FirestoreRepository implements ExpenseRepository {
     }
   }
 
+  @override
+  Future<List<SpaceMember>> fetchSpaceMembers(String spaceId) async {
+    try {
+      final snap = await _db
+          .collection('spaceMembers')
+          .where('spaceId', isEqualTo: spaceId)
+          .get();
+      return snap.docs.map((d) => SpaceMember.fromJson(d.data())).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
   // ---- queries ----
 
   @override
@@ -964,7 +978,10 @@ class FirestoreRepository implements ExpenseRepository {
 
   @override
   Future<void> saveNotification(AppNotification notification) async {
-    final id = '${_ownUid}_${notification.eventKey}';
+    // Keyed by the RECIPIENT (not the writer), so the same event landing in
+    // several users' inboxes maps to distinct documents instead of colliding
+    // on a single "writer + event" id.
+    final id = '${notification.userId}_${notification.eventKey}';
     await _db.collection('notifications').doc(id).set(notification.toJson());
   }
 

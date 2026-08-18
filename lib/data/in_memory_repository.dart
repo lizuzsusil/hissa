@@ -227,7 +227,10 @@ class InMemoryRepository implements ExpenseRepository {
 
   @override
   Future<void> saveNotification(AppNotification notification) async {
-    if (!_notifications.any((n) => n.id == notification.id)) {
+    final idx = _notifications.indexWhere((n) => n.id == notification.id);
+    if (idx >= 0) {
+      _notifications[idx] = notification;
+    } else {
       _notifications.add(notification);
     }
   }
@@ -266,6 +269,11 @@ class InMemoryRepository implements ExpenseRepository {
       if (s.id == spaceId) return s;
     }
     return null;
+  }
+
+  @override
+  Future<List<SpaceMember>> fetchSpaceMembers(String spaceId) async {
+    return _members.where((m) => m.spaceId == spaceId).toList();
   }
 
   @override

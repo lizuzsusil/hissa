@@ -78,6 +78,11 @@ abstract class ExpenseRepository {
   /// Space names for pending join requests the user is not a member of yet.
   Future<Space?> fetchSpaceById(String spaceId);
 
+  /// Members of [spaceId], even when that Space is not currently selected.
+  /// Used to resolve notification recipients (e.g. the Space owner) from flows
+  /// like join requests that run outside an attached Space.
+  Future<List<SpaceMember>> fetchSpaceMembers(String spaceId);
+
   /// Marks [groupId] inactive (deleted) without touching historical expenses.
   Future<void> deleteMemberGroup(String groupId);
 

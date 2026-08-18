@@ -37,6 +37,16 @@ service cloud.firestore {
       ).data.role == 'owner';
     }
 
+    // Whether `userId` is the owner of `spaceId`. Used to scope the owner's
+    // inbox writes (join/group requests are submitted by non-members).
+    function spaceOwnerById(spaceId, userId) {
+      return spaceId != null && userId != null && exists(
+        /databases/$(database)/documents/spaceMembers/$(spaceId + '_' + userId)
+      ) && get(
+        /databases/$(database)/documents/spaceMembers/$(spaceId + '_' + userId)
+      ).data.role == 'owner';
+    }
+
     // Whether `groupId` belongs to `spaceId`.
     function groupInSpace(spaceId, groupId) {
       return groupId != null && exists(
@@ -305,6 +315,34 @@ service cloud.firestore {
 
       allow delete: if signedIn()
         && spaceOwner(resource.data.spaceId);
+    }
+
+    // Per-user in-app notification inbox (Firestore-driven, no Cloud
+    // Functions). A user can read their own inbox; a signed-in actor may write
+    // a notification into a co-member's inbox (expense/settlement/decision
+    // flows), or into the Space owner's inbox when submitting a join/group
+    // request (the requester is not a member of the Space yet). Notifications
+    // are immutable and never deleted by the client.
+    match /notifications/{notificationId} {
+      allow read: if signedIn()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if signedIn()
+        && request.resource.data.userId != request.auth.uid
+        && request.resource.data.actorUserId == request.auth.uid
+        && (
+          request.resource.data.spaceId == null ||
+          memberOf(request.resource.data.spaceId) ||
+          (
+            request.resource.data.type in ['spaceJoinRequested', 'groupRequested']
+            && spaceOwnerById(
+              request.resource.data.spaceId,
+              request.resource.data.userId
+            )
+          )
+        );
+
+      allow update, delete: if false;
     }
 
     // FCM device tokens, keyed by userId. Each user may only register their own
