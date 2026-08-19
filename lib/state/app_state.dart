@@ -1600,6 +1600,16 @@ class AppState extends ChangeNotifier {
         .toList();
   }
 
+  /// The active Member Group the current user belongs to, if any. A grouped
+  /// user's balances are carried by their group, never individually.
+  MemberGroup? get currentUserGroup {
+    final uid = currentUser?.id;
+    if (uid == null) return null;
+    return activeMemberGroups
+        .where((g) => g.allUserIds.contains(uid))
+        .firstOrNull;
+  }
+
   /// Pending Space join requests in the currently selected Space. Only the
   /// Space owner sees these (and only they may approve/reject).
   List<SpaceJoinRequest> get pendingSpaceJoinRequests {

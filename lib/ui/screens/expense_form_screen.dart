@@ -137,13 +137,17 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     // Old model: ad-hoc ParticipantGroup from expense form
     for (final g in _groups) {
       groupedUserIds.addAll(g.userIds);
-      groupParties.add(SplitParty.group(groupId: g.id, name: g.name, userIds: g.userIds));
+      groupParties.add(
+        SplitParty.group(groupId: g.id, name: g.name, userIds: g.userIds),
+      );
     }
 
     // New model: persistent MemberGroups selected from Settings
     for (final g in _selectedGroups) {
       groupedUserIds.addAll(g.allUserIds);
-      groupParties.add(SplitParty.group(groupId: g.id, name: g.name, userIds: g.memberIds));
+      groupParties.add(
+        SplitParty.group(groupId: g.id, name: g.name, userIds: g.memberIds),
+      );
     }
 
     // Users represented by any active Member Group are only split via their
@@ -586,8 +590,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     // A member is selectable only when they are not part of any selected group
     // AND not represented by any existing active group.
     bool isMemberSelectable(String userId) =>
-        !groupedUserIds.contains(userId) &&
-        !allGroupedUserIds.contains(userId);
+        !groupedUserIds.contains(userId) && !allGroupedUserIds.contains(userId);
 
     // Check if a group is selectable (none of its represented users are selected individually)
     bool isGroupSelectable(MemberGroup group) {
@@ -611,15 +614,15 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   selected: _participants.contains(m.userId),
                   onSelected: isMemberSelectable(m.userId) && !_saving
                       ? (selected) => setState(() {
-                            if (selected) {
-                              _participants.add(m.userId);
-                            } else {
-                              _participants.remove(m.userId);
-                              _percentages.remove(m.userId);
-                              _customAmounts.remove(m.userId);
-                              _shareUnits.remove(m.userId);
-                            }
-                          })
+                          if (selected) {
+                            _participants.add(m.userId);
+                          } else {
+                            _participants.remove(m.userId);
+                            _percentages.remove(m.userId);
+                            _customAmounts.remove(m.userId);
+                            _shareUnits.remove(m.userId);
+                          }
+                        })
                       : null,
                   showCheckmark: false,
                   selectedColor: AppColors.primary.withValues(alpha: 0.15),
@@ -639,20 +642,20 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 selected: _selectedGroups.any((sg) => sg.id == g.id),
                 onSelected: isGroupSelectable(g) && !_saving
                     ? (selected) => setState(() {
-                          if (selected) {
-                            _selectedGroups.add(g);
-                            // Auto-remove any individual users (owner + members)
-                            // that are represented by this group
-                            for (final id in g.allUserIds) {
-                              _participants.remove(id);
-                              _percentages.remove(id);
-                              _customAmounts.remove(id);
-                              _shareUnits.remove(id);
-                            }
-                          } else {
-                            _selectedGroups.removeWhere((sg) => sg.id == g.id);
+                        if (selected) {
+                          _selectedGroups.add(g);
+                          // Auto-remove any individual users (owner + members)
+                          // that are represented by this group
+                          for (final id in g.allUserIds) {
+                            _participants.remove(id);
+                            _percentages.remove(id);
+                            _customAmounts.remove(id);
+                            _shareUnits.remove(id);
                           }
-                        })
+                        } else {
+                          _selectedGroups.removeWhere((sg) => sg.id == g.id);
+                        }
+                      })
                     : null,
                 showCheckmark: false,
                 selectedColor: AppColors.primary.withValues(alpha: 0.15),
@@ -670,7 +673,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
             ),
           ),
         ],
@@ -861,7 +866,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 child: Row(
                   children: [
                     MemberAvatar(
-                      name: state.memberName(_ownerIdOf(share, state) ?? '') ?? '?',
+                      name:
+                          state.memberName(_ownerIdOf(share, state) ?? '') ??
+                          '?',
                       size: 26,
                     ),
                     const SizedBox(width: 10),
@@ -985,7 +992,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         final percentage = _splitType == SplitType.percentage
             ? _percentages[g.id]
             : null;
-        final shares = _splitType == SplitType.shares ? _shareUnits[g.id] : null;
+        final shares = _splitType == SplitType.shares
+            ? _shareUnits[g.id]
+            : null;
         final custom = _splitType == SplitType.custom
             ? _customAmounts[g.id]?.paisa
             : null;
@@ -1173,9 +1182,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     onChanged: (v) {
                       final val = double.tryParse(v.replaceAll(',', '')) ?? 0;
                       setState(
-                        () => _customAmounts[p.id] = Money(
-                          (val * 100).round(),
-                        ),
+                        () => _customAmounts[p.id] = Money((val * 100).round()),
                       );
                     },
                     decoration: const InputDecoration(
@@ -1372,14 +1379,10 @@ class _PartyAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!party.isGroup) {
-      return MemberAvatar(
-        name: state.memberName(party.id) ?? '?',
-        size: size,
-      );
+      return MemberAvatar(name: state.memberName(party.id) ?? '?', size: size);
     }
     // Group participant: show the group owner's avatar.
-    final ownerName =
-        state.memberName(_ownerIdForGroup(party) ?? '') ?? '?';
+    final ownerName = state.memberName(_ownerIdForGroup(party) ?? '') ?? '?';
     return MemberAvatar(name: ownerName, size: size);
   }
 

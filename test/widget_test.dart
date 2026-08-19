@@ -190,7 +190,7 @@ void main() {
       expect(sita.remaining, Money.zero());
     });
 
-    test('group participant has its own balance entry', () {
+    test('group participant aggregates its members into one balance entry', () {
       final group = MemberGroup(
         id: 'g1',
         spaceId: 'space',
@@ -206,16 +206,9 @@ void main() {
         memberGroups: [group],
         cycle: _cycle,
         expenses: [
-          _expense('e1', 'u_ram', 1000000, ['u_ram', 'g1'], 'c'),
+          _expense('e1', 'u_ram', 1000000, ['g1', 'u_sita'], 'c'),
         ],
         shares: [
-          ExpenseShare(
-            id: genId(),
-            expenseId: 'e1',
-            userId: 'u_ram',
-            amount: const Money(500000),
-            participantType: ExpenseParticipantType.user,
-          ),
           ExpenseShare(
             id: genId(),
             expenseId: 'e1',
@@ -224,14 +217,33 @@ void main() {
             participantType: ExpenseParticipantType.group,
             memberGroupId: 'g1',
           ),
+          ExpenseShare(
+            id: genId(),
+            expenseId: 'e1',
+            userId: 'u_sita',
+            amount: const Money(500000),
+            participantType: ExpenseParticipantType.user,
+          ),
         ],
         settlements: const [],
       );
-      final ram = balances.firstWhere((b) => b.id == 'u_ram' && b.type == ExpenseParticipantType.user);
-      final grp = balances.firstWhere((b) => b.id == 'g1' && b.type == ExpenseParticipantType.group);
-      expect(ram.balance, const Money(500000));
-      expect(grp.balance, const Money(-500000));
+      // Grouped members never appear individually.
+      expect(
+        balances.any(
+          (b) => b.id == 'u_ram' && b.type == ExpenseParticipantType.user,
+        ),
+        isFalse,
+      );
+      // The owner's payment rolls into the group.
+      final grp =
+          balances.firstWhere((b) => b.id == 'g1' && b.type == ExpenseParticipantType.group);
+      expect(grp.paid, const Money(1000000));
+      expect(grp.share, const Money(500000));
+      expect(grp.balance, const Money(500000));
       expect(grp.type, ExpenseParticipantType.group);
+      // The ungrouped member splits the rest.
+      final sita = balances.firstWhere((b) => b.id == 'u_sita');
+      expect(sita.balance, const Money(-500000));
     });
   });
 

@@ -82,10 +82,9 @@ void main() {
       settlements: const [],
     );
 
-    // The group's share is never attributed to its members.
-    final u2 = entries.singleWhere((e) => e.id == 'u2');
-    expect(u2.share, const Money.zero());
-    expect(u2.balance, const Money.zero());
+    // The group's share is never attributed to its members. Group members are
+    // represented by the group itself, so B (the group owner) has no entry.
+    expect(entries.any((e) => e.id == 'u2'), isFalse);
 
     // The group itself carries the share as its own balance.
     final groupEntry =

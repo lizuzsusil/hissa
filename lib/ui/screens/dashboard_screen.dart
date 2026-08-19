@@ -73,22 +73,34 @@ class DashboardScreen extends StatelessWidget {
                   _QuickActions(proposals: proposals),
                   const SizedBox(height: 24),
                   SectionHeader(title: l10n.spaceBalances),
-                  ...members.asMap().entries.map(
-                    (entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Reveal(
-                        delay: Duration(milliseconds: 60 * entry.key),
-                        child: _MemberBalanceCard(
-                          member: entry.value,
-                          avatarUrl: state.memberAvatarUrl(entry.value.userId),
-                          balance: balances
-                              .where((b) => b.userId == entry.value.userId)
-                              .firstOrNull,
-                          isYou: entry.value.userId == state.currentUser?.id,
+                  // Grouped members are represented by their Member Group, so
+                  // only ungrouped members get an individual row.
+                  ...members
+                      .where((m) => !state.groupedUserIds.contains(m.userId))
+                      .toList()
+                      .asMap()
+                      .entries
+                      .map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Reveal(
+                            delay: Duration(milliseconds: 60 * entry.key),
+                            child: _MemberBalanceCard(
+                              member: entry.value,
+                              avatarUrl: state.memberAvatarUrl(
+                                entry.value.userId,
+                              ),
+                              balance: balances
+                                  .where(
+                                    (b) => b.userId == entry.value.userId,
+                                  )
+                                  .firstOrNull,
+                              isYou:
+                                  entry.value.userId == state.currentUser?.id,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
                   // Member Groups are financial participants too: surface their
                   // balance so the sheet reconciles (§37).
                   ...state.repo.memberGroups
@@ -336,7 +348,9 @@ class _YourBalanceCard extends StatelessWidget {
     final l10n = context.l10n;
     final user = state.currentUser;
     if (user == null) return const SizedBox.shrink();
-    final mine = balances.where((b) => b.userId == user.id).firstOrNull;
+    // A grouped user's balance is carried by their Member Group.
+    final mineId = state.currentUserGroup?.id ?? user.id;
+    final mine = balances.where((b) => b.userId == mineId).firstOrNull;
     if (mine == null) return const SizedBox.shrink();
 
     return SurfaceCard(

@@ -1,11 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hissa/core/money.dart';
 import 'package:hissa/models/models.dart';
 import 'package:hissa/state/app_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 void main() {
   late AppState state;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
     state = AppState();
     final repo = state.repo;
     await repo.saveUser(
@@ -371,5 +378,77 @@ void main() {
     expect(state.canRequestGroup, isFalse);
     final request = await state.requestGroup(['u_b']);
     expect(request, isNull);
+  });
+
+  test('a group is a single balance and settlement participant', () async {
+    // Owner's group: Owner + B. C and D stay ungrouped.
+    final repo = state.repo;
+    await repo.saveMemberGroup(
+      MemberGroup(
+        id: 'g1',
+        spaceId: 'h1',
+        ownerUserId: 'u_owner',
+        name: "Owner's Group",
+        isActive: true,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        memberIds: ['u_b'],
+      ),
+    );
+    await repo.addGroupMember('g1', 'u_b');
+    await repo.saveCycle(
+      Cycle(
+        id: 'c1',
+        spaceId: 'h1',
+        name: 'January 2026',
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 1, 31),
+        status: CycleStatus.active,
+      ),
+    );
+
+    // The owner (a group member) pays 90 split equally across the group,
+    // C and D.
+    await state.addExpense(
+      description: 'Dinner',
+      amount: const Money(90000),
+      date: DateTime(2026, 1, 10),
+      participantIds: ['u_c', 'u_d'],
+      memberGroups: [
+        MemberGroup(
+          id: 'g1',
+          spaceId: 'h1',
+          ownerUserId: 'u_owner',
+          name: "Owner's Group",
+          isActive: true,
+          createdAt: DateTime(2026, 1, 1),
+          updatedAt: DateTime(2026, 1, 1),
+          memberIds: ['u_b'],
+        ),
+      ],
+      splitType: SplitType.equal,
+    );
+
+    final balances = state.computeBalances();
+    // Grouped members never surface individually; the group is one entry.
+    expect(balances.map((b) => b.userId).toSet(), {'g1', 'u_c', 'u_d'});
+    final groupBalance = balances.singleWhere((b) => b.userId == 'g1');
+    expect(groupBalance.paid, const Money(90000));
+    expect(groupBalance.share, const Money(30000));
+    expect(groupBalance.balance, const Money(60000));
+    expect(
+      balances.singleWhere((b) => b.userId == 'u_c').balance,
+      const Money(-30000),
+    );
+
+    // Settlements reconcile: C and D each owe the group.
+    final proposals = state.settlementProposals();
+    final byFrom = {for (final p in proposals) p.fromUserId: p.amount};
+    expect(byFrom['u_c'], const Money(30000));
+    expect(byFrom['u_d'], const Money(30000));
+    expect(
+      proposals.fold<int>(0, (sum, p) => sum + p.amount.paisa),
+      60000,
+    );
   });
 }

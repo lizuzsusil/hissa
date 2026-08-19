@@ -73,12 +73,27 @@ class InsightsScreen extends StatelessWidget {
               const SizedBox(height: 24),
               SectionHeader(title: l10n.whoPaidThisCycle),
               const SizedBox(height: 4),
-              for (final m in members)
+              // Grouped members are represented by their Member Group.
+              for (final m in members.where(
+                (m) => !state.groupedUserIds.contains(m.userId),
+              ))
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: _MemberPaidRow(
                     name: m.name,
                     paid: memberPaid[m.userId] ?? Money.zero(),
+                    total: cycleBalances.fold<int>(
+                      0,
+                      (sum, b) => sum + b.paid.paisa,
+                    ),
+                  ),
+                ),
+              for (final g in state.activeMemberGroups)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _MemberPaidRow(
+                    name: g.name,
+                    paid: memberPaid[g.id] ?? Money.zero(),
                     total: cycleBalances.fold<int>(
                       0,
                       (sum, b) => sum + b.paid.paisa,

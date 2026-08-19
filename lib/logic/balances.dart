@@ -33,7 +33,10 @@ class BalanceEntry {
 }
 
 class BalanceCalculator {
-  /// Computes balance entries for every participant (users + groups) of [space] within [cycle].
+  /// Computes balance entries for every participant of [space] within
+  /// [cycle]. A Member Group is a single financial participant: the paid
+  /// amounts, shares and settlements of its members are rolled into the
+  /// group's entry, and the members themselves never appear individually.
   static List<BalanceEntry> compute({
     required Space space,
     required List<SpaceMember> members,
@@ -50,17 +53,27 @@ class BalanceCalculator {
     final settlementsInCycle =
         settlements.where((s) => s.cycleId == cycle.id).toList();
 
-    // Collect all participant entities: users + groups
-    final userIds = members.map((m) => m.userId).toSet();
-    final groupIds = memberGroups.where((g) => g.isActive).map((g) => g.id).toSet();
-    final allParticipantIds = {...userIds, ...groupIds};
+    // Active groups and the entity each member's activity rolls into.
+    final activeGroups = memberGroups.where((g) => g.isActive).toList();
+    final groupByUser = <String, String>{};
+    for (final g in activeGroups) {
+      for (final uid in g.allUserIds) {
+        groupByUser[uid] = g.id;
+      }
+    }
+    String entityFor(String id) => groupByUser[id] ?? id;
+
+    // Only ungrouped members surface individually; grouped members are
+    // represented by their group.
+    final ungroupedMembers =
+        members.where((m) => !groupByUser.containsKey(m.userId)).toList();
 
     final paidBy = <String, int>{};
     final shareBy = <String, int>{};
     final settledOut = <String, int>{};
     final settledIn = <String, int>{};
 
-    for (final id in allParticipantIds) {
+    for (final id in [...ungroupedMembers.map((m) => m.userId), ...activeGroups.map((g) => g.id)]) {
       paidBy[id] = 0;
       shareBy[id] = 0;
       settledOut[id] = 0;
@@ -68,13 +81,13 @@ class BalanceCalculator {
     }
 
     for (final expense in expensesInCycle) {
-      paidBy[expense.paidByUserId] =
-          (paidBy[expense.paidByUserId] ?? 0) + expense.amount.paisa;
+      final key = entityFor(expense.paidByUserId);
+      paidBy[key] = (paidBy[key] ?? 0) + expense.amount.paisa;
     }
 
     for (final share in sharesInCycle) {
       // For USER: share.userId is the key. For GROUP: share.memberGroupId is the key.
-      final key = share.participantId;
+      final key = entityFor(share.participantId);
       if (key.isNotEmpty) {
         shareBy[key] = (shareBy[key] ?? 0) + share.amount.paisa;
       }
@@ -82,16 +95,18 @@ class BalanceCalculator {
 
     for (final settlement in settlementsInCycle) {
       if (settlement.status == SettlementStatus.cancelled) continue;
-      settledOut[settlement.fromUserId] =
-          (settledOut[settlement.fromUserId] ?? 0) + settlement.amount.paisa;
-      settledIn[settlement.toUserId] =
-          (settledIn[settlement.toUserId] ?? 0) + settlement.amount.paisa;
+      final from = entityFor(settlement.fromUserId);
+      final to = entityFor(settlement.toUserId);
+      settledOut[from] =
+          (settledOut[from] ?? 0) + settlement.amount.paisa;
+      settledIn[to] =
+          (settledIn[to] ?? 0) + settlement.amount.paisa;
     }
 
     final entries = <BalanceEntry>[];
 
-    // User entries
-    for (final member in members) {
+    // Ungrouped member entries
+    for (final member in ungroupedMembers) {
       final id = member.userId;
       final paid = paidBy[id] ?? 0;
       final share = shareBy[id] ?? 0;
@@ -107,8 +122,7 @@ class BalanceCalculator {
     }
 
     // Group entries
-    for (final group in memberGroups) {
-      if (!group.isActive) continue;
+    for (final group in activeGroups) {
       final id = group.id;
       final paid = paidBy[id] ?? 0;
       final share = shareBy[id] ?? 0;
