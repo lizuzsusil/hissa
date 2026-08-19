@@ -219,4 +219,20 @@ void main() {
 
     expect(find.text('No member groups yet'), findsOneWidget);
   });
+
+  testWidgets('request sheet shows the space owner, not the requester, as owner',
+      (tester) async {
+    final state = await makeState(userId: 'u_b');
+
+    await tester.pumpWidget(appHarness(state, const MemberGroupsScreen()));
+    await tester.pump();
+
+    await tester.tap(find.text('Request a group'));
+    await tester.pumpAndSettle();
+
+    // u_b is only a member of the space; the group is created by the Space
+    // owner, so the owner card shows the owner, never the requester.
+    expect(find.text('Owner'), findsWidgets);
+    expect(find.text('B'), findsNothing);
+  });
 }

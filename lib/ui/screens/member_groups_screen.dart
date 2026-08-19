@@ -477,6 +477,19 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
     // The owner is the requester, so at most (max - 1) others can be chosen.
     final maxOtherMembers = state.maxGroupMembers - 1;
 
+    // The request flow is for non-owner members, so the group is created by
+    // the Space owner (who approves the request), not by the current user.
+    final spaceOwnerId =
+        state.space?.createdBy ??
+        state.members
+            .where((m) => m.role == MemberRole.owner)
+            .firstOrNull
+            ?.userId;
+    final spaceOwnerName =
+        state.memberName(spaceOwnerId ?? '') ?? l10n.groupOwner;
+    final isCurrentUserOwner =
+        spaceOwnerId != null && spaceOwnerId == state.currentUserId;
+
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(
@@ -518,7 +531,7 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
               child: Row(
                 children: [
                   MemberAvatar(
-                    name: state.currentUser?.name ?? l10n.you,
+                    name: isCurrentUserOwner ? l10n.you : spaceOwnerName,
                     size: 32,
                   ),
                   const SizedBox(width: 12),
@@ -527,14 +540,16 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          state.currentUser?.name ?? l10n.you,
+                          isCurrentUserOwner ? l10n.you : spaceOwnerName,
                           style: const TextStyle(
                             fontSize: 14.5,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
-                          l10n.youAreOwner,
+                          isCurrentUserOwner
+                              ? l10n.youAreOwner
+                              : l10n.groupOwnerLabel,
                           style: TextStyle(
                             fontSize: 12,
                             color: isDark
