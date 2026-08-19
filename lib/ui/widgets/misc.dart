@@ -16,8 +16,9 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12, top: 4),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md, top: AppSpacing.xs),
       child: Row(
         children: [
           Expanded(
@@ -26,31 +27,70 @@ class SectionHeader extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: Theme.of(context).brightness == Brightness.dark
+                color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimary,
+                letterSpacing: -0.2,
               ),
             ),
           ),
           if (actionLabel != null)
-            GestureDetector(
-              onTap: onAction,
-              child: Row(
-                children: [
-                  Text(
-                    actionLabel!,
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onAction,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.xs),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        actionLabel!,
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                    ],
                   ),
-                  const Icon(Icons.chevron_right,
-                      size: 18, color: AppColors.primary),
-                ],
+                ),
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Small pill used to label a space's mode (split / personal) on gradient
+/// hero surfaces.
+class ModeChip extends StatelessWidget {
+  final String label;
+
+  const ModeChip({super.key, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -87,16 +127,13 @@ class EmptyState extends StatelessWidget {
               ),
               child: Icon(icon, size: 38, color: AppColors.primary),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -109,7 +146,7 @@ class EmptyState extends StatelessWidget {
               ),
             ),
             if (action != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
               action!,
             ],
           ],

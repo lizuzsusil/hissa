@@ -57,7 +57,7 @@ class _SpaceScreenState extends State<SpaceScreen> {
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
                 gradient: AppColors.heroGradient,
-                borderRadius: BorderRadius.circular(26),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.3),
@@ -616,7 +616,7 @@ class _MemberGroupsTile extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(13),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
                   Icons.groups_rounded,

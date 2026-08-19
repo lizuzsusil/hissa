@@ -67,7 +67,7 @@ class BiometricAuthController extends ChangeNotifier {
       debugPrint('Biometric auth error: $e');
       return false;
     }
-  } 
+  }
 
   /// Requires a successful scan before the preference is persisted.
   Future<bool> enable(String localizedReason) async {

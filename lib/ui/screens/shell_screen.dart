@@ -217,7 +217,7 @@ class _NavBar extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
           color: isDark ? AppColors.borderDark : AppColors.border,
         ),
@@ -279,7 +279,7 @@ class _NavItem extends StatelessWidget {
                 color: selected
                     ? AppColors.primary.withValues(alpha: 0.14)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 icon,

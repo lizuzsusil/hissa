@@ -117,7 +117,7 @@ class _OutstandingCard extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: AppGradients.accent,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: AppColors.secondaryDark.withValues(alpha: 0.40),
@@ -133,7 +133,7 @@ class _OutstandingCard extends StatelessWidget {
             height: 54,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(17),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: const Icon(
               Icons.swap_horiz_rounded,
@@ -186,7 +186,7 @@ class _AllSettledCard extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: AppColors.positiveSoft,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.positive.withValues(alpha: 0.3)),
       ),
       child: Column(
@@ -242,54 +242,12 @@ class _NothingToSettleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-        boxShadow: cardShadow(),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.account_balance_wallet_outlined,
-              color: AppColors.primary,
-              size: 34,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            l10n.nothingToSettleTitle,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.noSettlementsMessage,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.4,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
-          ),
-        ],
+    return SurfaceCard(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxxl),
+      child: EmptyState(
+        icon: Icons.account_balance_wallet_outlined,
+        title: l10n.nothingToSettleTitle,
+        message: l10n.noSettlementsMessage,
       ),
     );
   }
@@ -430,7 +388,7 @@ class _HistoryRow extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               color: AppColors.positive.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(13),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
               Icons.check_circle_outline_rounded,

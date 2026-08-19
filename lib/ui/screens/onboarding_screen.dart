@@ -99,10 +99,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       child: Image.asset(
                         'assets/logo.png',
                         width: 46,
@@ -177,11 +177,7 @@ class _IntroPage extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _IntroPage({
-    required this.slide,
-    this.title = '',
-    this.subtitle = '',
-  });
+  const _IntroPage({required this.slide, this.title = '', this.subtitle = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -220,8 +216,7 @@ class _IntroPage extends StatelessWidget {
               fontWeight: FontWeight.w800,
               letterSpacing: -0.6,
               height: 1.2,
-              color:
-                  isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 14),

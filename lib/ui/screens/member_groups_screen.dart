@@ -8,7 +8,6 @@ import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/buttons.dart' show PrimaryButton;
-import '../widgets/misc.dart' show SectionHeader;
 import '../widgets/misc.dart';
 import '../widgets/toasts.dart';
 
@@ -164,7 +163,6 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
 
     final String message;
@@ -187,63 +185,30 @@ class _EmptyState extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Column(
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.primary.withValues(alpha: 0.15)
-                  : AppColors.primary.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.groups_rounded,
-              size: 40,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            l10n.noMemberGroups,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
-              ),
-            ),
-          ),
-          if (canCreate) ...[
-            const SizedBox(height: 24),
-            PrimaryButton(
-              label: l10n.createGroup,
-              icon: Icons.add_rounded,
-              onPressed: onCreate,
-            ),
-          ],
-          if (canRequest) ...[
-            const SizedBox(height: 12),
-            PrimaryButton(
-              label: l10n.requestGroup,
-              icon: Icons.outbox_rounded,
-              onPressed: onRequest,
-            ),
-          ],
-        ],
+      child: EmptyState(
+        icon: Icons.groups_rounded,
+        title: l10n.noMemberGroups,
+        message: message,
+        action: (canCreate || canRequest)
+            ? Column(
+                children: [
+                  if (canCreate)
+                    PrimaryButton(
+                      label: l10n.createGroup,
+                      icon: Icons.add_rounded,
+                      onPressed: onCreate,
+                    ),
+                  if (canRequest) ...[
+                    if (canCreate) const SizedBox(height: 12),
+                    PrimaryButton(
+                      label: l10n.requestGroup,
+                      icon: Icons.outbox_rounded,
+                      onPressed: onRequest,
+                    ),
+                  ],
+                ],
+              )
+            : null,
       ),
     );
   }
@@ -1318,7 +1283,7 @@ class _OwnerCard extends StatelessWidget {
         color: isOwner
             ? null
             : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: isOwner
             ? null
             : Border.all(

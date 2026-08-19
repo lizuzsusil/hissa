@@ -9,11 +9,7 @@ class CategoryIcon extends StatelessWidget {
   final Category? category;
   final double size;
 
-  const CategoryIcon({
-    super.key,
-    this.category,
-    this.size = 46,
-  });
+  const CategoryIcon({super.key, this.category, this.size = 46});
 
   Color get _color {
     final value = category?.colorValue;
@@ -62,8 +58,7 @@ class ColorDot extends StatelessWidget {
         color: color,
         shape: BoxShape.circle,
         border: selected
-            ? Border.all(
-                color: Theme.of(context).colorScheme.surface, width: 3)
+            ? Border.all(color: Theme.of(context).colorScheme.surface, width: 3)
             : null,
         boxShadow: selected
             ? [

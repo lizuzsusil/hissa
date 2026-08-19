@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
 import '../widgets/buttons.dart';
+import '../widgets/misc.dart';
 import '../widgets/motion.dart';
 import 'expense_form_screen.dart';
 
@@ -68,7 +69,7 @@ class ExpenseDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
                 gradient: AppColors.heroGradient,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Stack(
                 clipBehavior: Clip.none,
@@ -180,7 +181,7 @@ class ExpenseDetailScreen extends StatelessWidget {
             ),
             if (!isPersonal) ...[
               const SizedBox(height: 20),
-              SectionHeaderLocal(l10n.whoPaysWhat),
+              SectionHeader(title: l10n.whoPaysWhat),
               const SizedBox(height: 8),
               SurfaceCard(
                 padding: const EdgeInsets.all(20),
@@ -549,23 +550,6 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class SectionHeaderLocal extends StatelessWidget {
-  final String title;
-
-  const SectionHeaderLocal(this.title, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-      ),
     );
   }
 }

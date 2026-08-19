@@ -12,6 +12,7 @@ import '../widgets/buttons.dart';
 import '../widgets/misc.dart';
 import '../widgets/motion.dart';
 import '../widgets/swipe_reveal.dart';
+import '../widgets/toasts.dart';
 
 /// Post-login landing screen. Lists every Space the user belongs to with its
 /// mode and member count, and offers Create Space, Join Space and Sign Out.
@@ -97,17 +98,13 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
     final isDefault = state.defaultSpaceId == space.id;
     await state.setDefaultSpace(isDefault ? null : space.id);
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            isDefault
-                ? l10n.defaultSpaceRemovedMessage
-                : l10n.defaultSpaceSetMessage(space.name),
-          ),
-        ),
-      );
+    showToast(
+      context,
+      isDefault
+          ? l10n.defaultSpaceRemovedMessage
+          : l10n.defaultSpaceSetMessage(space.name),
+      type: ToastType.success,
+    );
   }
 
   /// Builds a single Space card wrapped with its swipe-to-reveal
@@ -165,11 +162,11 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
       final outstanding = await state.outstandingDuesFor(space.id, uid);
       if (!mounted) return;
       if (!outstanding.isZero) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text(context.l10n.leaveBlockedOutstanding)),
-          );
+        showToast(
+          context,
+          context.l10n.leaveBlockedOutstanding,
+          type: ToastType.danger,
+        );
         return;
       }
     }
@@ -223,9 +220,7 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
     _pendingSpaceId = null;
     _countdown.value = _actionCountdownSeconds;
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(context.l10n.spaceActionCancelled)));
+    showToast(context, context.l10n.spaceActionCancelled);
   }
 
   /// Performs the permanent Delete/Leave after the countdown expires.
@@ -244,8 +239,10 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     if (succeeded) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(isDelete ? l10n.spaceDeleted : l10n.spaceLeft)),
+      showToast(
+        context,
+        isDelete ? l10n.spaceDeleted : l10n.spaceLeft,
+        type: ToastType.success,
       );
     }
     await state.refreshSpaces();
@@ -288,7 +285,9 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
     final showDefaultToggle = (ownedSpaces.length + joinedSpaces.length) > 1;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
-    final textColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimary;
 
     // Spaces awaiting approval are shown (with their name) but can never be
     // entered until the owner approves the request.
@@ -337,7 +336,7 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
       cardIndex++;
     }
     if (ownedSpaces.isNotEmpty) {
-      tiles.add(_SectionHeader(title: l10n.yourSpaces, isDark: isDark));
+      tiles.add(SectionHeader(title: l10n.yourSpaces));
       for (final space in ownedSpaces) {
         tiles.add(
           _buildSpaceTile(
@@ -352,7 +351,7 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
       }
     }
     if (joinedSpaces.isNotEmpty) {
-      tiles.add(_SectionHeader(title: l10n.joinedSpaces, isDark: isDark));
+      tiles.add(SectionHeader(title: l10n.joinedSpaces));
       for (final space in joinedSpaces) {
         tiles.add(
           _buildSpaceTile(
@@ -416,7 +415,10 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
               child: LayoutBuilder(
                 builder: (context, constraints) => RefreshIndicator(
                   onRefresh: _refresh,
-                  child: (ownedSpaces.isEmpty && joinedSpaces.isEmpty && pendingSpaces.isEmpty)
+                  child:
+                      (ownedSpaces.isEmpty &&
+                          joinedSpaces.isEmpty &&
+                          pendingSpaces.isEmpty)
                       // Keep the empty state vertically centred like before;
                       // the ListView only exists to allow pull-to-refresh.
                       ? ListView(
@@ -435,7 +437,8 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                           itemCount: tiles.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 12),
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) => tiles[index],
                         ),
                 ),
@@ -500,7 +503,7 @@ class _SpaceCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
             color: isDark
                 ? AppColors.borderDark
@@ -520,10 +523,7 @@ class _SpaceCard extends StatelessWidget {
                     : const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF34C07E),
-                          AppColors.positive,
-                        ],
+                        colors: [Color(0xFF34C07E), AppColors.positive],
                       ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -602,9 +602,7 @@ class _SpaceCard extends StatelessWidget {
                 onPressed: onToggleDefault,
                 visualDensity: VisualDensity.compact,
                 icon: Icon(
-                  isDefault
-                      ? Icons.star_rounded
-                      : Icons.star_border_rounded,
+                  isDefault ? Icons.star_rounded : Icons.star_border_rounded,
                   size: 24,
                   color: isDefault
                       ? Colors.amber.shade600
@@ -645,7 +643,7 @@ class _SpaceActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.negative,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       child: InkWell(
         onTap: onPressed,
         child: SizedBox(
@@ -674,30 +672,6 @@ class _SpaceActionButton extends StatelessWidget {
 /// A Space the current user requested to join but has not been approved for
 /// yet. Shown so the requester can see their requested Space, but deliberately
 /// not tappable: the user can only open a Space once they are a member.
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final bool isDark;
-
-  const _SectionHeader({required this.title, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
-          color: isDark
-              ? AppColors.textSecondaryDark
-              : AppColors.textSecondary,
-        ),
-      ),
-    );
-  }
-}
 
 class _PendingSpaceCard extends StatelessWidget {
   final Space space;
@@ -713,7 +687,7 @@ class _PendingSpaceCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
@@ -723,7 +697,7 @@ class _PendingSpaceCard extends StatelessWidget {
             height: 46,
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
               Icons.hourglass_top_rounded,

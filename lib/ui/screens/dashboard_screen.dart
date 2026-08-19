@@ -91,9 +91,7 @@ class DashboardScreen extends StatelessWidget {
                                 entry.value.userId,
                               ),
                               balance: balances
-                                  .where(
-                                    (b) => b.userId == entry.value.userId,
-                                  )
+                                  .where((b) => b.userId == entry.value.userId)
                                   .firstOrNull,
                               isYou:
                                   entry.value.userId == state.currentUser?.id,
@@ -208,7 +206,7 @@ class _Header extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _ModeChip(label: l10n.split),
+                        ModeChip(label: l10n.split),
                       ],
                     ),
                   ),
@@ -918,27 +916,3 @@ class _ExpenseTile extends StatelessWidget {
 
 /// Small white pill identifying the Space mode, shown in the dashboard header
 /// so the active mode is always visible while inside a Space.
-class _ModeChip extends StatelessWidget {
-  final String label;
-
-  const _ModeChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}

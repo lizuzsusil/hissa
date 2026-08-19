@@ -582,14 +582,14 @@ class _ModeCard extends StatelessWidget {
       color: selected
           ? AppColors.primary.withValues(alpha: 0.08)
           : (isDark ? AppColors.surfaceDark : Colors.white),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: borderColor, width: selected ? 1.8 : 1),
           ),
           child: Column(
@@ -657,10 +657,10 @@ class _Segmented extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -668,7 +668,7 @@ class _Segmented extends StatelessWidget {
           return Stack(
             children: [
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 240),
+                duration: AppMotion.medium,
                 curve: Curves.easeOutCubic,
                 left: index * width,
                 width: width,
@@ -677,7 +677,7 @@ class _Segmented extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.surfaceDark : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.06),

@@ -65,7 +65,7 @@ class _LockScreenState extends State<LockScreen> {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.surfaceDark : Colors.white,
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.15),
@@ -75,11 +75,8 @@ class _LockScreenState extends State<LockScreen> {
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.asset(
-                      'assets/logo.png',
-                      fit: BoxFit.cover,
-                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    child: Image.asset('assets/logo.png', fit: BoxFit.cover),
                   ),
                 ),
               ),

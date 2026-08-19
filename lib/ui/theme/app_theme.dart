@@ -2,6 +2,56 @@ import 'package:flutter/material.dart';
 
 import '../widgets/motion.dart' show HissaPageTransitionsBuilder;
 
+/// Base spacing unit for the 4px grid used across the app.
+const double kSpacingUnit = 4;
+
+/// Design tokens for spacing, derived from a 4px base grid so every screen
+/// shares one consistent rhythm.
+class AppSpacing {
+  AppSpacing._();
+
+  static const double xs = kSpacingUnit; // 4
+  static const double sm = kSpacingUnit * 2; // 8
+  static const double md = kSpacingUnit * 3; // 12
+  static const double lg = kSpacingUnit * 4; // 16
+  static const double xl = kSpacingUnit * 6; // 24
+  static const double xxl = kSpacingUnit * 8; // 32
+  static const double xxxl = kSpacingUnit * 12; // 48
+}
+
+/// Design tokens for corner radii. Controls (buttons, inputs, chips) use
+/// [md]; cards use [lg]; elevated/sheet surfaces use [xl].
+class AppRadius {
+  AppRadius._();
+
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double pill = 1000;
+}
+
+/// Design tokens for elevation. Level 0 is a flat surface (border only);
+/// level 1 is a soft resting shadow for cards; level 2 is for raised
+/// elements such as the FAB and dialogs.
+class AppElevation {
+  AppElevation._();
+
+  static const double level0 = 0;
+  static const double level1 = 1;
+  static const double level2 = 2;
+}
+
+/// Design tokens for motion. Durations are kept short and functional so
+/// micro-interactions feel responsive rather than sluggish.
+class AppMotion {
+  AppMotion._();
+
+  static const Duration fast = Duration(milliseconds: 150);
+  static const Duration medium = Duration(milliseconds: 250);
+  static const Duration slow = Duration(milliseconds: 400);
+}
+
 /// Central design tokens for Hissa. Built on the original University of
 /// Texas palette (UT blue, burnt orange, gold, forest green) but refreshed
 /// into a brighter, more vibrant set of hues so the app reads modern and
@@ -121,7 +171,10 @@ class AppGradients {
       LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [color.withValues(alpha: alpha), color.withValues(alpha: 0.06)],
+        colors: [
+          color.withValues(alpha: alpha),
+          color.withValues(alpha: 0.06),
+        ],
       );
 }
 
@@ -205,10 +258,12 @@ class AppTheme {
       textTheme: textTheme,
       appBarTheme: appBarTheme,
       cardTheme: CardThemeData(
-        elevation: 0,
+        elevation: AppElevation.level0,
         color: isDark ? AppColors.surfaceDark : AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
         margin: EdgeInsets.zero,
       ),
       dividerTheme: DividerThemeData(
@@ -233,27 +288,27 @@ class AppTheme {
           vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: BorderSide(
             color: isDark ? AppColors.borderDark : AppColors.border,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: BorderSide(
             color: isDark ? AppColors.borderDark : AppColors.border,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.negative),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.negative, width: 1.8),
         ),
       ),
@@ -263,7 +318,9 @@ class AppTheme {
             ? AppColors.surfaceAltDark
             : const Color(0xFF22313F),
         contentTextStyle: const TextStyle(color: Colors.white),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
@@ -309,19 +366,25 @@ class AppTheme {
           color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
           fontWeight: FontWeight.w600,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
         side: BorderSide.none,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        elevation: AppElevation.level2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.primary,
@@ -342,25 +405,31 @@ class AppTheme {
             fontWeight: FontWeight.w700,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: 14,
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          elevation: 2,
+          elevation: AppElevation.level1,
           shadowColor: AppColors.primary.withValues(alpha: 0.3),
           textStyle: const TextStyle(
             fontSize: 15.5,
             fontWeight: FontWeight.w700,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: 14,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -374,9 +443,12 @@ class AppTheme {
             fontWeight: FontWeight.w700,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: 14,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -384,7 +456,7 @@ class AppTheme {
           foregroundColor: AppColors.primary,
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
       ),
@@ -432,7 +504,7 @@ class AppTheme {
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: isDark ? AppColors.surfaceAltDark : const Color(0xFF2B333B),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         textStyle: const TextStyle(color: Colors.white, fontSize: 12),
       ),
@@ -448,7 +520,9 @@ class AppTheme {
       popupMenuTheme: PopupMenuThemeData(
         color: isDark ? AppColors.surfaceDark : AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
         textStyle: TextStyle(
           color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
           fontSize: 14,

@@ -279,7 +279,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
                           color: _iconIndex == i
                               ? AppColors.primary.withValues(alpha: 0.15)
                               : AppColors.surfaceAlt,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
                             color: _iconIndex == i
                                 ? AppColors.primary

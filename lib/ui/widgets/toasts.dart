@@ -24,7 +24,9 @@ void showToast(
         behavior: SnackBarBehavior.floating,
         backgroundColor: style.background,
         elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
         content: Row(
           children: [
@@ -82,11 +84,7 @@ class _ToastStyle {
           Icons.warning_amber_rounded,
         );
       case ToastType.info:
-        return _ToastStyle(
-          AppColors.primary,
-          Colors.white,
-          Icons.info_rounded,
-        );
+        return _ToastStyle(AppColors.primary, Colors.white, Icons.info_rounded);
     }
   }
 }

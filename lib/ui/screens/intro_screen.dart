@@ -53,10 +53,10 @@ class _IntroScreenContentState extends State<_IntroScreenContent> {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       child: Image.asset(
                         'assets/logo.png',
                         width: 46,
@@ -166,12 +166,12 @@ class _ModeCard extends StatelessWidget {
         subtitle = mode.subtitle;
     }
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
+      duration: AppMotion.fast,
       decoration: BoxDecoration(
         color: selected
             ? AppColors.primary.withValues(alpha: 0.08)
             : (isDark ? AppColors.surfaceDark : Colors.white),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: selected
               ? AppColors.primary
@@ -182,7 +182,7 @@ class _ModeCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(18),
@@ -197,7 +197,7 @@ class _ModeCard extends StatelessWidget {
                         : (isDark
                               ? AppColors.surfaceAltDark
                               : AppColors.surfaceAlt),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Icon(
                     mode.icon,

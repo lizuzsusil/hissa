@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../theme/app_theme.dart';
+
+/// Resting card shadow used for raised surfaces. Scales with [AppElevation];
+/// level 0 yields no shadow at all.
 List<BoxShadow> cardShadow({Color? color, double opacity = 0.10}) => [
   BoxShadow(
     color: (color ?? Colors.black).withValues(alpha: opacity),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 /// Wraps [child] with a horizontal swipe-to-reveal action (e.g. a Space card
 /// revealing a Delete/Leave button). Swiping left slides the child away,
 /// revealing [action] pinned to the right edge; swiping right (or tapping the
@@ -56,8 +58,10 @@ class _SwipeRevealActionState extends State<SwipeRevealAction>
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
-    _ctrl.value =
-        (_ctrl.value - details.delta.dx / widget.actionWidth).clamp(0.0, 1.0);
+    _ctrl.value = (_ctrl.value - details.delta.dx / widget.actionWidth).clamp(
+      0.0,
+      1.0,
+    );
     _report();
   }
 
@@ -83,7 +87,7 @@ class _SwipeRevealActionState extends State<SwipeRevealAction>
       onHorizontalDragUpdate: _onDragUpdate,
       onHorizontalDragEnd: _onDragEnd,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Stack(
           children: [
             Positioned.fill(
