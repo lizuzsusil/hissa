@@ -604,7 +604,8 @@ class AppState extends ChangeNotifier {
 
   List<SpaceMember> get members {
     if (_spaceId == null) return const [];
-    return _repo.members.toList();
+    final seen = <String>{};
+    return _repo.members.where((m) => seen.add(m.userId)).toList();
   }
 
   bool get isOwner {

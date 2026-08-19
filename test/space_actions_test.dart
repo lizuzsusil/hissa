@@ -7,6 +7,7 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 import 'package:hissa/core/money.dart';
+import 'package:hissa/data/in_memory_repository.dart';
 import 'package:hissa/l10n/generated/app_localizations.dart';
 import 'package:hissa/models/models.dart';
 import 'package:hissa/state/app_state.dart';
@@ -424,4 +425,44 @@ void main() {
       expect(state.spaces.map((s) => s.id), contains('h2'));
     });
   });
+
+  test('members getter dedupes duplicate rows for the same user', () {
+    final state = AppState();
+    state.debugSetRepo(_DuplicatedMembersRepo());
+    state.debugSetSession(userId: 'u1', spaceId: 'h1');
+
+    expect(state.members.map((m) => m.userId), ['u1', 'u_other']);
+  });
+}
+
+/// Repo mirroring the legacy duplicate rows seen in Firestore (same user
+/// stored twice under different doc ids). [InMemoryRepository.saveMember]
+/// upserts by userId so it cannot reproduce this shape on its own.
+class _DuplicatedMembersRepo extends InMemoryRepository {
+  @override
+  List<SpaceMember> get members => [
+    SpaceMember(
+      userId: 'u1',
+      name: 'Ram',
+      role: MemberRole.owner,
+      joinedAt: _d,
+      spaceId: 'h1',
+    ),
+    SpaceMember(
+      userId: 'u1',
+      name: 'Ram',
+      role: MemberRole.owner,
+      joinedAt: _d,
+      spaceId: 'h1',
+    ),
+    SpaceMember(
+      userId: 'u_other',
+      name: 'B',
+      role: MemberRole.member,
+      joinedAt: _d,
+      spaceId: 'h1',
+    ),
+  ];
+
+  static final DateTime _d = DateTime(2026, 1, 1);
 }
