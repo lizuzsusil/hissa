@@ -1503,6 +1503,11 @@ class AppState extends ChangeNotifier {
     final targetMonth = month == null
         ? DateTime(DateTime.now().year, DateTime.now().month)
         : DateTime(month.year, month.month);
+    // Only one planned amount per month: if one already exists, edit it
+    // instead (updateEstimatedExpense).
+    if (estimatedExpensesForMonth(targetMonth).isNotEmpty) {
+      return;
+    }
     final now = DateTime.now();
     final estimate = EstimatedExpense(
       id: 'est_${genId(8)}',

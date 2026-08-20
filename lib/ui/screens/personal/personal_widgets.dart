@@ -695,18 +695,7 @@ Future<void> showMonthEstimatesSheet(
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  showEstimatedExpenseSheet(context);
-                },
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(l10n.addEstimate),
-              ),
-            ),
+            const SizedBox(height: 12),
           ],
         ),
       ),

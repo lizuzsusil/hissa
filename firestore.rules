@@ -199,6 +199,20 @@ service cloud.firestore {
         && spaceOwner(resource.data.spaceId);
     }
 
+    // Planned (estimated) spending amounts for a month in a personal space.
+    // Scoped like expenses: any member may read/write, only the space owner
+    // may delete.
+    match /estimatedExpenses/{estimateId} {
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
+      allow create, update: if signedIn()
+        && memberOf(request.resource.data.spaceId);
+
+      allow delete: if signedIn()
+        && spaceOwner(resource.data.spaceId);
+    }
+
     match /memberGroups/{groupId} {
       allow read: if signedIn()
         && memberOf(resource.data.spaceId);

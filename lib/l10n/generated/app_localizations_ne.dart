@@ -328,6 +328,33 @@ class AppLocalizationsNe extends AppLocalizations {
       'अर्को खोज वा फिल्टर प्रयास गर्नुहोस्, वा नयाँ खर्च थप्नुहोस्।';
 
   @override
+  String get allCategories => 'सबै श्रेणीहरू';
+
+  @override
+  String get lifetimeSpending => 'जीवनभरको खर्च';
+
+  @override
+  String get filteredSpending => 'फिल्टर गरिएको खर्च';
+
+  @override
+  String get thisWeek => 'यो हप्ता';
+
+  @override
+  String get vsLastWeek => 'पछिल्लो हप्तासँग तुलना';
+
+  @override
+  String get vsLastMonth => 'पछिल्लो महिनासँग तुलना';
+
+  @override
+  String get vsLastYear => 'पछिल्लो वर्षसँग तुलना';
+
+  @override
+  String get vsPreviousPeriod => 'पछिल्लो अवधिसँग तुलना';
+
+  @override
+  String get dateRange => 'मिति दायरा चयन गर्नुहोस्';
+
+  @override
   String get expenseDetails => 'खर्चको विवरण';
 
   @override
@@ -380,6 +407,12 @@ class AppLocalizationsNe extends AppLocalizations {
   String get lifetimeSummary => 'कुल सारांश';
 
   @override
+  String get topCategories => 'शीर्ष श्रेणीहरू';
+
+  @override
+  String get monthCompare => 'यो महिना र अघिल्लो महिना';
+
+  @override
   String get totalSpent => 'जम्मा खर्च';
 
   @override
@@ -417,6 +450,30 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get periodLifetime => 'जीवनभर';
+
+  @override
+  String get periodDaily => 'दैनिक';
+
+  @override
+  String get periodWeekly => 'साप्ताहिक';
+
+  @override
+  String get lastDays => 'पछिल्लो ७ दिन';
+
+  @override
+  String get lastWeeks => 'पछिल्लो ६ हप्ता';
+
+  @override
+  String get lastMonths => 'पछिल्लो ६ महिना';
+
+  @override
+  String get lastYears => 'पछिल्लो ५ वर्ष';
+
+  @override
+  String get chartSpent => 'खर्च';
+
+  @override
+  String get chartPlanned => 'अनुमानित';
 
   @override
   String get noSpendingChartTitle => 'चार्ट गर्न केही छैन';
@@ -485,6 +542,10 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get estimateAmountError => '0 भन्दा बढी रकम प्रविष्ट गर्नुहोस्।';
+
+  @override
+  String get estimateSaveError =>
+      'अनुमान बचत गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।';
 
   @override
   String get spentSoFar => 'अहिलेसम्म खर्च';

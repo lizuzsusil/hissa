@@ -134,6 +134,22 @@ void main() {
       );
     });
 
+    test('only one planned amount is kept per month', () async {
+      final state = await makePersonalState();
+      await state.addEstimatedExpense(
+        description: 'Rent',
+        amount: const Money(1500000),
+        month: DateTime(2026, 1),
+      );
+      await state.addEstimatedExpense(
+        description: 'Second',
+        amount: const Money(200000),
+        month: DateTime(2026, 1),
+      );
+      expect(state.estimatedExpenses, hasLength(1));
+      expect(state.estimatedExpenses.single.amount, const Money(1500000));
+    });
+
     test('estimates never count as actual spending', () async {
       final state = await makePersonalState();
       await state.addEstimatedExpense(

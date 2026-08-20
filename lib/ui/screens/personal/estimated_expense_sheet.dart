@@ -9,6 +9,7 @@ import '../../../state/app_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/amount_field.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/toasts.dart';
 
 /// Bottom sheet for adding or editing a planned (estimated) spending amount.
 /// Everything here is scoped to Personal Mode and the language makes it
@@ -79,6 +80,11 @@ class _EstimatedExpenseSheetState extends State<_EstimatedExpenseSheet> {
         );
       }
       if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) {
+        showToast(context, context.l10n.estimateSaveError,
+            type: ToastType.danger);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

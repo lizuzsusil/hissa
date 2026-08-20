@@ -329,6 +329,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'Try a different search or filter, or add a new expense.';
 
   @override
+  String get allCategories => 'All categories';
+
+  @override
+  String get lifetimeSpending => 'Lifetime spending';
+
+  @override
+  String get filteredSpending => 'Filtered spending';
+
+  @override
+  String get thisWeek => 'This week';
+
+  @override
+  String get vsLastWeek => 'vs last week';
+
+  @override
+  String get vsLastMonth => 'vs last month';
+
+  @override
+  String get vsLastYear => 'vs last year';
+
+  @override
+  String get vsPreviousPeriod => 'vs previous period';
+
+  @override
+  String get dateRange => 'Select date range';
+
+  @override
   String get expenseDetails => 'Expense details';
 
   @override
@@ -381,6 +408,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifetimeSummary => 'Lifetime summary';
 
   @override
+  String get topCategories => 'Top categories';
+
+  @override
+  String get monthCompare => 'This month vs last month';
+
+  @override
   String get totalSpent => 'Total spent';
 
   @override
@@ -418,6 +451,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get periodLifetime => 'Lifetime';
+
+  @override
+  String get periodDaily => 'Daily';
+
+  @override
+  String get periodWeekly => 'Weekly';
+
+  @override
+  String get lastDays => 'the last 7 days';
+
+  @override
+  String get lastWeeks => 'the last 6 weeks';
+
+  @override
+  String get lastMonths => 'the last 6 months';
+
+  @override
+  String get lastYears => 'the last 5 years';
+
+  @override
+  String get chartSpent => 'Spent';
+
+  @override
+  String get chartPlanned => 'Planned';
 
   @override
   String get noSpendingChartTitle => 'Nothing to chart yet';
@@ -486,6 +543,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get estimateAmountError => 'Enter a planned amount greater than 0.';
+
+  @override
+  String get estimateSaveError =>
+      'Couldn\'t save the estimate. Please try again.';
 
   @override
   String get spentSoFar => 'Spent so far';

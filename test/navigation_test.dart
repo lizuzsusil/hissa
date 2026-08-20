@@ -10,6 +10,7 @@ import 'package:hissa/core/money.dart';
 import 'package:hissa/l10n/generated/app_localizations.dart';
 import 'package:hissa/models/models.dart';
 import 'package:hissa/state/app_state.dart';
+import 'package:hissa/ui/screens/expenses_screen.dart';
 import 'package:hissa/ui/screens/shell_screen.dart';
 import 'package:hissa/ui/screens/spaces_dashboard_screen.dart';
 import 'package:hissa/ui/state/biometric_controller.dart';
@@ -125,7 +126,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Category breakdown'), findsOneWidget);
-    expect(find.text('Lifetime summary'), findsOneWidget);
+    // The lifetime summary row is no longer part of the personal insights.
+    expect(find.text('Lifetime summary'), findsNothing);
     // Cycle-specific UI is absent in personal mode.
     expect(find.text('Select cycle'), findsNothing);
     expect(find.text('Who paid this cycle'), findsNothing);
@@ -146,14 +148,16 @@ void main() {
     await tester.pump();
 
     expect(find.text('Add expense'), findsOneWidget);
-    expect(find.text('Add estimate'), findsOneWidget);
-    expect(find.text('Estimated expenses'), findsOneWidget);
-    expect(find.text('Rent'), findsOneWidget);
+    // With a planned amount already set for this month, the quick action
+    // switches to "Edit estimate" and no separate estimates list is shown.
+    expect(find.text('Edit estimate'), findsOneWidget);
+    expect(find.text('Add estimate'), findsNothing);
+    expect(find.text('Estimated expenses'), findsNothing);
     // Planned amounts are kept visually distinct from real expenses.
     expect(find.text('No expenses yet'), findsOneWidget);
   });
 
-  testWidgets('personal insights offers period and granularity filters', (
+  testWidgets('personal insights offers a single rolling-window filter', (
     tester,
   ) async {
     final state = await makeState(mode: SpaceMode.personal);
@@ -169,16 +173,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Spending overview'), findsOneWidget);
-    // Period scope toggle.
+    // The single filter covers every view level (lifetime is shown below).
+    expect(find.text('Daily'), findsOneWidget);
+    expect(find.text('Weekly'), findsOneWidget);
     expect(find.text('Monthly'), findsOneWidget);
     expect(find.text('Yearly'), findsOneWidget);
-    expect(find.text('Lifetime'), findsOneWidget);
-    // Granularity filter.
-    expect(find.text('Day'), findsOneWidget);
-    expect(find.text('Week'), findsOneWidget);
-    expect(find.text('Month'), findsOneWidget);
-    expect(find.text('Year'), findsOneWidget);
+    expect(find.text('Lifetime'), findsNothing);
     expect(find.text('Category breakdown'), findsOneWidget);
+    // The top-categories leaderboard follows the selected window, so an
+    // expense from outside the last 6 months is not listed.
+    expect(find.text('Top categories'), findsNothing);
   });
 
   testWidgets('personal insights chart renders with same-day expenses', (
@@ -199,6 +203,117 @@ void main() {
     expect(find.text('Spending overview'), findsOneWidget);
     // Same-day spending must produce chart bars, not the empty state.
     expect(find.text('Nothing to chart yet'), findsNothing);
+    // The top-categories leaderboard covers the selected window.
+    expect(find.text('Top categories'), findsOneWidget);
+  });
+
+  testWidgets('personal insights overlays the planned amount on the chart', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
+    await state.addPersonalExpense(
+      description: 'Coffee',
+      amount: const Money(50000),
+      date: DateTime.now(),
+    );
+    await state.addEstimatedExpense(
+      description: 'Rent',
+      amount: const Money(1500000),
+    );
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    await tester.tap(find.text('Insights'));
+    await tester.pumpAndSettle();
+
+    // The month-bucketed view draws the planned amount alongside the actual
+    // spending and explains it with a legend.
+    expect(find.text('Spent'), findsOneWidget);
+    expect(find.text('Planned'), findsOneWidget);
+  });
+
+  testWidgets('personal insights shows comparison and category sections', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
+    final now = DateTime.now();
+    await state.addPersonalExpense(
+      description: 'Coffee',
+      amount: const Money(50000),
+      date: now,
+    );
+    await state.addPersonalExpense(
+      description: 'Rent',
+      amount: const Money(1500000),
+      date: DateTime(now.year, now.month - 1, 5),
+    );
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    await tester.tap(find.text('Insights'));
+    await tester.pumpAndSettle();
+
+    // Month-over-month comparison (this + last month both have spending).
+    expect(find.text('This month vs last month'), findsOneWidget);
+    // All-time category leaderboard is shown; removed sections are absent.
+    expect(find.text('Top categories'), findsOneWidget);
+    expect(find.text('Spending by day'), findsNothing);
+    expect(find.text('Lifetime trend'), findsNothing);
+  });
+
+  testWidgets('personal expenses show lifetime summary and inline time filters', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
+    await state.addPersonalExpense(
+      description: 'Coffee',
+      amount: const Money(50000),
+      date: DateTime.now(),
+    );
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    await tester.tap(find.text('Expenses'));
+    await tester.pumpAndSettle();
+
+    // Lifetime spending summary sits above the list in personal mode.
+    expect(find.text('Lifetime spending'), findsOneWidget);
+
+    // Inline period chips and a date-range action (no filter icon in personal
+    // mode — the filter sheet is split-mode only).
+    expect(find.byIcon(Icons.date_range_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.filter_alt_outlined), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(ExpensesScreen),
+        matching: find.text('All time'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(ExpensesScreen),
+        matching: find.text('This month'),
+      ),
+      findsOneWidget,
+    );
+
+    // The summary updates with the selected inline filter.
+    await tester.tap(
+      find.descendant(
+        of: find.byType(ExpensesScreen),
+        matching: find.text('This month'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Lifetime spending'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(ExpensesScreen),
+        matching: find.text('This month'),
+      ),
+      findsNWidgets(2),
+    );
   });
 
   testWidgets('personal dashboard fits narrow screens without overflow', (
@@ -219,8 +334,9 @@ void main() {
     await tester.pump();
 
     expect(find.text('Add expense'), findsOneWidget);
-    expect(find.text('Add estimate'), findsOneWidget);
-    expect(find.text('Rent'), findsOneWidget);
+    // With a planned amount already set, the quick action lets you edit it.
+    expect(find.text('Edit estimate'), findsOneWidget);
+    expect(find.text('Add estimate'), findsNothing);
   });
 
   testWidgets('estimated spending form is simplified to amount only', (
@@ -240,6 +356,33 @@ void main() {
     expect(find.text('Date'), findsNothing);
     expect(find.text('Category'), findsNothing);
     expect(find.text('Save estimate'), findsOneWidget);
+  });
+
+  testWidgets('add estimate saves a planned amount for the current month', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    await tester.tap(find.text('Add estimate'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).last, '15000');
+    await tester.pump();
+
+    await tester.tap(find.text('Save estimate'));
+    await tester.pumpAndSettle();
+
+    expect(state.estimatedExpenses, hasLength(1));
+    expect(state.estimatedExpenses.single.amount, const Money(1500000));
+    final now = DateTime.now();
+    expect(
+      state.estimatedExpenses.single.month,
+      DateTime(now.year, now.month),
+    );
+    // After saving, the quick action switches to editing the planned amount.
+    expect(find.text('Edit estimate'), findsOneWidget);
   });
 
   testWidgets('spaces dashboard shows empty state with create/join actions', (

@@ -626,6 +626,60 @@ abstract class AppLocalizations {
   /// **'Try a different search or filter, or add a new expense.'**
   String get noMatchingMessage;
 
+  /// No description provided for @allCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All categories'**
+  String get allCategories;
+
+  /// No description provided for @lifetimeSpending.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime spending'**
+  String get lifetimeSpending;
+
+  /// No description provided for @filteredSpending.
+  ///
+  /// In en, this message translates to:
+  /// **'Filtered spending'**
+  String get filteredSpending;
+
+  /// No description provided for @thisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get thisWeek;
+
+  /// No description provided for @vsLastWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'vs last week'**
+  String get vsLastWeek;
+
+  /// No description provided for @vsLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'vs last month'**
+  String get vsLastMonth;
+
+  /// No description provided for @vsLastYear.
+  ///
+  /// In en, this message translates to:
+  /// **'vs last year'**
+  String get vsLastYear;
+
+  /// No description provided for @vsPreviousPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'vs previous period'**
+  String get vsPreviousPeriod;
+
+  /// No description provided for @dateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date range'**
+  String get dateRange;
+
   /// No description provided for @expenseDetails.
   ///
   /// In en, this message translates to:
@@ -722,6 +776,18 @@ abstract class AppLocalizations {
   /// **'Lifetime summary'**
   String get lifetimeSummary;
 
+  /// No description provided for @topCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Top categories'**
+  String get topCategories;
+
+  /// No description provided for @monthCompare.
+  ///
+  /// In en, this message translates to:
+  /// **'This month vs last month'**
+  String get monthCompare;
+
   /// No description provided for @totalSpent.
   ///
   /// In en, this message translates to:
@@ -799,6 +865,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Lifetime'**
   String get periodLifetime;
+
+  /// No description provided for @periodDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get periodDaily;
+
+  /// No description provided for @periodWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get periodWeekly;
+
+  /// No description provided for @lastDays.
+  ///
+  /// In en, this message translates to:
+  /// **'the last 7 days'**
+  String get lastDays;
+
+  /// No description provided for @lastWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'the last 6 weeks'**
+  String get lastWeeks;
+
+  /// No description provided for @lastMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'the last 6 months'**
+  String get lastMonths;
+
+  /// No description provided for @lastYears.
+  ///
+  /// In en, this message translates to:
+  /// **'the last 5 years'**
+  String get lastYears;
+
+  /// No description provided for @chartSpent.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent'**
+  String get chartSpent;
+
+  /// No description provided for @chartPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get chartPlanned;
 
   /// No description provided for @noSpendingChartTitle.
   ///
@@ -919,6 +1033,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a planned amount greater than 0.'**
   String get estimateAmountError;
+
+  /// No description provided for @estimateSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the estimate. Please try again.'**
+  String get estimateSaveError;
 
   /// No description provided for @spentSoFar.
   ///

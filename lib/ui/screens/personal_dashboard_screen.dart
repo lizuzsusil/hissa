@@ -58,8 +58,13 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
     final total = state.personalTotalSpent(_month);
     final previous = state.personalTotalSpent(_previousMonth);
     final delta = total - previous;
-    final estimates = state.estimatedExpensesForMonth(_month);
     final estimatedTotal = state.estimatedTotalForMonth(_month);
+    final now = DateTime.now();
+    final thisMonthEstimates = state.estimatedExpensesForMonth(
+      DateTime(now.year, now.month),
+    );
+    final currentEstimate =
+        thisMonthEstimates.isEmpty ? null : thisMonthEstimates.first;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
 
@@ -122,9 +127,15 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                       Expanded(
                         child: _ActionButton(
                           gradient: null,
-                          icon: Icons.flag_outlined,
-                          label: l10n.addEstimate,
-                          onTap: () => _openEstimateSheet(),
+                          icon: currentEstimate == null
+                              ? Icons.flag_outlined
+                              : Icons.edit_outlined,
+                          label: currentEstimate == null
+                              ? l10n.addEstimate
+                              : l10n.editEstimate,
+                          onTap: () => _openEstimateSheet(
+                            estimate: currentEstimate,
+                          ),
                         ),
                       ),
                     ],
@@ -157,25 +168,7 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                             ),
                           ),
                         ),
-                  if (estimates.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  SectionHeader(
-                    title: l10n.estimatedExpenses,
-                    actionLabel: l10n.viewAll,
-                    onAction: () => _openEstimatesEditor(),
-                  ),
-                  ...estimates.take(8).map(
-                    (estimate) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: EstimateTile(
-                        estimate: estimate,
-                        onEdit: () => _openEstimateSheet(estimate: estimate),
-                        onRemove: () => _removeEstimate(estimate),
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 32),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -191,13 +184,6 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
 
   Future<void> _openEstimatesEditor() {
     return showMonthEstimatesSheet(context, month: _month);
-  }
-
-  Future<void> _removeEstimate(EstimatedExpense estimate) async {
-    final appState = context.read<AppState>();
-    final ok = await confirmRemoveEstimate(context);
-    if (!ok) return;
-    await appState.deleteEstimatedExpense(estimate.id);
   }
 }
 
