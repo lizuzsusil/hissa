@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
@@ -13,6 +14,8 @@ import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
 import '../widgets/misc.dart';
+import 'personal/estimated_expense_sheet.dart';
+import 'personal/personal_widgets.dart';
 
 class InsightsScreen extends StatelessWidget {
   const InsightsScreen({super.key});
@@ -24,13 +27,9 @@ class InsightsScreen extends StatelessWidget {
     final isPersonal = state.isPersonalMode;
 
     // Personal (personal) spaces have no cycles or shares, so Insights shows
-    // monthly spending, category breakdown and the lifetime summary.
+    // a filterable spending chart, category breakdown and lifetime summary.
     if (isPersonal) {
-      return _PersonalInsights(
-        monthlyData: _personalMonthlyData(state),
-        categoryData: _categoryTotals(state.personalExpenses),
-        categories: state.categories,
-      );
+      return const _PersonalInsights();
     }
 
     final cycles = state.cycles;
@@ -192,38 +191,46 @@ Map<String, Money> _memberPaidTotals(
   return totals;
 }
 
-/// Groups a personal space's expenses by calendar month, newest first, for the
-/// monthly spending chart.
-List<({String label, Money total})> _personalMonthlyData(AppState state) {
-  final byMonth = <String, Money>{};
-  for (final e in state.personalExpenses) {
-    final key = '${e.date.year}-${e.date.month.toString().padLeft(2, '0')}';
-    byMonth[key] = (byMonth[key] ?? Money.zero()) + e.amount;
-  }
-  final months = byMonth.keys.toList()..sort();
-  return months.reversed.map((key) {
-    final parts = key.split('-');
-    final month = DateTime(int.parse(parts[0]), int.parse(parts[1]));
-    return (label: formatMonthShort(month), total: byMonth[key]!);
-  }).toList();
+enum _ChartGranularity { day, week, month, year }
+
+enum _SpendingPeriod { monthly, yearly, lifetime }
+
+/// Insights layout for personal spaces: a filterable spending chart
+/// (ascending, chronological, with granularity + period controls), the
+/// month's planned-vs-actual estimates, category breakdown and the lifetime
+/// summary. No cycle picker or per-member settlement section.
+class _PersonalInsights extends StatefulWidget {
+  const _PersonalInsights();
+
+  @override
+  State<_PersonalInsights> createState() => _PersonalInsightsState();
 }
 
-/// Insights layout for personal spaces: monthly spending + category breakdown +
-/// lifetime summary. No cycle picker or per-member settlement section.
-class _PersonalInsights extends StatelessWidget {
-  final List<({String label, Money total})> monthlyData;
-  final Map<String, Money> categoryData;
-  final List<Category> categories;
-
-  const _PersonalInsights({
-    required this.monthlyData,
-    required this.categoryData,
-    required this.categories,
-  });
+class _PersonalInsightsState extends State<_PersonalInsights> {
+  _ChartGranularity _granularity = _ChartGranularity.month;
+  _SpendingPeriod _period = _SpendingPeriod.monthly;
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
     final l10n = context.l10n;
+
+    final range = _periodRange(state.personalExpenses, _period);
+    final chart = _bucketPersonalSpending(
+      state.personalExpenses,
+      start: range.$1,
+      end: range.$2,
+      granularity: _granularity,
+    );
+    final scopeExpenses = state.personalExpenses
+        .where((e) => !e.date.isBefore(range.$1) && !e.date.isAfter(range.$2))
+        .toList();
+    final scopeTotal = scopeExpenses.fold<Money>(
+      Money.zero(),
+      (sum, e) => sum + e.amount,
+    );
+    final periodLabel = _periodLabel(l10n, _period);
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.insights)),
       body: RefreshIndicator(
@@ -232,18 +239,514 @@ class _PersonalInsights extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
           children: [
-            if (monthlyData.length > 1) ...[
-              SectionHeader(title: l10n.monthlySpending),
-              _MonthlyBarChart(data: monthlyData),
-              const SizedBox(height: 24),
-            ],
-            SectionHeader(title: l10n.categoryBreakdown),
-            _CategoryPie(categories: categories, categoryData: categoryData),
-            const SizedBox(height: 24),
-            const _SummaryRow(cycles: null),
+            ResponsiveContent(
+              padding: EdgeInsets.zero,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SegmentedControl<_SpendingPeriod>(
+                    value: _period,
+                    options: const [
+                      SegmentOption(
+                        value: _SpendingPeriod.monthly,
+                        label: 'Monthly',
+                      ),
+                      SegmentOption(
+                        value: _SpendingPeriod.yearly,
+                        label: 'Yearly',
+                      ),
+                      SegmentOption(
+                        value: _SpendingPeriod.lifetime,
+                        label: 'Lifetime',
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _period = value;
+                        _granularity = switch (value) {
+                          _SpendingPeriod.monthly => _ChartGranularity.day,
+                          _SpendingPeriod.yearly => _ChartGranularity.month,
+                          _SpendingPeriod.lifetime => _ChartGranularity.month,
+                        };
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  SegmentedControl<_ChartGranularity>(
+                    value: _granularity,
+                    options: [
+                      SegmentOption(
+                        value: _ChartGranularity.day,
+                        label: l10n.granularityDay,
+                      ),
+                      SegmentOption(
+                        value: _ChartGranularity.week,
+                        label: l10n.granularityWeek,
+                      ),
+                      SegmentOption(
+                        value: _ChartGranularity.month,
+                        label: l10n.granularityMonth,
+                      ),
+                      SegmentOption(
+                        value: _ChartGranularity.year,
+                        label: l10n.granularityYear,
+                      ),
+                    ],
+                    onChanged: (value) => setState(() => _granularity = value),
+                  ),
+                  const SizedBox(height: 16),
+                  _SpendingChartCard(
+                    points: chart.points,
+                    capped: chart.capped,
+                    total: scopeTotal,
+                    periodLabel: periodLabel,
+                    granularity: _granularity,
+                  ),
+                  const SizedBox(height: 24),
+                  if (_period == _SpendingPeriod.monthly) ...[
+                    SectionHeader(title: l10n.estimatedExpenses),
+                    EstimateProgressCard(
+                      month: DateTime(
+                        DateTime.now().year,
+                        DateTime.now().month,
+                      ),
+                      spent: state.personalTotalSpent(
+                        DateTime(DateTime.now().year, DateTime.now().month),
+                      ),
+                      estimated: state.estimatedTotalForMonth(
+                        DateTime(DateTime.now().year, DateTime.now().month),
+                      ),
+                      onAddEstimate: () => showEstimatedExpenseSheet(context),
+                      onManageEstimates: () => showMonthEstimatesSheet(
+                        context,
+                        month: DateTime(
+                          DateTime.now().year,
+                          DateTime.now().month,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  SectionHeader(title: l10n.categoryBreakdown),
+                  _CategoryPie(
+                    categories: state.categories,
+                    categoryData: _categoryTotals(scopeExpenses),
+                  ),
+                  const SizedBox(height: 24),
+                  const _SummaryRow(cycles: null),
+                ],
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A single bar in the spending chart, in ascending chronological order.
+class _ChartPoint {
+  final DateTime start;
+  final String label;
+  final String tooltipLabel;
+  final Money total;
+
+  const _ChartPoint({
+    required this.start,
+    required this.label,
+    required this.tooltipLabel,
+    required this.total,
+  });
+}
+
+/// Returns the inclusive [start, end] range for a spending period, ending at
+/// the very end of today so same-day expenses are counted. The lifetime range
+/// starts at the earliest recorded expense (or today).
+(DateTime, DateTime) _periodRange(
+  List<Expense> expenses,
+  _SpendingPeriod period,
+) {
+  final now = DateTime.now();
+  final todayStart = DateTime(now.year, now.month, now.day);
+  final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+  switch (period) {
+    case _SpendingPeriod.monthly:
+      return (DateTime(now.year, now.month, 1), todayEnd);
+    case _SpendingPeriod.yearly:
+      return (DateTime(now.year, 1, 1), todayEnd);
+    case _SpendingPeriod.lifetime:
+      final earliest = expenses.isEmpty
+          ? null
+          : expenses
+              .map((e) => e.date)
+              .reduce((a, b) => a.isBefore(b) ? a : b);
+      return (earliest ?? todayStart, todayEnd);
+  }
+}
+
+String _periodLabel(AppLocalizations l10n, _SpendingPeriod period) {
+  switch (period) {
+    case _SpendingPeriod.monthly:
+      return l10n.periodMonthly;
+    case _SpendingPeriod.yearly:
+      return l10n.periodYearly;
+    case _SpendingPeriod.lifetime:
+      return l10n.periodLifetime;
+  }
+}
+
+DateTime _startOfWeek(DateTime date) {
+  return DateTime(date.year, date.month, date.day - (date.weekday - 1));
+}
+
+({List<_ChartPoint> points, bool capped}) _bucketPersonalSpending(
+  List<Expense> expenses, {
+  required DateTime start,
+  required DateTime end,
+  required _ChartGranularity granularity,
+}) {
+  // Build bucket boundaries from range start, aligned to the granularity.
+  final starts = <DateTime>[];
+  var cursor = switch (granularity) {
+    _ChartGranularity.day => start,
+    _ChartGranularity.week => _startOfWeek(start),
+    _ChartGranularity.month => DateTime(start.year, start.month, 1),
+    _ChartGranularity.year => DateTime(start.year, 1, 1),
+  };
+  var guard = 0;
+  while (!cursor.isAfter(end) && guard < 6000) {
+    starts.add(cursor);
+    guard++;
+    cursor = switch (granularity) {
+      _ChartGranularity.day => cursor.add(const Duration(days: 1)),
+      _ChartGranularity.week => cursor.add(const Duration(days: 7)),
+      _ChartGranularity.month => DateTime(cursor.year, cursor.month + 1, 1),
+      _ChartGranularity.year => DateTime(cursor.year + 1, 1, 1),
+    };
+  }
+
+  final maxBuckets = switch (granularity) {
+    _ChartGranularity.day => 31,
+    _ChartGranularity.week => 16,
+    _ChartGranularity.month => 24,
+    _ChartGranularity.year => 12,
+  };
+  var capped = false;
+  var visibleStarts = starts;
+  if (starts.length > maxBuckets) {
+    visibleStarts = starts.sublist(starts.length - maxBuckets);
+    capped = true;
+  }
+
+  final byKey = <String, int>{};
+  for (final e in expenses) {
+    final d = e.date;
+    if (d.isBefore(start) || d.isAfter(end)) continue;
+    final bucket = switch (granularity) {
+      _ChartGranularity.day => DateTime(d.year, d.month, d.day),
+      _ChartGranularity.week => _startOfWeek(d),
+      _ChartGranularity.month => DateTime(d.year, d.month, 1),
+      _ChartGranularity.year => DateTime(d.year, 1, 1),
+    };
+    final key = bucket.toIso8601String();
+    byKey[key] = (byKey[key] ?? 0) + e.amount.paisa;
+  }
+
+  final points = <_ChartPoint>[];
+  for (final bucket in visibleStarts) {
+    final key = bucket.toIso8601String();
+    final paisa = byKey[key] ?? 0;
+    points.add(
+      _ChartPoint(
+        start: bucket,
+        label: _axisLabel(bucket, granularity, start, end),
+        tooltipLabel: _tooltipLabel(bucket, granularity),
+        total: Money(paisa),
+      ),
+    );
+  }
+  return (points: points, capped: capped);
+}
+
+String _axisLabel(
+  DateTime bucket,
+  _ChartGranularity granularity,
+  DateTime rangeStart,
+  DateTime end,
+) {
+  final spansYears = rangeStart.year != end.year;
+  switch (granularity) {
+    case _ChartGranularity.day:
+      return spansYears
+          ? DateFormat('d MMM').format(bucket)
+          : DateFormat('d').format(bucket);
+    case _ChartGranularity.week:
+      return DateFormat('d MMM').format(bucket);
+    case _ChartGranularity.month:
+      return spansYears
+          ? DateFormat('MMM yy').format(bucket)
+          : DateFormat('MMM').format(bucket);
+    case _ChartGranularity.year:
+      return DateFormat('yyyy').format(bucket);
+  }
+}
+
+String _tooltipLabel(DateTime bucket, _ChartGranularity granularity) {
+  switch (granularity) {
+    case _ChartGranularity.day:
+      return DateFormat('d MMM yyyy').format(bucket);
+    case _ChartGranularity.week:
+      return DateFormat('d MMM yyyy').format(bucket);
+    case _ChartGranularity.month:
+      return DateFormat('MMMM yyyy').format(bucket);
+    case _ChartGranularity.year:
+      return DateFormat('yyyy').format(bucket);
+  }
+}
+
+/// Card showing the personal spending chart in ascending chronological order,
+/// with the selected scope's total on top, tooltips and a caption when only the
+/// most recent buckets are shown.
+class _SpendingChartCard extends StatelessWidget {
+  final List<_ChartPoint> points;
+  final bool capped;
+  final Money total;
+  final String periodLabel;
+  final _ChartGranularity granularity;
+
+  const _SpendingChartCard({
+    required this.points,
+    required this.capped,
+    required this.total,
+    required this.periodLabel,
+    required this.granularity,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (total.isZero) {
+      return SurfaceCard(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ChartHeader(total: total, periodLabel: periodLabel),
+            const SizedBox(height: 12),
+            EmptyState(
+              icon: Icons.bar_chart_rounded,
+              title: l10n.noSpendingChartTitle,
+              message: l10n.noSpendingChartMessage,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final maxValue = points.isEmpty
+        ? 1.0
+        : points.fold<double>(
+            0,
+            (m, p) => p.total.major > m ? p.total.major : m,
+          );
+    final barWidth = points.length > 20
+        ? 8.0
+        : points.length > 12
+            ? 11.0
+            : 20.0;
+    final labelStep = (points.length / 6).ceil().clamp(1, points.length);
+
+    return SurfaceCard(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ChartHeader(total: total, periodLabel: periodLabel),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 190,
+            child: BarChart(
+              BarChartData(
+                maxY: maxValue * 1.18,
+                alignment: BarChartAlignment.spaceAround,
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: maxValue / 4,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: (isDark
+                            ? AppColors.borderDark
+                            : AppColors.border)
+                        .withValues(alpha: 0.6),
+                    strokeWidth: 1,
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      getTitlesWidget: (value, meta) => Text(
+                        value >= 1000
+                            ? '${(value / 1000).toStringAsFixed(0)}k'
+                            : value.toStringAsFixed(0),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isDark
+                              ? AppColors.textMutedDark
+                              : AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 24,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index < 0 ||
+                            index >= points.length ||
+                            (index % labelStep != 0 &&
+                                index != points.length - 1)) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            points[index].label,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (_) => isDark
+                        ? AppColors.surfaceAltDark
+                        : const Color(0xFF22313F),
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      if (groupIndex >= points.length) return null;
+                      final point = points[groupIndex];
+                      return BarTooltipItem(
+                        '${point.tooltipLabel}\n${formatMoney(point.total)}',
+                        const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                barGroups: [
+                  for (var i = 0; i < points.length; i++)
+                    BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: points[i].total.major,
+                          width: barWidth,
+                          gradient: AppColors.heroGradient,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (capped) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  Icons.history_rounded,
+                  size: 13,
+                  color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  l10n.showingRecentWindow,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontStyle: FontStyle.italic,
+                    color:
+                        isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ChartHeader extends StatelessWidget {
+  final Money total;
+  final String periodLabel;
+
+  const _ChartHeader({required this.total, required this.periodLabel});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            l10n.spendingOverview,
+            style: const TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              formatMoney(total),
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              l10n.spentInPeriod(formatMoneyCompact(total), periodLabel),
+              style: TextStyle(
+                fontSize: 11.5,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

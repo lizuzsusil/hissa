@@ -112,6 +112,66 @@
   "totalSpent": "जम्मा खर्च",
   "average": "औसत",
 
+  "spendingOverview": "खर्च अवलोकन",
+  "thisMonthTotal": "यो महिना",
+  "thisYearTotal": "यो वर्ष",
+  "allTimeTotal": "सबै समय",
+  "granularityDay": "दिन",
+  "granularityWeek": "हप्ता",
+  "granularityMonth": "महिना",
+  "granularityYear": "वर्ष",
+  "periodMonthly": "मासिक",
+  "periodYearly": "वार्षिक",
+  "periodLifetime": "जीवनभर",
+  "noSpendingChartTitle": "चार्ट गर्न केही छैन",
+  "noSpendingChartMessage": "आफ्नो समयसँगै खर्च हेर्न खर्चहरू थप्नुहोस्।",
+  "showingRecentWindow": "सबैभन्दा भर्खरको अवधि देखाइँदै",
+  "spentInPeriod": "{period} मा {amount}",
+  "@spentInPeriod": {
+    "placeholders": {
+      "amount": { "type": "String" },
+      "period": { "type": "String" }
+    }
+  },
+
+  "addEstimate": "अनुमान थप्नुहोस्",
+  "estimatedExpenses": "अनुमानित खर्चहरू",
+  "estimatedExpense": "अनुमान",
+  "estimateSectionSubtitle": "महिनाको लागि योजना गरिएको रकम — वास्तविक खर्च होइन।",
+  "noEstimatesYet": "अहिलेसम्म कुनै अनुमान छैन",
+  "noEstimatesMessage": "वास्तविक खर्चसँग तुलना गर्न योजना गरिएको रकम थप्नुहोस्।",
+  "editEstimate": "अनुमान सम्पादन गर्नुहोस्",
+  "removeEstimate": "अनुमान हटाउनुहोस्",
+  "removeEstimateTitle": "यो अनुमान हटाउने हो?",
+  "removeEstimateMessage": "योजना गरिएको रकम हटाइनेछ। कुनै वास्तविक खर्च प्रभावित हुँदैन।",
+  "estimateForMonth": "{month} को लागि अनुमान",
+  "@estimateForMonth": {
+    "placeholders": {
+      "month": { "type": "String" }
+    }
+  },
+  "estimateDescriptionHint": "के को लागि योजना गर्दै हुनुहुन्छ?",
+  "estimatedAmount": "अनुमानित खर्च रकम",
+  "saveEstimate": "अनुमान बचत गर्नुहोस्",
+  "updateEstimate": "अनुमान अद्यावधिक गर्नुहोस्",
+  "estimateAmountError": "0 भन्दा बढी रकम प्रविष्ट गर्नुहोस्।",
+  "spentSoFar": "अहिलेसम्म खर्च",
+  "estimatedTotalShort": "अनुमानित",
+  "remainingFromEstimate": "बाँकी",
+  "overEstimateBy": "{amount} ले बढी",
+  "@overEstimateBy": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "spentOfEstimate": "{estimate} अनुमानमा {spent} खर्च भयो",
+  "@spentOfEstimate": {
+    "placeholders": {
+      "spent": { "type": "String" },
+      "estimate": { "type": "String" }
+    }
+  },
+
   "introTitle1": "हिस्सामा स्वागत छ",
   "introSubtitle1": "समूह, रूममेट र परिवारहरूले साझा खर्च सँगै ट्र्याक गर्ने सबैभन्दा सजिलो तरिका।",
   "introTitle2": "हरेक खर्च ट्र्याक गर्नुहोस्",

@@ -734,6 +734,222 @@ abstract class AppLocalizations {
   /// **'Average'**
   String get average;
 
+  /// No description provided for @spendingOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending overview'**
+  String get spendingOverview;
+
+  /// No description provided for @thisMonthTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get thisMonthTotal;
+
+  /// No description provided for @thisYearTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get thisYearTotal;
+
+  /// No description provided for @allTimeTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get allTimeTotal;
+
+  /// No description provided for @granularityDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get granularityDay;
+
+  /// No description provided for @granularityWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get granularityWeek;
+
+  /// No description provided for @granularityMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get granularityMonth;
+
+  /// No description provided for @granularityYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get granularityYear;
+
+  /// No description provided for @periodMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get periodMonthly;
+
+  /// No description provided for @periodYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get periodYearly;
+
+  /// No description provided for @periodLifetime.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime'**
+  String get periodLifetime;
+
+  /// No description provided for @noSpendingChartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to chart yet'**
+  String get noSpendingChartTitle;
+
+  /// No description provided for @noSpendingChartMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expenses to see your spending over time.'**
+  String get noSpendingChartMessage;
+
+  /// No description provided for @showingRecentWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the most recent period'**
+  String get showingRecentWindow;
+
+  /// Header line inside the spending chart, e.g. 'Rs. 12,000 in Monthly'
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} in {period}'**
+  String spentInPeriod(String amount, String period);
+
+  /// No description provided for @addEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Add estimate'**
+  String get addEstimate;
+
+  /// No description provided for @estimatedExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated expenses'**
+  String get estimatedExpenses;
+
+  /// No description provided for @estimatedExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate'**
+  String get estimatedExpense;
+
+  /// No description provided for @estimateSectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned amounts for the month — not actual spending.'**
+  String get estimateSectionSubtitle;
+
+  /// No description provided for @noEstimatesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No estimates yet'**
+  String get noEstimatesYet;
+
+  /// No description provided for @noEstimatesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a planned amount to see how it compares with your actual spending.'**
+  String get noEstimatesMessage;
+
+  /// No description provided for @editEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit estimate'**
+  String get editEstimate;
+
+  /// No description provided for @removeEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove estimate'**
+  String get removeEstimate;
+
+  /// No description provided for @removeEstimateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this estimate?'**
+  String get removeEstimateTitle;
+
+  /// No description provided for @removeEstimateMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The planned amount will be removed. No actual expenses are affected.'**
+  String get removeEstimateMessage;
+
+  /// Title of the estimate form, e.g. 'Estimate for July 2026'
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate for {month}'**
+  String estimateForMonth(String month);
+
+  /// No description provided for @estimateDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What are you planning for?'**
+  String get estimateDescriptionHint;
+
+  /// No description provided for @estimatedAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated spending amount'**
+  String get estimatedAmount;
+
+  /// No description provided for @saveEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Save estimate'**
+  String get saveEstimate;
+
+  /// No description provided for @updateEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update estimate'**
+  String get updateEstimate;
+
+  /// No description provided for @estimateAmountError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a planned amount greater than 0.'**
+  String get estimateAmountError;
+
+  /// No description provided for @spentSoFar.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent so far'**
+  String get spentSoFar;
+
+  /// No description provided for @estimatedTotalShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated'**
+  String get estimatedTotalShort;
+
+  /// No description provided for @remainingFromEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get remainingFromEstimate;
+
+  /// No description provided for @overEstimateBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {amount}'**
+  String overEstimateBy(String amount);
+
+  /// Progress line, e.g. 'Rs. 8,000 of Rs. 12,000 estimated'
+  ///
+  /// In en, this message translates to:
+  /// **'{spent} of {estimate} estimated'**
+  String spentOfEstimate(String spent, String estimate);
+
   /// No description provided for @introTitle1.
   ///
   /// In en, this message translates to:

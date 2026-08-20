@@ -131,6 +131,117 @@ void main() {
     expect(find.text('Who paid this cycle'), findsNothing);
   });
 
+  testWidgets('personal dashboard shows quick actions and planned amounts', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
+    final now = DateTime.now();
+    final month = DateTime(now.year, now.month);
+    await state.addEstimatedExpense(
+      description: 'Rent',
+      amount: const Money(1500000),
+      month: month,
+    );
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    expect(find.text('Add expense'), findsOneWidget);
+    expect(find.text('Add estimate'), findsOneWidget);
+    expect(find.text('Estimated expenses'), findsOneWidget);
+    expect(find.text('Rent'), findsOneWidget);
+    // Planned amounts are kept visually distinct from real expenses.
+    expect(find.text('No expenses yet'), findsOneWidget);
+  });
+
+  testWidgets('personal insights offers period and granularity filters', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
+    await state.addPersonalExpense(
+      description: 'Coffee',
+      amount: const Money(50000),
+      date: DateTime(2026, 1, 12),
+    );
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    await tester.tap(find.text('Insights'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Spending overview'), findsOneWidget);
+    // Period scope toggle.
+    expect(find.text('Monthly'), findsOneWidget);
+    expect(find.text('Yearly'), findsOneWidget);
+    expect(find.text('Lifetime'), findsOneWidget);
+    // Granularity filter.
+    expect(find.text('Day'), findsOneWidget);
+    expect(find.text('Week'), findsOneWidget);
+    expect(find.text('Month'), findsOneWidget);
+    expect(find.text('Year'), findsOneWidget);
+    expect(find.text('Category breakdown'), findsOneWidget);
+  });
+
+  testWidgets('personal insights chart renders with same-day expenses', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
+    await state.addPersonalExpense(
+      description: 'Coffee',
+      amount: const Money(50000),
+      date: DateTime.now(),
+    );
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    await tester.tap(find.text('Insights'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Spending overview'), findsOneWidget);
+    // Same-day spending must produce chart bars, not the empty state.
+    expect(find.text('Nothing to chart yet'), findsNothing);
+  });
+
+  testWidgets('personal dashboard fits narrow screens without overflow', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
+    final now = DateTime.now();
+    final month = DateTime(now.year, now.month);
+    await state.addEstimatedExpense(
+      description: 'Rent',
+      amount: const Money(1500000),
+      month: month,
+    );
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    expect(find.text('Add expense'), findsOneWidget);
+    expect(find.text('Add estimate'), findsOneWidget);
+    expect(find.text('Rent'), findsOneWidget);
+  });
+
+  testWidgets('estimated spending form is simplified to amount only', (
+    tester,
+  ) async {
+    final state = await makeState(mode: SpaceMode.personal);
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    await tester.tap(find.text('Add estimate'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Estimated spending amount'), findsOneWidget);
+    // Description, category and date picker are intentionally not part of the
+    // planned-amount form.
+    expect(find.text('What are you planning for?'), findsNothing);
+    expect(find.text('Date'), findsNothing);
+    expect(find.text('Category'), findsNothing);
+    expect(find.text('Save estimate'), findsOneWidget);
+  });
+
   testWidgets('spaces dashboard shows empty state with create/join actions', (
     tester,
   ) async {

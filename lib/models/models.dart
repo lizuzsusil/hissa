@@ -479,6 +479,83 @@ class Expense {
       );
 }
 
+/// A planned / estimated expense in a Personal space. An estimate is NOT a
+/// real transaction: it is the amount the owner expects to spend during a
+/// given calendar month. Estimates are kept entirely separate from [Expense]
+/// records so they can never be mistaken for actual spending, and they only
+/// exist in Personal (personal) spaces.
+///
+/// Persisted in the `estimatedExpenses/{spaceId}_{id}` Firestore collection.
+class EstimatedExpense {
+  final String id;
+  final String spaceId;
+
+  /// The planned amount for the month.
+  final Money amount;
+
+  final String? categoryId;
+  final String? description;
+
+  /// The first day of the calendar month this estimate applies to (time is
+  /// always midnight so month comparisons are safe).
+  final DateTime month;
+
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const EstimatedExpense({
+    required this.id,
+    required this.spaceId,
+    required this.amount,
+    this.categoryId,
+    this.description,
+    required this.month,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  EstimatedExpense copyWith({
+    Money? amount,
+    String? categoryId,
+    String? description,
+    DateTime? month,
+  }) {
+    return EstimatedExpense(
+      id: id,
+      spaceId: spaceId,
+      amount: amount ?? this.amount,
+      categoryId: categoryId ?? this.categoryId,
+      description: description ?? this.description,
+      month: month ?? this.month,
+      createdAt: createdAt,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'spaceId': spaceId,
+        'amountPaisa': amount.paisa,
+        'categoryId': categoryId,
+        'description': description,
+        'month': month.toIso8601String(),
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt.toIso8601String(),
+      };
+
+  factory EstimatedExpense.fromJson(Map<String, dynamic> json) =>
+      EstimatedExpense(
+        id: json['id'] as String,
+        spaceId: json['spaceId'] as String,
+        amount: Money(json['amountPaisa'] as int),
+        categoryId: json['categoryId'] as String?,
+        description: json['description'] as String?,
+        month: DateTime.parse(json['month'] as String),
+        createdAt: DateTime.parse(json['createdAt'] as String),
+        updatedAt: DateTime.parse(json['updatedAt'] as String),
+      );
+}
+
 /// A group of Space members that acts as a single split party for one
 /// expense (Phase 6). Groups are scoped to an expense and never alter Space
 /// membership. The underlying user identities live in [ExpenseShare] rows, so

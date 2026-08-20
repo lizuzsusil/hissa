@@ -16,10 +16,14 @@ import '../widgets/misc.dart';
 import '../widgets/motion.dart';
 import 'expense_detail_screen.dart';
 import 'expense_form_screen.dart';
+import 'personal/estimated_expense_sheet.dart';
+import 'personal/personal_widgets.dart';
 
-/// Home screen for Personal (personal) spaces: month-based total spending and
-/// recent personal expenses. Never shows owed/received balances or
-/// settlement actions.
+/// Home screen for Personal (personal) spaces: month-based total spending,
+/// a planned-vs-actual estimate summary, recent personal expenses and the
+/// month's planned amounts. Never shows owed/received balances or settlement
+/// actions, and estimated amounts are always kept visually and numerically
+/// distinct from real spending.
 class PersonalDashboardScreen extends StatefulWidget {
   const PersonalDashboardScreen({super.key});
 
@@ -54,6 +58,8 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
     final total = state.personalTotalSpent(_month);
     final previous = state.personalTotalSpent(_previousMonth);
     final delta = total - previous;
+    final estimates = state.estimatedExpensesForMonth(_month);
+    final estimatedTotal = state.estimatedTotalForMonth(_month);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
 
@@ -64,7 +70,7 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
         slivers: [
           SliverAppBar(
             pinned: true,
-            expandedHeight: 248,
+            expandedHeight: 208,
             backgroundColor: isDark ? AppColors.bgDark : AppColors.bg,
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
@@ -84,25 +90,44 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: Padding(
+            child: ResponsiveContent(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _MonthSpendingCard(
-                    total: total,
-                    previous: previous,
-                    previousMonth: _previousMonth,
+                  EstimateProgressCard(
+                    month: _month,
+                    spent: total,
+                    estimated: estimatedTotal,
+                    showEmptyAction: false,
+                    onAddEstimate: () => _openEstimateSheet(),
+                    onManageEstimates: () => _openEstimatesEditor(),
                   ),
                   const SizedBox(height: 16),
-                  _AddExpenseButton(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ExpenseFormScreen(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ActionButton(
+                          gradient: AppGradients.accent,
+                          icon: Icons.add_rounded,
+                          label: l10n.addExpense,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ExpenseFormScreen(),
+                            ),
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _ActionButton(
+                          gradient: null,
+                          icon: Icons.flag_outlined,
+                          label: l10n.addEstimate,
+                          onTap: () => _openEstimateSheet(),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
                   SectionHeader(
@@ -132,7 +157,25 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                             ),
                           ),
                         ),
+                  if (estimates.isNotEmpty) ...[
                   const SizedBox(height: 24),
+                  SectionHeader(
+                    title: l10n.estimatedExpenses,
+                    actionLabel: l10n.viewAll,
+                    onAction: () => _openEstimatesEditor(),
+                  ),
+                  ...estimates.take(8).map(
+                    (estimate) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: EstimateTile(
+                        estimate: estimate,
+                        onEdit: () => _openEstimateSheet(estimate: estimate),
+                        onRemove: () => _removeEstimate(estimate),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -140,6 +183,21 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openEstimateSheet({EstimatedExpense? estimate}) {
+    return showEstimatedExpenseSheet(context, estimate: estimate);
+  }
+
+  Future<void> _openEstimatesEditor() {
+    return showMonthEstimatesSheet(context, month: _month);
+  }
+
+  Future<void> _removeEstimate(EstimatedExpense estimate) async {
+    final appState = context.read<AppState>();
+    final ok = await confirmRemoveEstimate(context);
+    if (!ok) return;
+    await appState.deleteEstimatedExpense(estimate.id);
   }
 }
 
@@ -169,6 +227,9 @@ class _Header extends StatelessWidget {
     final canGoNext =
         !(month.year == DateTime.now().year &&
             month.month == DateTime.now().month);
+    final firstName = user == null || user.name.trim().isEmpty
+        ? null
+        : user.name.trim().split(RegExp(r'\s+')).first;
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.shimmerGradient,
@@ -177,29 +238,34 @@ class _Header extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.person_outline_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
+                  if (user != null) ...[
+                    MemberAvatar(
+                      name: user.name,
+                      avatarUrl: user.avatarUrl,
+                      size: 36,
+                      outline: true,
+                    ),
+                    const SizedBox(width: 10),
+                  ],
                   Expanded(
                     child: Row(
                       children: [
                         Flexible(
                           child: Text(
-                            space.name,
+                            firstName != null
+                                ? l10n.welcomeUser(firstName)
+                                : space.name,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
@@ -209,65 +275,68 @@ class _Header extends StatelessWidget {
                     ),
                   ),
                   _MonthSwitcher(
-                    label: formatMonthYear(month),
+                    label: formatMonthShort(month),
                     onPrevious: onPreviousMonth,
                     onNext: canGoNext ? onNextMonth : null,
                   ),
                 ],
               ),
               const Spacer(),
-              if (user != null) ...[
-                Row(
-                  children: [
-                    MemberAvatar(
-                      name: user.name,
-                      avatarUrl: user.avatarUrl,
-                      size: 32,
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        l10n.welcomeUser(user.name),
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-              ],
               Text(
                 l10n.totalSpending,
                 style: const TextStyle(
                   color: Colors.white70,
-                  fontSize: 13,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: AnimatedMoney(
-                  paisa: total.paisa,
-                  formatter: (p) => formatMoney(Money(p)),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 38,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1,
+              const SizedBox(height: 2),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: AnimatedMoney(
+                        paisa: total.paisa,
+                        formatter: (p) => formatMoney(Money(p)),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 38,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _deltaLabel(l10n),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
-                '${l10n.thisMonth} · ${_deltaLabel(l10n)}',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 13,
+                formatMonthYear(month),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -282,7 +351,7 @@ class _Header extends StatelessWidget {
     final monthLabel = formatMonthShort(previousMonth);
     if (delta.isZero) return l10n.even;
     final sign = delta.isPositive ? '+' : '−';
-    return '$sign ${formatMoney(delta.abs(), showSymbol: false)} ${l10n.vsMonth(monthLabel)}';
+    return '$sign ${formatMoney(delta.abs(), showSymbol: false)} $monthLabel';
   }
 }
 
@@ -338,128 +407,72 @@ class _MonthSwitcher extends StatelessWidget {
   }
 }
 
-class _MonthSpendingCard extends StatelessWidget {
-  final Money total;
-  final Money previous;
-  final DateTime previousMonth;
+/// One of the two quick actions on the dashboard: adding a real expense
+/// (gradient) or adding a planned amount (outlined, tertiary). The two are
+/// deliberately styled differently so actual vs estimated is never ambiguous.
+class _ActionButton extends StatelessWidget {
+  final LinearGradient? gradient;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-  const _MonthSpendingCard({
-    required this.total,
-    required this.previous,
-    required this.previousMonth,
+  const _ActionButton({
+    required this.gradient,
+    required this.icon,
+    required this.label,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final delta = total - previous;
-    final positive = delta.isPositive;
-    final color = positive ? AppColors.positive : AppColors.negative;
-    final soft = positive ? AppColors.positiveSoft : AppColors.negativeSoft;
-
-    return SurfaceCard(
-      padding: const EdgeInsets.all(18),
-      borderRadius: 20,
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.thisMonth,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                AnimatedMoney(
-                  paisa: total.paisa,
-                  formatter: (p) => formatMoney(Money(p)),
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: soft,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  l10n.vsMonth(formatMonthShort(previousMonth)),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  delta.isZero
-                      ? l10n.even
-                      : '${positive ? '+' : '−'} ${formatMoney(delta.abs(), showSymbol: false)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: delta.isZero ? AppColors.textMuted : color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AddExpenseButton extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _AddExpenseButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
     return PressableScale(
       onTap: onTap,
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(
-          gradient: AppGradients.accent,
+          gradient: gradient,
+          color: gradient == null
+              ? (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt)
+              : null,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.secondaryDark.withValues(alpha: 0.30),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          border: gradient == null
+              ? Border.all(
+                  color: isDark ? AppColors.borderDark : AppColors.border,
+                )
+              : null,
+          boxShadow: gradient != null
+              ? [
+                  BoxShadow(
+                    color: AppColors.secondaryDark.withValues(alpha: 0.28),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+            Icon(
+              icon,
+              size: 20,
+              color: gradient == null ? AppColors.tertiary : Colors.white,
+            ),
             const SizedBox(width: 8),
-            Text(
-              l10n.addExpense,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: gradient == null
+                      ? (isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimary)
+                      : Colors.white,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -521,7 +534,10 @@ class _PersonalExpenseTile extends StatelessWidget {
             ),
             Text(
               formatMoney(expense.amount),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),
@@ -529,6 +545,3 @@ class _PersonalExpenseTile extends StatelessWidget {
     );
   }
 }
-
-/// Small white pill identifying the Space mode, shown in the dashboard header
-/// so the active mode is always visible while inside a Space.

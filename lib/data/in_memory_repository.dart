@@ -15,6 +15,7 @@ class InMemoryRepository implements ExpenseRepository {
   final List<Expense> _expenses = [];
   final List<ExpenseShare> _shares = [];
   final List<Settlement> _settlements = [];
+  final List<EstimatedExpense> _estimatedExpenses = [];
   final List<Category> _categories = [];
   final List<MemberGroup> _memberGroups = [];
   final List<MemberGroupMember> _memberGroupMembers = [];
@@ -45,6 +46,10 @@ class InMemoryRepository implements ExpenseRepository {
 
   @override
   List<Settlement> get settlements => List.unmodifiable(_settlements);
+
+  @override
+  List<EstimatedExpense> get estimatedExpenses =>
+      List.unmodifiable(_estimatedExpenses);
 
   @override
   List<Category> get categories => List.unmodifiable(_categories);
@@ -152,6 +157,21 @@ class InMemoryRepository implements ExpenseRepository {
     } else {
       _categories.add(category);
     }
+  }
+
+  @override
+  Future<void> saveEstimatedExpense(EstimatedExpense estimate) async {
+    final idx = _estimatedExpenses.indexWhere((e) => e.id == estimate.id);
+    if (idx >= 0) {
+      _estimatedExpenses[idx] = estimate;
+    } else {
+      _estimatedExpenses.add(estimate);
+    }
+  }
+
+  @override
+  Future<void> deleteEstimatedExpense(String estimateId) async {
+    _estimatedExpenses.removeWhere((e) => e.id == estimateId);
   }
 
   @override
@@ -370,6 +390,7 @@ class InMemoryRepository implements ExpenseRepository {
     _expenses.removeWhere((e) => e.spaceId == spaceId);
     _shares.removeWhere((s) => expenseIds.contains(s.expenseId));
     _settlements.removeWhere((s) => s.spaceId == spaceId);
+    _estimatedExpenses.removeWhere((e) => e.spaceId == spaceId);
     _categories.removeWhere((c) => c.spaceId == spaceId);
     final groupIds =
         _memberGroups.where((g) => g.spaceId == spaceId).map((g) => g.id).toSet();

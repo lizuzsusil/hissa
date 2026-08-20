@@ -1463,6 +1463,87 @@ class AppState extends ChangeNotifier {
     await _commit();
   }
 
+  // ---- personal estimated expenses (Personal mode only) ----
+
+  /// Estimated (planned) expenses for the selected Personal space. Estimates
+  /// are kept fully separate from real expenses so they can never leak into
+  /// actual spending totals or balances.
+  List<EstimatedExpense> get estimatedExpenses {
+    if (_spaceId == null) return const [];
+    return _repo.estimatedExpenses
+        .where((e) => e.spaceId == _spaceId)
+        .toList();
+  }
+
+  /// Estimated expenses whose [EstimatedExpense.month] falls within [month].
+  List<EstimatedExpense> estimatedExpensesForMonth(DateTime month) {
+    return estimatedExpenses
+        .where((e) => e.month.year == month.year && e.month.month == month.month)
+        .toList();
+  }
+
+  /// Total estimated amount for [month].
+  Money estimatedTotalForMonth(DateTime month) {
+    var paisa = 0;
+    for (final e in estimatedExpensesForMonth(month)) {
+      paisa += e.amount.paisa;
+    }
+    return Money(paisa);
+  }
+
+  /// Adds a planned amount for [month] (defaults to the current month).
+  Future<void> addEstimatedExpense({
+    required String description,
+    required Money amount,
+    String? categoryId,
+    DateTime? month,
+  }) async {
+    final s = space;
+    if (s == null || amount.isZero) return;
+    final targetMonth = month == null
+        ? DateTime(DateTime.now().year, DateTime.now().month)
+        : DateTime(month.year, month.month);
+    final now = DateTime.now();
+    final estimate = EstimatedExpense(
+      id: 'est_${genId(8)}',
+      spaceId: s.id,
+      amount: amount,
+      categoryId: categoryId,
+      description: description.trim().isEmpty
+          ? 'Planned expense'
+          : description.trim(),
+      month: targetMonth,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await _repo.saveEstimatedExpense(estimate);
+    await _commit();
+  }
+
+  Future<void> updateEstimatedExpense(
+    EstimatedExpense estimate, {
+    required String description,
+    required Money amount,
+    String? categoryId,
+    DateTime? month,
+  }) async {
+    final updated = estimate.copyWith(
+      description: description.trim().isEmpty
+          ? 'Planned expense'
+          : description.trim(),
+      amount: amount,
+      categoryId: categoryId,
+      month: month == null ? estimate.month : DateTime(month.year, month.month),
+    );
+    await _repo.saveEstimatedExpense(updated);
+    await _commit();
+  }
+
+  Future<void> deleteEstimatedExpense(String estimateId) async {
+    await _repo.deleteEstimatedExpense(estimateId);
+    await _commit();
+  }
+
   // ---- settlements ----
 
   Future<void> addSettlement({

@@ -110,4 +110,110 @@ void main() {
       expect(state.repo.settlements, isEmpty);
     },
   );
+
+  group('estimated expenses', () {
+    test('add a planned amount for a month', () async {
+      final state = await makePersonalState();
+      await state.addEstimatedExpense(
+        description: 'Rent',
+        amount: const Money(1500000),
+        month: DateTime(2026, 1),
+      );
+      expect(state.estimatedExpenses, hasLength(1));
+      final estimate = state.estimatedExpenses.single;
+      expect(estimate.description, 'Rent');
+      expect(estimate.amount, const Money(1500000));
+      expect(estimate.month, DateTime(2026, 1));
+      expect(
+        state.estimatedExpensesForMonth(DateTime(2026, 1)),
+        hasLength(1),
+      );
+      expect(
+        state.estimatedTotalForMonth(DateTime(2026, 1)),
+        const Money(1500000),
+      );
+    });
+
+    test('estimates never count as actual spending', () async {
+      final state = await makePersonalState();
+      await state.addEstimatedExpense(
+        description: 'Planned vacation',
+        amount: const Money(9000000),
+        month: DateTime(2026, 1),
+      );
+      expect(state.personalExpenses, isEmpty);
+      expect(
+        state.personalTotalSpent(DateTime(2026, 1)),
+        const Money(0),
+        reason: 'planned amounts must not leak into actual spending totals',
+      );
+    });
+
+    test('estimates are scoped to their month', () async {
+      final state = await makePersonalState();
+      await state.addEstimatedExpense(
+        description: 'January rent',
+        amount: const Money(1500000),
+        month: DateTime(2026, 1),
+      );
+      await state.addEstimatedExpense(
+        description: 'February rent',
+        amount: const Money(1600000),
+        month: DateTime(2026, 2),
+      );
+      expect(
+        state.estimatedTotalForMonth(DateTime(2026, 1)),
+        const Money(1500000),
+      );
+      expect(
+        state.estimatedTotalForMonth(DateTime(2026, 2)),
+        const Money(1600000),
+      );
+      expect(state.estimatedExpensesForMonth(DateTime(2026, 3)), isEmpty);
+    });
+
+    test('edit an estimate keeps it separate from actual expenses', () async {
+      final state = await makePersonalState();
+      await state.addEstimatedExpense(
+        description: 'Rent',
+        amount: const Money(1500000),
+        month: DateTime(2026, 1),
+      );
+      await state.updateEstimatedExpense(
+        state.estimatedExpenses.single,
+        description: 'Rent + utilities',
+        amount: const Money(1750000),
+        month: DateTime(2026, 1),
+      );
+      final estimate = state.estimatedExpenses.single;
+      expect(estimate.description, 'Rent + utilities');
+      expect(estimate.amount, const Money(1750000));
+      expect(
+        state.estimatedTotalForMonth(DateTime(2026, 1)),
+        const Money(1750000),
+      );
+      expect(state.personalExpenses, isEmpty);
+    });
+
+    test('delete an estimate removes only the planned amount', () async {
+      final state = await makePersonalState();
+      await state.addEstimatedExpense(
+        description: 'Gadget',
+        amount: const Money(800000),
+        month: DateTime(2026, 1),
+      );
+      await state.addPersonalExpense(
+        description: 'Coffee',
+        amount: const Money(5000),
+        date: DateTime(2026, 1, 12),
+      );
+      await state.deleteEstimatedExpense(state.estimatedExpenses.single.id);
+      expect(state.estimatedExpenses, isEmpty);
+      expect(state.personalExpenses, hasLength(1));
+      expect(
+        state.personalTotalSpent(DateTime(2026, 1)),
+        const Money(5000),
+      );
+    });
+  });
 }

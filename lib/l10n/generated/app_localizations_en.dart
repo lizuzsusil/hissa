@@ -387,6 +387,126 @@ class AppLocalizationsEn extends AppLocalizations {
   String get average => 'Average';
 
   @override
+  String get spendingOverview => 'Spending overview';
+
+  @override
+  String get thisMonthTotal => 'This month';
+
+  @override
+  String get thisYearTotal => 'This year';
+
+  @override
+  String get allTimeTotal => 'All time';
+
+  @override
+  String get granularityDay => 'Day';
+
+  @override
+  String get granularityWeek => 'Week';
+
+  @override
+  String get granularityMonth => 'Month';
+
+  @override
+  String get granularityYear => 'Year';
+
+  @override
+  String get periodMonthly => 'Monthly';
+
+  @override
+  String get periodYearly => 'Yearly';
+
+  @override
+  String get periodLifetime => 'Lifetime';
+
+  @override
+  String get noSpendingChartTitle => 'Nothing to chart yet';
+
+  @override
+  String get noSpendingChartMessage =>
+      'Add expenses to see your spending over time.';
+
+  @override
+  String get showingRecentWindow => 'Showing the most recent period';
+
+  @override
+  String spentInPeriod(String amount, String period) {
+    return '$amount in $period';
+  }
+
+  @override
+  String get addEstimate => 'Add estimate';
+
+  @override
+  String get estimatedExpenses => 'Estimated expenses';
+
+  @override
+  String get estimatedExpense => 'Estimate';
+
+  @override
+  String get estimateSectionSubtitle =>
+      'Planned amounts for the month — not actual spending.';
+
+  @override
+  String get noEstimatesYet => 'No estimates yet';
+
+  @override
+  String get noEstimatesMessage =>
+      'Add a planned amount to see how it compares with your actual spending.';
+
+  @override
+  String get editEstimate => 'Edit estimate';
+
+  @override
+  String get removeEstimate => 'Remove estimate';
+
+  @override
+  String get removeEstimateTitle => 'Remove this estimate?';
+
+  @override
+  String get removeEstimateMessage =>
+      'The planned amount will be removed. No actual expenses are affected.';
+
+  @override
+  String estimateForMonth(String month) {
+    return 'Estimate for $month';
+  }
+
+  @override
+  String get estimateDescriptionHint => 'What are you planning for?';
+
+  @override
+  String get estimatedAmount => 'Estimated spending amount';
+
+  @override
+  String get saveEstimate => 'Save estimate';
+
+  @override
+  String get updateEstimate => 'Update estimate';
+
+  @override
+  String get estimateAmountError => 'Enter a planned amount greater than 0.';
+
+  @override
+  String get spentSoFar => 'Spent so far';
+
+  @override
+  String get estimatedTotalShort => 'Estimated';
+
+  @override
+  String get remainingFromEstimate => 'Remaining';
+
+  @override
+  String overEstimateBy(String amount) {
+    return 'Over by $amount';
+  }
+
+  @override
+  String spentOfEstimate(String spent, String estimate) {
+    return '$spent of $estimate estimated';
+  }
+
+  @override
   String get introTitle1 => 'Welcome to Hissa';
 
   @override

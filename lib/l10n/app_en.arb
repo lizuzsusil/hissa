@@ -204,6 +204,69 @@
   "totalSpent": "Total spent",
   "average": "Average",
 
+  "spendingOverview": "Spending overview",
+  "thisMonthTotal": "This month",
+  "thisYearTotal": "This year",
+  "allTimeTotal": "All time",
+  "granularityDay": "Day",
+  "granularityWeek": "Week",
+  "granularityMonth": "Month",
+  "granularityYear": "Year",
+  "periodMonthly": "Monthly",
+  "periodYearly": "Yearly",
+  "periodLifetime": "Lifetime",
+  "noSpendingChartTitle": "Nothing to chart yet",
+  "noSpendingChartMessage": "Add expenses to see your spending over time.",
+  "showingRecentWindow": "Showing the most recent period",
+  "spentInPeriod": "{amount} in {period}",
+  "@spentInPeriod": {
+    "description": "Header line inside the spending chart, e.g. 'Rs. 12,000 in Monthly'",
+    "placeholders": {
+      "amount": { "type": "String" },
+      "period": { "type": "String" }
+    }
+  },
+
+  "addEstimate": "Add estimate",
+  "estimatedExpenses": "Estimated expenses",
+  "estimatedExpense": "Estimate",
+  "estimateSectionSubtitle": "Planned amounts for the month — not actual spending.",
+  "noEstimatesYet": "No estimates yet",
+  "noEstimatesMessage": "Add a planned amount to see how it compares with your actual spending.",
+  "editEstimate": "Edit estimate",
+  "removeEstimate": "Remove estimate",
+  "removeEstimateTitle": "Remove this estimate?",
+  "removeEstimateMessage": "The planned amount will be removed. No actual expenses are affected.",
+  "estimateForMonth": "Estimate for {month}",
+  "@estimateForMonth": {
+    "description": "Title of the estimate form, e.g. 'Estimate for July 2026'",
+    "placeholders": {
+      "month": { "type": "String" }
+    }
+  },
+  "estimateDescriptionHint": "What are you planning for?",
+  "estimatedAmount": "Estimated spending amount",
+  "saveEstimate": "Save estimate",
+  "updateEstimate": "Update estimate",
+  "estimateAmountError": "Enter a planned amount greater than 0.",
+  "spentSoFar": "Spent so far",
+  "estimatedTotalShort": "Estimated",
+  "remainingFromEstimate": "Remaining",
+  "overEstimateBy": "Over by {amount}",
+  "@overEstimateBy": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "spentOfEstimate": "{spent} of {estimate} estimated",
+  "@spentOfEstimate": {
+    "description": "Progress line, e.g. 'Rs. 8,000 of Rs. 12,000 estimated'",
+    "placeholders": {
+      "spent": { "type": "String" },
+      "estimate": { "type": "String" }
+    }
+  },
+
   "introTitle1": "Welcome to Hissa",
   "introSubtitle1": "The simplest way for groups, roommates and families to track shared expenses together.",
   "introTitle2": "Track every expense",

@@ -69,7 +69,8 @@ class _ShellScreenState extends State<ShellScreen> {
             body: state.isSwitchingSpace
                 ? const _SpaceSwitchingScreen()
                 : IndexedStack(index: _tabController.index, children: screens),
-            floatingActionButton: _tabController.index == screens.length - 1
+            floatingActionButton: (_tabController.index == 0 ||
+                    _tabController.index == screens.length - 1)
                 ? null
                 : _FloatingAddButton(),
             bottomNavigationBar: _NavBar(

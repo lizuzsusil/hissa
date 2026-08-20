@@ -13,6 +13,7 @@ abstract class ExpenseRepository {
   List<Expense> get expenses;
   List<ExpenseShare> get shares;
   List<Settlement> get settlements;
+  List<EstimatedExpense> get estimatedExpenses;
   List<Category> get categories;
   List<MemberGroup> get memberGroups;
   List<MemberGroupMember> get memberGroupMembers;
@@ -29,6 +30,12 @@ abstract class ExpenseRepository {
   Future<void> addShare(ExpenseShare share);
   Future<void> saveSettlement(Settlement settlement);
   Future<void> saveCategory(Category category);
+
+  /// Persists a Personal-space [EstimatedExpense]. Upserts by id.
+  Future<void> saveEstimatedExpense(EstimatedExpense estimate);
+
+  /// Permanently removes an [EstimatedExpense] by id.
+  Future<void> deleteEstimatedExpense(String estimateId);
 
   /// Creates a Member Group owned by [ownerUserId]. Group members must already
   /// belong to [spaceId]; the owner is always implied and never stored as a

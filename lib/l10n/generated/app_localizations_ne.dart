@@ -386,6 +386,126 @@ class AppLocalizationsNe extends AppLocalizations {
   String get average => 'औसत';
 
   @override
+  String get spendingOverview => 'खर्च अवलोकन';
+
+  @override
+  String get thisMonthTotal => 'यो महिना';
+
+  @override
+  String get thisYearTotal => 'यो वर्ष';
+
+  @override
+  String get allTimeTotal => 'सबै समय';
+
+  @override
+  String get granularityDay => 'दिन';
+
+  @override
+  String get granularityWeek => 'हप्ता';
+
+  @override
+  String get granularityMonth => 'महिना';
+
+  @override
+  String get granularityYear => 'वर्ष';
+
+  @override
+  String get periodMonthly => 'मासिक';
+
+  @override
+  String get periodYearly => 'वार्षिक';
+
+  @override
+  String get periodLifetime => 'जीवनभर';
+
+  @override
+  String get noSpendingChartTitle => 'चार्ट गर्न केही छैन';
+
+  @override
+  String get noSpendingChartMessage =>
+      'आफ्नो समयसँगै खर्च हेर्न खर्चहरू थप्नुहोस्।';
+
+  @override
+  String get showingRecentWindow => 'सबैभन्दा भर्खरको अवधि देखाइँदै';
+
+  @override
+  String spentInPeriod(String amount, String period) {
+    return '$period मा $amount';
+  }
+
+  @override
+  String get addEstimate => 'अनुमान थप्नुहोस्';
+
+  @override
+  String get estimatedExpenses => 'अनुमानित खर्चहरू';
+
+  @override
+  String get estimatedExpense => 'अनुमान';
+
+  @override
+  String get estimateSectionSubtitle =>
+      'महिनाको लागि योजना गरिएको रकम — वास्तविक खर्च होइन।';
+
+  @override
+  String get noEstimatesYet => 'अहिलेसम्म कुनै अनुमान छैन';
+
+  @override
+  String get noEstimatesMessage =>
+      'वास्तविक खर्चसँग तुलना गर्न योजना गरिएको रकम थप्नुहोस्।';
+
+  @override
+  String get editEstimate => 'अनुमान सम्पादन गर्नुहोस्';
+
+  @override
+  String get removeEstimate => 'अनुमान हटाउनुहोस्';
+
+  @override
+  String get removeEstimateTitle => 'यो अनुमान हटाउने हो?';
+
+  @override
+  String get removeEstimateMessage =>
+      'योजना गरिएको रकम हटाइनेछ। कुनै वास्तविक खर्च प्रभावित हुँदैन।';
+
+  @override
+  String estimateForMonth(String month) {
+    return '$month को लागि अनुमान';
+  }
+
+  @override
+  String get estimateDescriptionHint => 'के को लागि योजना गर्दै हुनुहुन्छ?';
+
+  @override
+  String get estimatedAmount => 'अनुमानित खर्च रकम';
+
+  @override
+  String get saveEstimate => 'अनुमान बचत गर्नुहोस्';
+
+  @override
+  String get updateEstimate => 'अनुमान अद्यावधिक गर्नुहोस्';
+
+  @override
+  String get estimateAmountError => '0 भन्दा बढी रकम प्रविष्ट गर्नुहोस्।';
+
+  @override
+  String get spentSoFar => 'अहिलेसम्म खर्च';
+
+  @override
+  String get estimatedTotalShort => 'अनुमानित';
+
+  @override
+  String get remainingFromEstimate => 'बाँकी';
+
+  @override
+  String overEstimateBy(String amount) {
+    return '$amount ले बढी';
+  }
+
+  @override
+  String spentOfEstimate(String spent, String estimate) {
+    return '$estimate अनुमानमा $spent खर्च भयो';
+  }
+
+  @override
   String get introTitle1 => 'हिस्सामा स्वागत छ';
 
   @override
