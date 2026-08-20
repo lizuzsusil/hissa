@@ -301,17 +301,6 @@ class _PersonalInsightsState extends State<_PersonalInsights> {
                       previous: previousMonthTotal,
                     ),
                   ],
-                  if (scopeExpenses.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    SectionHeader(
-                      title: l10n.topCategories,
-                      actionLabel: caption,
-                    ),
-                    _CategoryLeaderboard(
-                      categories: state.categories,
-                      categoryData: _categoryTotals(scopeExpenses),
-                    ),
-                  ],
                 ],
               ),
             ),

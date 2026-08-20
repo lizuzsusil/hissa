@@ -316,6 +316,31 @@ void main() {
     );
   });
 
+  testWidgets('search empty state does not overflow on a short viewport', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 420));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final state = await makeState(mode: SpaceMode.personal);
+    await state.addPersonalExpense(
+      description: 'Coffee',
+      amount: const Money(50000),
+      date: DateTime.now(),
+    );
+    await tester.pumpWidget(appHarness(state, const ShellScreen()));
+    await tester.pump();
+
+    await tester.tap(find.text('Expenses'));
+    await tester.pumpAndSettle();
+
+    // Search for something that matches nothing.
+    await tester.enterText(find.byType(TextField), 'zzzz');
+    await tester.pumpAndSettle();
+
+    expect(find.text('No matching expenses'), findsOneWidget);
+  });
+
   testWidgets('personal dashboard fits narrow screens without overflow', (
     tester,
   ) async {

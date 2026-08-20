@@ -147,7 +147,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ),
           ),
           SizedBox(
-            height: 40,
+            height: 34,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -173,13 +173,22 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       _categoryFilter = _categoryFilter == c.id ? null : c.id;
                       _memberFilter = null;
                     }),
+                    leading: Icon(
+                      iconForCodePoint(c.iconCodePoint),
+                      size: 14,
+                      color: _categoryFilter == c.id
+                          ? Colors.white
+                          : (c.colorValue == null
+                              ? AppColors.textSecondary
+                              : Color(c.colorValue!)),
+                    ),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: 34,
+            height: 30,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -227,20 +236,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          if (isPersonal) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _LifetimeCard(
-                title: summaryTitle,
-                total: summaryTotal,
-                count: summaryCount,
-                average: summaryAvg,
-                deltaPercent: deltaPercent,
-                deltaLabel: previous?.label,
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => context.read<AppState>().refresh(),
@@ -264,6 +259,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                       children: [
+                        if (isPersonal) ...[
+                          const SizedBox(height: 8),
+                          _LifetimeCard(
+                            title: summaryTitle,
+                            total: summaryTotal,
+                            count: summaryCount,
+                            average: summaryAvg,
+                            deltaPercent: deltaPercent,
+                            deltaLabel: previous?.label,
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                         for (final entry in _groupByDay(filtered).entries) ...[
                           Padding(
                             padding: const EdgeInsets.fromLTRB(2, 14, 2, 10),
@@ -593,12 +600,14 @@ class _FilterChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final bool compact;
+  final Widget? leading;
 
   const _FilterChip({
     required this.label,
     required this.selected,
     required this.onTap,
     this.compact = false,
+    this.leading,
   });
 
   @override
@@ -609,7 +618,7 @@ class _FilterChip extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 14),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             gradient: selected
@@ -622,13 +631,22 @@ class _FilterChip extends StatelessWidget {
             color: selected ? null : AppColors.surfaceAlt,
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: compact ? 12.5 : 13,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : AppColors.textSecondary,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (leading != null) ...[
+                leading!,
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: compact ? 12.5 : 13,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : AppColors.textSecondary,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -889,9 +907,20 @@ class _ExpenseRow extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              formatMoney(expense.amount),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  formatMoney(expense.amount),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

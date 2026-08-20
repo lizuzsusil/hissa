@@ -256,7 +256,7 @@ class _Header extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ModeChip(label: l10n.personalMode),
+                        Flexible(child: ModeChip(label: l10n.personalMode)),
                       ],
                     ),
                   ),
@@ -518,11 +518,19 @@ class _PersonalExpenseTile extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              formatMoney(expense.amount),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
+            const SizedBox(width: 8),
+            Flexible(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  formatMoney(expense.amount),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
             ),
           ],

@@ -117,6 +117,8 @@ class _RootGateState extends State<RootGate> {
 
   Future<void> _bootstrap() async {
     final state = context.read<AppState>();
+    final localeController = context.read<LocaleController>();
+    final biometricController = context.read<BiometricAuthController>();
     _router = NotificationRouter(navigatorKey: widget.navigatorKey, state: state);
     FcmMessagingService.init(
       onTap: (data) {
@@ -136,8 +138,8 @@ class _RootGateState extends State<RootGate> {
     }
     await Future.wait([
       state.load(),
-      context.read<LocaleController>().load(),
-      context.read<BiometricAuthController>().load(),
+      localeController.load(),
+      biometricController.load(),
     ]);
     if (!mounted) return;
     // Give the branded splash a moment to breathe.
