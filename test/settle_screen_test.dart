@@ -126,14 +126,21 @@ void main() {
       date: DateTime(2026, 1, 10),
       participantIds: ['u_owner', 'u_b'],
     );
-    // B settles their half, making every balance even.
-    await state.addSettlement(
-      fromUserId: 'u_b',
+    // B owes their half: as the debtor they request the settlement and the
+    // creditor (owner) approves it, making every balance even.
+    state.debugSetSession(userId: 'u_b', spaceId: 'h1');
+    final requested = await state.requestSettlement(
       toUserId: 'u_owner',
       amount: const Money(50000),
       paymentMethod: 'Cash',
       date: DateTime(2026, 1, 12),
     );
+    expect(requested, isTrue);
+    state.debugSetSession(userId: 'u_owner', spaceId: 'h1');
+    final approved = await state.approveSettlement(
+      state.repo.settlements.single.id,
+    );
+    expect(approved, isTrue);
 
     expect(state.settlementProposals(), isEmpty);
     expect(state.expensesInCycle, hasLength(1));

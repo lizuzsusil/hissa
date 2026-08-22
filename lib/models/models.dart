@@ -691,7 +691,13 @@ class Settlement {
   final String id;
   final String spaceId;
   final String cycleId;
+
+  /// The debtor: the member who owes this amount and who initiated the
+  /// settlement request.
   final String fromUserId;
+
+  /// The creditor: the member who is owed [amount] and who must approve the
+  /// settlement before it counts as settled.
   final String toUserId;
   final Money amount;
   final String currency;
@@ -700,6 +706,10 @@ class Settlement {
   final String? note;
   final SettlementStatus status;
   final DateTime createdAt;
+
+  /// When the creditor approved or rejected the request. Null while the
+  /// decision is pending (and on legacy records).
+  final DateTime? respondedAt;
 
   Settlement({
     required this.id,
@@ -714,7 +724,35 @@ class Settlement {
     this.note,
     required this.status,
     required this.createdAt,
+    this.respondedAt,
   });
+
+  /// Whether [userId] is the debtor of this settlement.
+  bool isDebtor(String? userId) => userId != null && userId == fromUserId;
+
+  /// Whether [userId] is the creditor of this settlement.
+  bool isCreditor(String? userId) => userId != null && userId == toUserId;
+
+  Settlement copyWith({
+    SettlementStatus? status,
+    DateTime? respondedAt,
+  }) {
+    return Settlement(
+      id: id,
+      spaceId: spaceId,
+      cycleId: cycleId,
+      fromUserId: fromUserId,
+      toUserId: toUserId,
+      amount: amount,
+      currency: currency,
+      paymentMethod: paymentMethod,
+      date: date,
+      note: note,
+      status: status ?? this.status,
+      createdAt: createdAt,
+      respondedAt: respondedAt ?? this.respondedAt,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -729,6 +767,7 @@ class Settlement {
         'note': note,
         'status': status.name,
         'createdAt': createdAt.toIso8601String(),
+        'respondedAt': respondedAt?.toIso8601String(),
       };
 
   factory Settlement.fromJson(Map<String, dynamic> json) => Settlement(
@@ -742,8 +781,13 @@ class Settlement {
         paymentMethod: json['paymentMethod'] as String,
         date: DateTime.parse(json['date'] as String),
         note: json['note'] as String?,
-        status: SettlementStatus.values.byName(json['status'] as String),
+        // Defensive parse: legacy docs may carry pre-approval statuses and an
+        // unknown value must never crash the whole Space load.
+        status: SettlementStatus.parse(json['status']),
         createdAt: DateTime.parse(json['createdAt'] as String),
+        respondedAt: json['respondedAt'] == null
+            ? null
+            : DateTime.parse(json['respondedAt'] as String),
       );
 }
 

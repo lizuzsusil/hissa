@@ -969,7 +969,8 @@ class FirestoreRepository implements ExpenseRepository {
         .where(
           (s) =>
               openCycleIds.contains(s.cycleId) &&
-              s.status != SettlementStatus.cancelled &&
+              // Only approved settlements count as paid.
+              s.status.isSettled &&
               (s.fromUserId == userId || s.toUserId == userId),
         )
         .toList();

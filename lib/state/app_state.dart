@@ -1551,8 +1551,44 @@ class AppState extends ChangeNotifier {
 
   // ---- settlements ----
 
-  Future<void> addSettlement({
-    required String fromUserId,
+  /// The balance-sheet entity that carries [userId]'s finances: their active
+  /// Member Group when they belong to one, otherwise the user themselves.
+  String financialEntityFor(String userId) {
+    final group = activeMemberGroups
+        .where((g) => g.allUserIds.contains(userId))
+        .firstOrNull;
+    return group?.id ?? userId;
+  }
+
+  /// The signed-in user as a balance-sheet participant ([financialEntityFor]).
+  String? get myFinancialEntityId =>
+      _currentUserId == null ? null : financialEntityFor(_currentUserId!);
+
+  /// Maximum amount [debtorId] may still request from [creditorId] this
+  /// cycle: the pairwise outstanding after approved settlements, minus any
+  /// other requests still awaiting a decision between the two.
+  Money outstandingBetween(String debtorId, String creditorId) {
+    final balances = {for (final b in computeBalances()) b.userId: b.remaining};
+    final owedBy = -(balances[debtorId]?.paisa ?? 0);
+    final owedTo = balances[creditorId]?.paisa ?? 0;
+    final cap = owedBy < owedTo ? owedBy : owedTo;
+    final pendingBetween = _repo.settlements
+        .where((s) =>
+            s.cycleId == selectedCycle?.id &&
+            s.status.awaitsDecision &&
+            s.fromUserId == debtorId &&
+            s.toUserId == creditorId)
+        .fold<int>(0, (acc, s) => acc + s.amount.paisa);
+    final left = cap - pendingBetween;
+    return left > 0 ? Money(left) : Money.zero();
+  }
+
+  /// Step 1 of the Split-Mode approval flow: the DEBTOR submits a settlement
+  /// request to [toUserId] (the creditor). The request stays unsettled until
+  /// the creditor approves it via [approveSettlement]. Only the member who
+  /// actually owes money may call this; the amount cannot exceed what is
+  /// still outstanding between the two.
+  Future<bool> requestSettlement({
     required String toUserId,
     required Money amount,
     required String paymentMethod,
@@ -1561,27 +1597,38 @@ class AppState extends ChangeNotifier {
   }) async {
     final s = space;
     final cycle = selectedCycle;
-    if (s == null || cycle == null) return;
+    final me = _currentUserId;
+    if (s == null || cycle == null || me == null) return false;
+
+    // Permission: only the debtor initiates. The requesting entity must be
+    // the one carrying the debt (the user or their Member Group).
+    final myEntity = financialEntityFor(me);
+    if (myEntity == financialEntityFor(toUserId)) return false;
+
+    if (amount.paisa <= 0 || amount.paisa > outstandingBetween(myEntity, toUserId).paisa) {
+      return false;
+    }
+
     final settlementId = 's_${genId(8)}';
     await _repo.saveSettlement(
       Settlement(
         id: settlementId,
         spaceId: s.id,
         cycleId: cycle.id,
-        fromUserId: fromUserId,
+        fromUserId: myEntity,
         toUserId: toUserId,
         amount: amount,
         currency: s.currency,
         paymentMethod: paymentMethod,
         date: date,
         note: note?.trim().isEmpty ?? true ? null : note!.trim(),
-        status: SettlementStatus.paid,
+        status: SettlementStatus.pendingApproval,
         createdAt: DateTime.now(),
       ),
     );
     await _saveNotificationFor(
       recipientId: toUserId,
-      type: NotificationType.settlementRecorded,
+      type: NotificationType.settlementRequested,
       eventKey: settlementId,
       spaceId: s.id,
       extra: {
@@ -1591,6 +1638,76 @@ class AppState extends ChangeNotifier {
       },
     );
     await _commit();
+    return true;
+  }
+
+  /// Step 2 of the flow: the CREDITOR approves a pending settlement request,
+  /// marking it settled. Balances update immediately because only approved
+  /// settlements are counted by the balance calculator. Only the member who
+  /// is owed the money may approve.
+  Future<bool> approveSettlement(String settlementId) async {
+    final me = _currentUserId;
+    final settlement =
+        _repo.settlements.where((x) => x.id == settlementId).firstOrNull;
+    if (me == null ||
+        settlement == null ||
+        !settlement.status.awaitsDecision ||
+        !settlement.isCreditor(financialEntityFor(me))) {
+      return false;
+    }
+    await _repo.saveSettlement(
+      settlement.copyWith(
+        status: SettlementStatus.approved,
+        respondedAt: DateTime.now(),
+      ),
+    );
+    await _saveNotificationFor(
+      recipientId: settlement.fromUserId,
+      type: NotificationType.settlementApproved,
+      eventKey: settlementId,
+      spaceId: settlement.spaceId,
+      extra: {
+        'settlementId': settlementId,
+        'spaceId': settlement.spaceId,
+        'amount': settlement.amount.paisa,
+      },
+    );
+    await _commit();
+    return true;
+  }
+
+  /// Step 2 (rejected): the CREDITOR declines a pending settlement request.
+  /// The record stays unsettled and the debtor may submit a new request.
+  /// Only the member who is owed the money may reject.
+  Future<bool> rejectSettlement(String settlementId) async {
+    final me = _currentUserId;
+    final settlement =
+        _repo.settlements.where((x) => x.id == settlementId).firstOrNull;
+    if (me == null ||
+        settlement == null ||
+        !settlement.status.awaitsDecision ||
+        !settlement.isCreditor(financialEntityFor(me))) {
+      return false;
+    }
+    await _repo.saveSettlement(
+      settlement.copyWith(
+        status: SettlementStatus.rejected,
+        respondedAt: DateTime.now(),
+      ),
+    );
+    await _saveNotificationFor(
+      recipientId: settlement.fromUserId,
+      type: NotificationType.settlementRejected,
+      eventKey: settlementId,
+      spaceId: settlement.spaceId,
+      extra: {
+        'settlementId': settlementId,
+        'spaceId': settlement.spaceId,
+        'amount': settlement.amount.paisa,
+      },
+    );
+    await _commit();
+    return true;
   }
 
   // ---- derived calculations ----
@@ -1618,8 +1735,18 @@ class AppState extends ChangeNotifier {
     final cycle = selectedCycle;
     if (cycle == null) return const [];
     return _repo.settlements.where((s) => s.cycleId == cycle.id).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
+
+  /// Settlement requests in the current cycle that still await the creditor's
+  /// decision, newest first.
+  List<Settlement> get pendingSettlementRequests =>
+      settlementsInCycle.where((s) => s.status.awaitsDecision).toList();
+
+  /// Resolved settlements of the current cycle (approved/settled or
+  /// rejected), newest first.
+  List<Settlement> get resolvedSettlements =>
+      settlementsInCycle.where((s) => !s.status.awaitsDecision).toList();
 
   List<BalanceInfo> computeBalances([String? cycleId]) {
     final s = space;

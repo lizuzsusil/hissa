@@ -362,19 +362,21 @@ class InMemoryRepository implements ExpenseRepository {
             (s) =>
                 s.spaceId == spaceId &&
                 s.cycleId == cycle.id &&
-                s.status != SettlementStatus.cancelled &&
+                // Only approved settlements count as paid; a pending request
+                // never changes the outstanding dues.
+                s.status.isSettled &&
                 s.fromUserId == userId,
           )
-          .fold<int>(0, (a, s) => a + s.amount.paisa);
+          .fold<int>(0, (a, e) => a + e.amount.paisa);
       final settledIn = _settlements
           .where(
             (s) =>
                 s.spaceId == spaceId &&
                 s.cycleId == cycle.id &&
-                s.status != SettlementStatus.cancelled &&
+                s.status.isSettled &&
                 s.toUserId == userId,
           )
-          .fold<int>(0, (a, s) => a + s.amount.paisa);
+          .fold<int>(0, (a, e) => a + e.amount.paisa);
       total += paid - share + settledOut - settledIn;
     }
     return Money(total);

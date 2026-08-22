@@ -100,13 +100,13 @@ void main() {
     'a settlement cannot be recorded in a personal space (no cycle)',
     () async {
       final state = await makePersonalState();
-      await state.addSettlement(
-        fromUserId: 'u1',
-        toUserId: 'u1',
+      final ok = await state.requestSettlement(
+        toUserId: 'u2',
         amount: const Money(1000),
         paymentMethod: 'Cash',
         date: DateTime(2026, 1, 15),
       );
+      expect(ok, isFalse);
       expect(state.repo.settlements, isEmpty);
     },
   );

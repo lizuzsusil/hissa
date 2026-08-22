@@ -94,7 +94,10 @@ class BalanceCalculator {
     }
 
     for (final settlement in settlementsInCycle) {
-      if (settlement.status == SettlementStatus.cancelled) continue;
+      // Only creditor-approved settlements reduce balances. A pending
+      // request must never change what is owed, and a rejected one stays
+      // fully unsettled.
+      if (!settlement.status.isSettled) continue;
       final from = entityFor(settlement.fromUserId);
       final to = entityFor(settlement.toUserId);
       settledOut[from] =

@@ -1799,7 +1799,7 @@ abstract class AppLocalizations {
   /// No description provided for @settleHint.
   ///
   /// In en, this message translates to:
-  /// **'Record a payment once it’s made. Balances update automatically.'**
+  /// **'You pay, then request settlement. The member you owe approves it before the balance updates.'**
   String get settleHint;
 
   /// No description provided for @settlementHistory.
@@ -1837,6 +1837,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settle'**
   String get settleAction;
+
+  /// No description provided for @requestSettlementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request settlement'**
+  String get requestSettlementTitle;
+
+  /// No description provided for @requestSettlementAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send request'**
+  String get requestSettlementAction;
+
+  /// No description provided for @creditorApprovalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} must approve this request before the amount is marked as settled.'**
+  String creditorApprovalNote(String name);
+
+  /// No description provided for @maxOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {amount}'**
+  String maxOutstanding(String amount);
+
+  /// No description provided for @pendingRequestsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending approvals'**
+  String get pendingRequestsSection;
+
+  /// No description provided for @waitingApprovalFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {name} to approve'**
+  String waitingApprovalFrom(String name);
+
+  /// No description provided for @awaitingDebtorRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} owes you — waiting for their settlement request'**
+  String awaitingDebtorRequest(String name);
+
+  /// No description provided for @statusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved · Settled'**
+  String get statusApproved;
+
+  /// No description provided for @statusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get statusRejected;
+
+  /// No description provided for @requestAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Request again'**
+  String get requestAgain;
+
+  /// No description provided for @settlementRequestedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement request sent to {name}'**
+  String settlementRequestedToast(String name);
+
+  /// No description provided for @settlementApprovedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement approved and recorded'**
+  String get settlementApprovedToast;
+
+  /// No description provided for @settlementRejectedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Request rejected. You can send a new one.'**
+  String get settlementRejectedToast;
+
+  /// No description provided for @amountExceedsOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount cannot exceed what you still owe.'**
+  String get amountExceedsOutstanding;
 
   /// No description provided for @profile.
   ///
@@ -2641,6 +2725,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A settlement was recorded'**
   String get notificationSettlementRecorded;
+
+  /// No description provided for @notificationSettlementRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'A settlement request awaits your approval'**
+  String get notificationSettlementRequested;
+
+  /// No description provided for @notificationSettlementApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Your settlement request was approved'**
+  String get notificationSettlementApproved;
+
+  /// No description provided for @notificationSettlementRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Your settlement request was declined'**
+  String get notificationSettlementRejected;
 
   /// No description provided for @notificationSpaceInvited.
   ///

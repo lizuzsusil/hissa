@@ -969,7 +969,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get settleHint =>
-      'भुक्तानी भएपछि एक पटक रेकर्ड गर्नुहोस्। ब्यालेन्सहरू आफैं अपडेट हुन्छन्।';
+      'तपाईंले तिरेपछि सेटलमेन्ट अनुरोध पठाउनुहोस्। जसलाई पैसा दिनुभएको हो, उनले स्वीकृत गरेपछि मात्र ब्यालेन्स अपडेट हुन्छ।';
 
   @override
   String get settlementHistory => 'सेटलमेन्ट इतिहास';
@@ -989,6 +989,60 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get settleAction => 'मिलान';
+
+  @override
+  String get requestSettlementTitle => 'सेटलमेन्ट अनुरोध';
+
+  @override
+  String get requestSettlementAction => 'अनुरोध पठाउनुहोस्';
+
+  @override
+  String creditorApprovalNote(String name) {
+    return 'रकम मिलान भयो भनी चिन्ह लगाउन $name को स्वीकृति आवश्यक छ।';
+  }
+
+  @override
+  String maxOutstanding(String amount) {
+    return '$amount सम्म';
+  }
+
+  @override
+  String get pendingRequestsSection => 'स्वीकृतिको प्रतीक्षामा';
+
+  @override
+  String waitingApprovalFrom(String name) {
+    return '$name को स्वीकृतिको प्रतीक्षामा';
+  }
+
+  @override
+  String awaitingDebtorRequest(String name) {
+    return '$name ले तपाईंलाई तिर्नुपर्छ — उनीहरूको अनुरोधको प्रतीक्षामा';
+  }
+
+  @override
+  String get statusApproved => 'स्वीकृत · मिलान';
+
+  @override
+  String get statusRejected => 'अस्वीकृत';
+
+  @override
+  String get requestAgain => 'फेरि अनुरोध गर्नुहोस्';
+
+  @override
+  String settlementRequestedToast(String name) {
+    return '$name लाई सेटलमेन्ट अनुरोध पठाइयो';
+  }
+
+  @override
+  String get settlementApprovedToast => 'सेटलमेन्ट स्वीकृत भई रेकर्ड भयो';
+
+  @override
+  String get settlementRejectedToast =>
+      'अनुरोध अस्वीकृत भयो। फेरि पठाउन सक्नुहुन्छ।';
+
+  @override
+  String get amountExceedsOutstanding =>
+      'रकम तपाईंले तिर्न बाँकी भन्दा बढी हुन सक्दैन।';
 
   @override
   String get profile => 'प्रोफाइल';
@@ -1428,6 +1482,18 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get notificationSettlementRecorded => 'एउटा भुक्तानी दर्ता गरियो';
+
+  @override
+  String get notificationSettlementRequested =>
+      'एउटा सेटलमेन्ट अनुरोध तपाईंको स्वीकृतिको पर्खाइमा छ';
+
+  @override
+  String get notificationSettlementApproved =>
+      'तपाईंको सेटलमेन्ट अनुरोध स्वीकृत भयो';
+
+  @override
+  String get notificationSettlementRejected =>
+      'तपाईंको सेटलमेन्ट अनुरोध अस्वीकृत भयो';
 
   @override
   String get notificationSpaceInvited => 'तपाईंलाई एउटा स्पेसमा निम्तो गरियो';

@@ -157,7 +157,7 @@ void main() {
       );
     });
 
-    test('a settlement notifies the recipient', () async {
+    test('a settlement notifies the creditor then the debtor', () async {
       final state = await makeHomeState();
       await state.addExpense(
         description: 'Dinner',
@@ -165,18 +165,33 @@ void main() {
         date: DateTime(2026, 1, 10),
         participantIds: ['u_owner', 'u_b'],
       );
-      await state.addSettlement(
-        fromUserId: 'u_b',
+
+      // The debtor (B) initiates the settlement request.
+      state.debugSetSession(userId: 'u_b', spaceId: 'h1');
+      final requested = await state.requestSettlement(
         toUserId: 'u_owner',
         amount: const Money(50000),
         paymentMethod: 'Cash',
         date: DateTime(2026, 1, 12),
       );
+      expect(requested, isTrue);
 
-      final toB = state.notifications
-          .where((n) => n.type == NotificationType.settlementRecorded);
-      // u_owner -> u_owner is a self-notify no-op.
-      expect(toB, isEmpty);
+      final forOwner = state.notifications
+          .where((n) => n.type == NotificationType.settlementRequested);
+      expect(forOwner, hasLength(1));
+      expect(forOwner.single.userId, 'u_owner');
+
+      // The creditor's approval notifies the debtor.
+      state.debugSetSession(userId: 'u_owner', spaceId: 'h1');
+      final settlement =
+          state.repo.settlements.singleWhere((s) => s.status.awaitsDecision);
+      final approved = await state.approveSettlement(settlement.id);
+      expect(approved, isTrue);
+
+      final forB = state.notifications
+          .where((n) => n.type == NotificationType.settlementApproved);
+      expect(forB, hasLength(1));
+      expect(forB.single.userId, 'u_b');
     });
   });
 

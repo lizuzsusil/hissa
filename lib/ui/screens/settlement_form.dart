@@ -7,13 +7,21 @@ import '../../core/money.dart';
 import '../../l10n/l10n.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/amount_field.dart';
 import '../widgets/avatars.dart';
 import '../widgets/buttons.dart';
 import '../widgets/toasts.dart';
 
+/// Step 1 of the Split-Mode approval flow: opened by the DEBTOR only. The
+/// debtor picks the amount (capped at what is still outstanding), a payment
+/// method and submits a settlement request. Nothing is marked settled until
+/// the creditor approves the request.
 class SettlementForm extends StatefulWidget {
   final String fromUserId;
   final String toUserId;
+
+  /// Suggested amount (the pairwise outstanding). Still editable by the
+  /// debtor for partial settlements.
   final Money amount;
 
   const SettlementForm({
@@ -30,13 +38,16 @@ class SettlementForm extends StatefulWidget {
 class _SettlementFormState extends State<SettlementForm> {
   late String _method;
   DateTime _date = DateTime.now();
+  Money _amount = Money.zero();
   final _noteController = TextEditingController();
   bool _saving = false;
+  bool _attemptedSave = false;
 
   @override
   void initState() {
     super.initState();
     _method = kPaymentMethods.first;
+    _amount = widget.amount;
   }
 
   @override
@@ -45,23 +56,50 @@ class _SettlementFormState extends State<SettlementForm> {
     super.dispose();
   }
 
-  Future<void> _save() async {
-    setState(() => _saving = true);
+  Money _maxOutstanding(AppState state) =>
+      state.outstandingBetween(widget.fromUserId, widget.toUserId);
+
+  String? get _amountError {
+    if (!_attemptedSave) return null;
     final state = context.read<AppState>();
-    await state.addSettlement(
-      fromUserId: widget.fromUserId,
+    final max = _maxOutstanding(state);
+    if (_amount.isZero) return context.l10n.expenseAmountError;
+    if (_amount.paisa > max.paisa) {
+      return context.l10n.amountExceedsOutstanding;
+    }
+    return null;
+  }
+
+  Future<void> _save() async {
+    setState(() => _attemptedSave = true);
+    final state = context.read<AppState>();
+    final max = _maxOutstanding(state);
+    if (_amount.isZero || _amount.paisa > max.paisa) return;
+
+    setState(() => _saving = true);
+    final ok = await state.requestSettlement(
       toUserId: widget.toUserId,
-      amount: widget.amount,
+      amount: _amount,
       paymentMethod: _method,
       date: _date,
       note: _noteController.text,
     );
-    if (mounted) {
-      setState(() => _saving = false);
-      Navigator.pop(context);
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (!ok) {
       showToast(
         context,
-        context.l10n.settlementRecorded,
+        context.l10n.amountExceedsOutstanding,
+        type: ToastType.danger,
+      );
+      return;
+    }
+    Navigator.pop(context);
+    final creditorName = state.memberName(widget.toUserId) ?? '?';
+    if (mounted) {
+      showToast(
+        context,
+        context.l10n.settlementRequestedToast(creditorName),
         type: ToastType.success,
       );
     }
@@ -80,7 +118,7 @@ class _SettlementFormState extends State<SettlementForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.recordSettlement,
+          l10n.requestSettlementTitle,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 16),
@@ -155,17 +193,54 @@ class _SettlementFormState extends State<SettlementForm> {
           ),
         ),
         const SizedBox(height: 16),
+        AmountField(
+          value: _amount,
+          label: l10n.amount,
+          errorText: _amountError,
+          onChanged: (m) => setState(() => _amount = m),
+        ),
         Center(
           child: Text(
-            formatMoney(widget.amount),
-            style: const TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.6,
+            l10n.maxOutstanding(formatMoney(_maxOutstanding(state))),
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondary,
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.warningSoft,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.hourglass_top_rounded,
+                size: 20,
+                color: AppColors.warning,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.creditorApprovalNote(toName),
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.warning,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
         Text(
           l10n.paymentMethod,
           style: TextStyle(
@@ -239,8 +314,8 @@ class _SettlementFormState extends State<SettlementForm> {
         ),
         const SizedBox(height: 20),
         PrimaryButton(
-          label: l10n.confirmPayment,
-          icon: Icons.check_rounded,
+          label: l10n.requestSettlementAction,
+          icon: Icons.send_rounded,
           loading: _saving,
           onPressed: _saving ? null : _save,
         ),

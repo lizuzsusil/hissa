@@ -969,7 +969,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settleHint =>
-      'Record a payment once it’s made. Balances update automatically.';
+      'You pay, then request settlement. The member you owe approves it before the balance updates.';
 
   @override
   String get settlementHistory => 'Settlement history';
@@ -990,6 +990,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settleAction => 'Settle';
+
+  @override
+  String get requestSettlementTitle => 'Request settlement';
+
+  @override
+  String get requestSettlementAction => 'Send request';
+
+  @override
+  String creditorApprovalNote(String name) {
+    return '$name must approve this request before the amount is marked as settled.';
+  }
+
+  @override
+  String maxOutstanding(String amount) {
+    return 'Up to $amount';
+  }
+
+  @override
+  String get pendingRequestsSection => 'Pending approvals';
+
+  @override
+  String waitingApprovalFrom(String name) {
+    return 'Waiting for $name to approve';
+  }
+
+  @override
+  String awaitingDebtorRequest(String name) {
+    return '$name owes you — waiting for their settlement request';
+  }
+
+  @override
+  String get statusApproved => 'Approved · Settled';
+
+  @override
+  String get statusRejected => 'Rejected';
+
+  @override
+  String get requestAgain => 'Request again';
+
+  @override
+  String settlementRequestedToast(String name) {
+    return 'Settlement request sent to $name';
+  }
+
+  @override
+  String get settlementApprovedToast => 'Settlement approved and recorded';
+
+  @override
+  String get settlementRejectedToast =>
+      'Request rejected. You can send a new one.';
+
+  @override
+  String get amountExceedsOutstanding =>
+      'The amount cannot exceed what you still owe.';
 
   @override
   String get profile => 'Profile';
@@ -1428,6 +1482,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationSettlementRecorded => 'A settlement was recorded';
+
+  @override
+  String get notificationSettlementRequested =>
+      'A settlement request awaits your approval';
+
+  @override
+  String get notificationSettlementApproved =>
+      'Your settlement request was approved';
+
+  @override
+  String get notificationSettlementRejected =>
+      'Your settlement request was declined';
 
   @override
   String get notificationSpaceInvited => 'You were invited to a Space';

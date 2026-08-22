@@ -12,17 +12,36 @@ import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
 import '../widgets/misc.dart';
 import '../widgets/motion.dart';
+import '../widgets/toasts.dart';
 import 'settlement_form.dart';
 
 class SettleScreen extends StatelessWidget {
   const SettleScreen({super.key});
 
+  /// A proposal disappears from "who owes whom" once a pending request
+  /// between the same two parties already covers its full amount.
+  static bool _coveredByPendingRequest(
+    SettlementProposal proposal,
+    List<Settlement> pending,
+  ) {
+    return pending.any(
+      (s) =>
+          s.fromUserId == proposal.fromUserId &&
+          s.toUserId == proposal.toUserId &&
+          s.amount.paisa >= proposal.amount.paisa,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final balances = state.computeBalances();
-    final proposals = state.settlementProposals();
-    final history = state.settlementsInCycle;
+    final pendingRequests = state.pendingSettlementRequests;
+    final proposals = state
+        .settlementProposals()
+        .where((p) => !_coveredByPendingRequest(p, pendingRequests))
+        .toList();
+    final history = state.resolvedSettlements;
     final hasExpenses = state.expensesInCycle.isNotEmpty;
     final totalOutstanding = balances.fold<int>(
       0,
@@ -38,7 +57,7 @@ class SettleScreen extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
           children: [
-            if (proposals.isEmpty)
+            if (proposals.isEmpty && pendingRequests.isEmpty)
               // With no expenses at all there is nothing to settle, so a plain
               // "All settled up!" would be misleading.
               if (hasExpenses)
@@ -56,7 +75,19 @@ class SettleScreen extends StatelessWidget {
                   child: Reveal(child: _ProposalCard(proposal: proposal)),
                 ),
             ],
-            if (proposals.isNotEmpty) ...[
+            if (pendingRequests.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              SectionHeader(title: l10n.pendingRequestsSection),
+              const SizedBox(height: 4),
+              for (final request in pendingRequests)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Reveal(
+                    child: _PendingRequestRow(settlement: request),
+                  ),
+                ),
+            ],
+            if (proposals.isNotEmpty && pendingRequests.isEmpty) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -96,9 +127,42 @@ class SettleScreen extends StatelessWidget {
                   child: _HistoryRow(settlement: settlement),
                 ),
             ],
-            if (proposals.isEmpty && history.isEmpty)
+            if (proposals.isEmpty &&
+                pendingRequests.isEmpty &&
+                history.isEmpty)
               const SizedBox(height: 24),
           ],
+        ),
+      ),
+    );
+  }
+
+  static void openSettlementSheet(
+    BuildContext context, {
+    required String fromUserId,
+    required String toUserId,
+    required Money amount,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.surfaceDark
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: SettlementForm(
+          fromUserId: fromUserId,
+          toUserId: toUserId,
+          amount: amount,
         ),
       ),
     );
@@ -253,6 +317,8 @@ class _NothingToSettleCard extends StatelessWidget {
   }
 }
 
+/// One row of the "who owes whom" breakdown. Only the DEBTOR sees a Settle
+/// action — settlement can only be initiated by the member who owes money.
 class _ProposalCard extends StatelessWidget {
   final SettlementProposal proposal;
 
@@ -261,9 +327,12 @@ class _ProposalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final myEntity = state.myFinancialEntityId;
     final fromName = state.memberName(proposal.fromUserId) ?? '?';
     final toName = state.memberName(proposal.toUserId) ?? '?';
     final l10n = context.l10n;
+    final iAmDebtor = myEntity == proposal.fromUserId;
+    final iAmCreditor = myEntity == proposal.toUserId;
 
     return SurfaceCard(
       child: Row(
@@ -290,54 +359,49 @@ class _ProposalCard extends StatelessWidget {
                     color: AppColors.negative,
                   ),
                 ),
+                // The creditor cannot record the payment themselves; they
+                // wait for the debtor's request and approve it afterwards.
+                if (iAmCreditor) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.awaitingDebtorRequest(fromName),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-          PressableScale(
-            onTap: () => _openSettlement(context, state),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+          if (iAmDebtor)
+            PressableScale(
+              onTap: () => SettleScreen.openSettlementSheet(
+                context,
+                fromUserId: proposal.fromUserId,
+                toUserId: proposal.toUserId,
+                amount: proposal.amount,
               ),
-              child: Text(
-                l10n.settleAction,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  l10n.settleAction,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
-      ),
-    );
-  }
-
-  void _openSettlement(BuildContext context, AppState state) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: SettlementForm(
-          fromUserId: proposal.fromUserId,
-          toUserId: proposal.toUserId,
-          amount: proposal.amount,
-        ),
       ),
     );
   }
@@ -367,17 +431,74 @@ class _AvatarPair extends StatelessWidget {
   }
 }
 
-class _HistoryRow extends StatelessWidget {
+/// A settlement request that still awaits the creditor's decision. The
+/// creditor gets Approve / Reject actions; everyone else (including the
+/// debtor) sees a waiting state.
+class _PendingRequestRow extends StatelessWidget {
   final Settlement settlement;
 
-  const _HistoryRow({required this.settlement});
+  const _PendingRequestRow({required this.settlement});
+
+  Future<void> _reject(BuildContext context) async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.reject),
+        content: Text(l10n.creditorApprovalNote(
+          dialogContext.read<AppState>().memberName(settlement.fromUserId) ??
+              '?',
+        )),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              l10n.reject,
+              style: const TextStyle(color: AppColors.negative),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final state = context.read<AppState>();
+    final ok = await state.rejectSettlement(settlement.id);
+    if (!context.mounted) return;
+    showToast(
+      context,
+      ok
+          ? context.l10n.settlementRejectedToast
+          : context.l10n.groupRequestRejectFail,
+      type: ok ? ToastType.warning : ToastType.danger,
+    );
+  }
+
+  Future<void> _approve(BuildContext context) async {
+    final state = context.read<AppState>();
+    final ok = await state.approveSettlement(settlement.id);
+    if (!context.mounted) return;
+    showToast(
+      context,
+      ok
+          ? context.l10n.settlementApprovedToast
+          : context.l10n.groupRequestApprovedFail,
+      type: ok ? ToastType.success : ToastType.danger,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final myEntity = state.myFinancialEntityId;
     final fromName = state.memberName(settlement.fromUserId) ?? '?';
     final toName = state.memberName(settlement.toUserId) ?? '?';
     final l10n = context.l10n;
+    final iAmCreditor = settlement.isCreditor(myEntity);
+
     return SurfaceCard(
       padding: const EdgeInsets.all(14),
       borderRadius: 18,
@@ -387,12 +508,127 @@ class _HistoryRow extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.positive.withValues(alpha: 0.12),
+              color: AppColors.warning.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
-              Icons.check_circle_outline_rounded,
-              color: AppColors.positive,
+              Icons.hourglass_top_rounded,
+              color: AppColors.warning,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.fromTo(fromName, toName),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  iAmCreditor
+                      ? '${l10n.requestedBy} $fromName'
+                      : l10n.waitingApprovalFrom(toName),
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (iAmCreditor) ...[
+            PressableScale(
+              onTap: () => _approve(context),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.positive.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Text(
+                  l10n.approve,
+                  style: const TextStyle(
+                    color: AppColors.positive,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            PressableScale(
+              onTap: () => _reject(context),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.negative.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Text(
+                  l10n.reject,
+                  style: const TextStyle(
+                    color: AppColors.negative,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
+            ),
+          ] else
+            _StatusChip(status: settlement.status),
+        ],
+      ),
+    );
+  }
+}
+
+/// A resolved settlement in the history list: approved/settled rows confirm
+/// the payment, rejected rows let the debtor submit a new request.
+class _HistoryRow extends StatelessWidget {
+  final Settlement settlement;
+
+  const _HistoryRow({required this.settlement});
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final myEntity = state.myFinancialEntityId;
+    final fromName = state.memberName(settlement.fromUserId) ?? '?';
+    final toName = state.memberName(settlement.toUserId) ?? '?';
+    final l10n = context.l10n;
+    final rejected = settlement.status == SettlementStatus.rejected;
+    final iAmDebtor =
+        settlement.isDebtor(myEntity) && rejected;
+
+    return SurfaceCard(
+      padding: const EdgeInsets.all(14),
+      borderRadius: 18,
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: rejected
+                  ? AppColors.negative.withValues(alpha: 0.10)
+                  : AppColors.positive.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(
+              rejected
+                  ? Icons.close_rounded
+                  : Icons.check_circle_outline_rounded,
+              color: rejected ? AppColors.negative : AppColors.positive,
               size: 22,
             ),
           ),
@@ -424,15 +660,100 @@ class _HistoryRow extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            formatMoney(settlement.amount),
-            style: const TextStyle(
-              fontSize: 14.5,
-              fontWeight: FontWeight.w800,
-              color: AppColors.positive,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                formatMoney(settlement.amount),
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  color: rejected ? AppColors.negative : AppColors.positive,
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (iAmDebtor)
+                PressableScale(
+                  onTap: () => SettleScreen.openSettlementSheet(
+                    context,
+                    fromUserId: settlement.fromUserId,
+                    toUserId: settlement.toUserId,
+                    amount: settlement.amount,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Text(
+                      l10n.requestAgain,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                _StatusChip(status: settlement.status),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Small pill visualising where a settlement stands in the approval flow.
+class _StatusChip extends StatelessWidget {
+  final SettlementStatus status;
+
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final String label;
+    final Color color;
+    switch (status) {
+      case SettlementStatus.pendingApproval:
+        label = l10n.pendingApproval;
+        color = AppColors.warning;
+      case SettlementStatus.approved:
+      case SettlementStatus.paid:
+        label = status == SettlementStatus.approved
+            ? l10n.statusApproved
+            : l10n.statusSettled;
+        color = AppColors.positive;
+      case SettlementStatus.rejected:
+        label = l10n.statusRejected;
+        color = AppColors.negative;
+      case SettlementStatus.pending:
+        label = l10n.statusPending;
+        color = AppColors.textMuted;
+      case SettlementStatus.partiallyPaid:
+        label = l10n.statusPartiallyPaid;
+        color = AppColors.textMuted;
+      case SettlementStatus.cancelled:
+        label = l10n.statusCancelled;
+        color = AppColors.textMuted;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 10.5,
+        ),
       ),
     );
   }

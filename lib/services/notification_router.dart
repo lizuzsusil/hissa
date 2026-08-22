@@ -95,6 +95,9 @@ class NotificationRouter {
         if (expense != null) return ExpenseDetailScreen(expense: expense);
         return const ExpensesScreen();
       case NotificationType.settlementRecorded:
+      case NotificationType.settlementRequested:
+      case NotificationType.settlementApproved:
+      case NotificationType.settlementRejected:
         // Settle only exists for Split Spaces; Personal has no dues.
         if (state.isPersonalMode) return const DashboardScreen();
         return const SettleScreen();

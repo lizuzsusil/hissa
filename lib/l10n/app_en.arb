@@ -434,13 +434,53 @@
 
   "toBeSettled": "To be settled",
   "whoOwesWhom": "Who owes whom",
-  "settleHint": "Record a payment once it’s made. Balances update automatically.",
+  "settleHint": "You pay, then request settlement. The member you owe approves it before the balance updates.",
   "settlementHistory": "Settlement history",
   "allSettled": "All settled up!",
   "allSettledMessage": "Everyone in this cycle is even. Nice teamwork.",
   "nothingToSettleTitle": "Nothing to settle yet",
   "noSettlementsMessage": "No expenses have been recorded in this cycle yet. Add your first expense and the who-owes-whom breakdown will appear here.",
   "settleAction": "Settle",
+
+  "requestSettlementTitle": "Request settlement",
+  "requestSettlementAction": "Send request",
+  "creditorApprovalNote": "{name} must approve this request before the amount is marked as settled.",
+  "@creditorApprovalNote": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "maxOutstanding": "Up to {amount}",
+  "@maxOutstanding": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "pendingRequestsSection": "Pending approvals",
+  "waitingApprovalFrom": "Waiting for {name} to approve",
+  "@waitingApprovalFrom": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "awaitingDebtorRequest": "{name} owes you — waiting for their settlement request",
+  "@awaitingDebtorRequest": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "statusApproved": "Approved · Settled",
+  "statusRejected": "Rejected",
+  "requestAgain": "Request again",
+  "settlementRequestedToast": "Settlement request sent to {name}",
+  "@settlementRequestedToast": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "settlementApprovedToast": "Settlement approved and recorded",
+  "settlementRejectedToast": "Request rejected. You can send a new one.",
+  "amountExceedsOutstanding": "The amount cannot exceed what you still owe.",
 
   "profile": "Profile",
   "displayName": "Display name",
@@ -616,6 +656,9 @@
   "notificationExpenseAdded": "An expense was added",
   "notificationExpenseUpdated": "An expense was updated",
   "notificationSettlementRecorded": "A settlement was recorded",
+  "notificationSettlementRequested": "A settlement request awaits your approval",
+  "notificationSettlementApproved": "Your settlement request was approved",
+  "notificationSettlementRejected": "Your settlement request was declined",
   "notificationSpaceInvited": "You were invited to a Space",
   "notificationSpaceJoinRequested": "A new join request awaits your approval",
   "notificationSpaceJoinApproved": "Your join request was approved",

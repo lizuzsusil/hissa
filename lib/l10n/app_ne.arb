@@ -314,13 +314,53 @@
 
   "toBeSettled": "मिलान गर्न बाँकी",
   "whoOwesWhom": "कसले कसलाई तिर्न बाँकी",
-  "settleHint": "भुक्तानी भएपछि एक पटक रेकर्ड गर्नुहोस्। ब्यालेन्सहरू आफैं अपडेट हुन्छन्।",
+  "settleHint": "तपाईंले तिरेपछि सेटलमेन्ट अनुरोध पठाउनुहोस्। जसलाई पैसा दिनुभएको हो, उनले स्वीकृत गरेपछि मात्र ब्यालेन्स अपडेट हुन्छ।",
   "settlementHistory": "सेटलमेन्ट इतिहास",
   "allSettled": "सबै मिलान भयो!",
   "allSettledMessage": "यो चक्रमा सबैजना बराबर छन्। राम्रो सहकार्य।",
   "nothingToSettleTitle": "अहिले मिलान गर्नुपर्ने केही छैन",
   "noSettlementsMessage": "यस चक्रमा अहिलेसम्म कुनै खर्च रेकर्ड भएको छैन। पहिलो खर्च थप्नुहोस् र कसले कसलाई तिर्न बाँकी छ भन्ने विवरण यहाँ देखा पर्नेछ।",
   "settleAction": "मिलान",
+
+  "requestSettlementTitle": "सेटलमेन्ट अनुरोध",
+  "requestSettlementAction": "अनुरोध पठाउनुहोस्",
+  "creditorApprovalNote": "रकम मिलान भयो भनी चिन्ह लगाउन {name} को स्वीकृति आवश्यक छ।",
+  "@creditorApprovalNote": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "maxOutstanding": "{amount} सम्म",
+  "@maxOutstanding": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "pendingRequestsSection": "स्वीकृतिको प्रतीक्षामा",
+  "waitingApprovalFrom": "{name} को स्वीकृतिको प्रतीक्षामा",
+  "@waitingApprovalFrom": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "awaitingDebtorRequest": "{name} ले तपाईंलाई तिर्नुपर्छ — उनीहरूको अनुरोधको प्रतीक्षामा",
+  "@awaitingDebtorRequest": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "statusApproved": "स्वीकृत · मिलान",
+  "statusRejected": "अस्वीकृत",
+  "requestAgain": "फेरि अनुरोध गर्नुहोस्",
+  "settlementRequestedToast": "{name} लाई सेटलमेन्ट अनुरोध पठाइयो",
+  "@settlementRequestedToast": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "settlementApprovedToast": "सेटलमेन्ट स्वीकृत भई रेकर्ड भयो",
+  "settlementRejectedToast": "अनुरोध अस्वीकृत भयो। फेरि पठाउन सक्नुहुन्छ।",
+  "amountExceedsOutstanding": "रकम तपाईंले तिर्न बाँकी भन्दा बढी हुन सक्दैन।",
 
   "profile": "प्रोफाइल",
   "displayName": "देखाउने नाम",
@@ -489,6 +529,9 @@
   "notificationExpenseAdded": "एउटा खर्च थपियो",
   "notificationExpenseUpdated": "एउटा खर्च अद्यावधिक गरियो",
   "notificationSettlementRecorded": "एउटा भुक्तानी दर्ता गरियो",
+  "notificationSettlementRequested": "एउटा सेटलमेन्ट अनुरोध तपाईंको स्वीकृतिको पर्खाइमा छ",
+  "notificationSettlementApproved": "तपाईंको सेटलमेन्ट अनुरोध स्वीकृत भयो",
+  "notificationSettlementRejected": "तपाईंको सेटलमेन्ट अनुरोध अस्वीकृत भयो",
   "notificationSpaceInvited": "तपाईंलाई एउटा स्पेसमा निम्तो गरियो",
   "notificationSpaceJoinRequested": "नयाँ सामेल अनुरोध तपाईंको स्वीकृतिको पर्खाइमा",
   "notificationSpaceJoinApproved": "तपाईंको सामेल अनुरोध स्वीकृत भयो",

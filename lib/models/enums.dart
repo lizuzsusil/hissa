@@ -37,23 +37,53 @@ enum CycleType {
   final String label;
 }
 
+/// The lifecycle of a Split-Mode settlement. The debtor (who owes) initiates
+/// a settlement request; the creditor (who is owed) must approve it before
+/// the amount counts as settled.
 enum SettlementStatus {
-  pending,
-  partiallyPaid,
-  paid,
-  cancelled;
+  /// The debtor submitted a settlement request that awaits the creditor's
+  /// decision. Does not affect balances.
+  pendingApproval('Pending approval'),
 
-  String get label {
-    switch (this) {
-      case SettlementStatus.pending:
-        return 'Pending';
-      case SettlementStatus.partiallyPaid:
-        return 'Partially paid';
-      case SettlementStatus.paid:
-        return 'Paid';
-      case SettlementStatus.cancelled:
-        return 'Cancelled';
+  /// The creditor approved the request: the amount is settled.
+  approved('Approved'),
+
+  /// The creditor rejected the request. The debtor may submit a new one.
+  rejected('Rejected'),
+
+  // ---- Legacy statuses (read-only) ----
+  // Records written before the approval flow existed. They are never created
+  // anymore but must keep parsing so historical data stays readable.
+  pending('Pending'),
+  partiallyPaid('Partially paid'),
+  paid('Paid'),
+  cancelled('Cancelled');
+
+  const SettlementStatus(this.label);
+
+  final String label;
+
+  /// Whether this status means the money transfer is confirmed and must be
+  /// counted in balances ([approved], or the legacy [paid]).
+  bool get isSettled => this == SettlementStatus.approved || this == paid;
+
+  /// Whether this record was written by the pre-approval flow.
+  bool get isLegacy =>
+      this == pending ||
+      this == partiallyPaid ||
+      this == paid ||
+      this == cancelled;
+
+  /// Whether the creditor still owes a decision on this settlement.
+  bool get awaitsDecision => this == SettlementStatus.pendingApproval;
+
+  static SettlementStatus parse(Object? value) {
+    if (value is String) {
+      for (final s in values) {
+        if (s.name == value) return s;
+      }
     }
+    return SettlementStatus.pendingApproval;
   }
 }
 
@@ -198,6 +228,9 @@ enum NotificationType {
   expenseAdded,
   expenseUpdated,
   settlementRecorded,
+  settlementRequested,
+  settlementApproved,
+  settlementRejected,
   spaceInvited,
   spaceJoinRequested,
   spaceJoinApproved,
@@ -214,6 +247,12 @@ enum NotificationType {
         return 'notificationExpenseUpdated';
       case NotificationType.settlementRecorded:
         return 'notificationSettlementRecorded';
+      case NotificationType.settlementRequested:
+        return 'notificationSettlementRequested';
+      case NotificationType.settlementApproved:
+        return 'notificationSettlementApproved';
+      case NotificationType.settlementRejected:
+        return 'notificationSettlementRejected';
       case NotificationType.spaceInvited:
         return 'notificationSpaceInvited';
       case NotificationType.spaceJoinRequested:
