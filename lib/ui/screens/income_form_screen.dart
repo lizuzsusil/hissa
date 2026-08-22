@@ -70,40 +70,72 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
     super.dispose();
   }
 
-  /// Members eligible as participants: ungrouped members only — grouped
-  /// members' finances are carried by their Member Group (Rule 8), which the
-  /// balance calculator maps automatically.
+  /// Members eligible as individual participants: ungrouped members only —
+  /// grouped members' finances are carried by their Member Group (Rule 8),
+  /// which appears as its own selectable party below.
   List<SpaceMember> _eligibleMembers(AppState state) {
     final grouped = state.groupedUserIds;
     return state.members.where((m) => !grouped.contains(m.userId)).toList();
   }
 
+  /// Whether [id] refers to an active Member Group (a single financial
+  /// participant) rather than an individual member.
+  bool _isGroupId(AppState state, String id) {
+    return state.activeMemberGroups.any((g) => g.id == id);
+  }
+
+  /// The split parties currently in effect, mirroring the expense form:
+  /// ungrouped members are individual parties, each selected Member Group is
+  /// ONE party whose share is never divided between its members.
+  List<SplitParty> _parties(AppState state) {
+    return [
+      for (final id in _participants)
+        _isGroupId(state, id)
+            ? SplitParty.group(
+                groupId: id,
+                name: state.memberName(id) ?? id,
+                userIds: const [],
+              )
+            : SplitParty.individual(id),
+    ];
+  }
+
   void _ensureDefaults(AppState state) {
+    final groups = state.activeMemberGroups;
     if (_receivedByUserId == null && state.members.isNotEmpty) {
-      // Default to the signed-in user when they are eligible.
+      // Default to the signed-in user when they participate as an
+      // individual; otherwise fall back to the first eligible party.
       final me = state.currentUserId;
       final eligible = me != null && !state.groupedUserIds.contains(me);
       _receivedByUserId = eligible
           ? me
-          : _eligibleMembers(state).firstOrNull?.userId;
+          : (_eligibleMembers(state).firstOrNull?.userId ??
+                groups.firstOrNull?.id);
     }
     if (_participants.isEmpty && state.members.isNotEmpty) {
-      _participants = _eligibleMembers(state).map((m) => m.userId).toSet();
+      // Preselect every ungrouped member AND every active Member Group,
+      // exactly like the expense form does.
+      _participants = _eligibleMembers(state)
+          .map((m) => m.userId)
+          .followedBy(groups.map((g) => g.id))
+          .toSet();
       if (!_participants.contains(_receivedByUserId)) {
         final receiver = _receivedByUserId;
-        if (receiver != null && !state.groupedUserIds.contains(receiver)) {
-          _participants.add(receiver);
+        if (receiver != null) {
+          if (!state.groupedUserIds.contains(receiver) ||
+              groups.any((g) => g.id == receiver)) {
+            _participants.add(receiver);
+          }
         }
       }
     }
   }
 
   List<({String id, int paisa})> _previewShares(AppState state) {
-    final ids = _participants.toList();
-    final amounts = SplitCalculator.build(
+    final amounts = SplitCalculator.buildGrouped(
       expenseId: 'preview',
       amount: _amount,
-      participantIds: ids,
+      parties: _parties(state),
       type: _splitType,
       percentages: _percentages,
     );
@@ -236,9 +268,13 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               children: [
                 for (final m in members)
                   _receiverChip(m, selected: m.userId == _receivedByUserId),
+                // Member Groups are financial participants too: they may
+                // receive household income on behalf of their members.
+                for (final g in state.activeMemberGroups)
+                  _groupReceiverChip(g, selected: g.id == _receivedByUserId),
               ],
             ),
-            if (members.isEmpty) ...[
+            if (members.isEmpty && state.activeMemberGroups.isEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 l10n.expenseParticipantError,
@@ -302,6 +338,24 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
                         }
                       } else {
                         _participants.add(m.userId);
+                      }
+                    }),
+                  ),
+                // Each Member Group joins the split as a SINGLE participant —
+                // its share is never divided between its members.
+                for (final g in state.activeMemberGroups)
+                  _groupChip(
+                    state,
+                    g,
+                    selected: _participants.contains(g.id),
+                    onTap: () => setState(() {
+                      if (_participants.contains(g.id)) {
+                        if (_participants.length > 1) {
+                          _participants.remove(g.id);
+                          _percentages.remove(g.id);
+                        }
+                      } else {
+                        _participants.add(g.id);
                       }
                     }),
                   ),
@@ -545,7 +599,7 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
   }
 
   /// Prominent single-select chip for "Received by". Always outlined so it
-  /// is visible in both themes; the selected member gets a filled primary
+  /// is visible in both themes; the selected party gets a filled primary
   /// style plus a check icon.
   Widget _receiverChip(SpaceMember member, {required bool selected}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -591,6 +645,127 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               const Icon(Icons.check_circle_rounded,
                   size: 17, color: AppColors.primary),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// "Received by" chip for a Member Group. A group is one financial
+  /// participant: the income it receives belongs to the household and its
+  /// benefit still splits across all selected parties.
+  Widget _groupReceiverChip(MemberGroup group, {required bool selected}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: _saving
+          ? null
+          : () => setState(() {
+              _receivedByUserId = group.id;
+              if (!_participants.contains(group.id)) {
+                _participants.add(group.id);
+              }
+            }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.14)
+              : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary
+                : (isDark ? AppColors.borderDark : AppColors.border),
+            width: selected ? 1.8 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                gradient: AppGradients.tint(AppColors.primary),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.groups_rounded,
+                size: 16,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              group.name,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                color: selected ? AppColors.primary : null,
+              ),
+            ),
+            if (selected) ...[
+              const SizedBox(width: 6),
+              const Icon(Icons.check_circle_rounded,
+                  size: 17, color: AppColors.primary),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Multi-select split chip for a Member Group in "Split between".
+  Widget _groupChip(
+    AppState state,
+    MemberGroup group, {
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: _saving ? null : onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.12)
+              : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary
+                : (isDark ? AppColors.borderDark : AppColors.border),
+            width: selected ? 1.6 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                gradient: AppGradients.tint(AppColors.primary),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.groups_rounded,
+                size: 14,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              group.name,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: selected ? AppColors.primary : null,
+              ),
+            ),
           ],
         ),
       ),

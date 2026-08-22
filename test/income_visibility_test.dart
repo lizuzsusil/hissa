@@ -83,6 +83,20 @@ void main() {
         isDefault: true,
       ),
     );
+    // A Member Group so the form must surface group parties too.
+    await repo.saveMemberGroup(
+      MemberGroup(
+        id: 'g1',
+        spaceId: 'h1',
+        ownerUserId: 'u_b',
+        name: 'Flatmates',
+        isActive: true,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        memberIds: ['u_c'],
+      ),
+    );
+    await repo.addGroupMember('g1', 'u_c');
     state.debugSetSession(userId: 'u_a', spaceId: 'h1');
     return state;
   }
@@ -124,11 +138,16 @@ void main() {
     await tester.pumpWidget(harness(state, const IncomeFormScreen()));
     await tester.pump();
 
-    // The section header and every member chip must be present.
+    // The section header and every eligible party must be present:
+    // ungrouped members individually, plus the Member Group as ONE party.
     expect(find.text('Received by'), findsOneWidget);
-    for (final name in ['Alice', 'Bob', 'Cara', 'Dan']) {
-      expect(find.text(name), findsWidgets);
-    }
+    expect(find.text('Alice'), findsWidgets);
+    expect(find.text('Dan'), findsWidgets);
+    expect(find.text('Flatmates'), findsWidgets);
+    // Grouped members (Bob owns Flatmates, Cara belongs to it) are
+    // represented by their group only — never as individual chips.
+    expect(find.text('Bob'), findsNothing);
+    expect(find.text('Cara'), findsNothing);
     // The selected receiver defaults to the signed-in user (Alice).
     expect(find.text('Alice'), findsWidgets);
 
@@ -150,15 +169,13 @@ void main() {
     await tester.pumpWidget(harness(state, const IncomeFormScreen()));
     await tester.pump();
 
-    await tester.tap(find.text('Bob').first);
+    // Individuals and groups are both selectable receivers.
+    await tester.tap(find.text('Dan').first);
     await tester.pump();
-
-    expect(state.currentUserId, 'u_a'); // sanity
-    // Bob is now rendered with a selected style somewhere in the receiver
-    // wrap; tapping again keeps exactly one selection.
-    await tester.tap(find.text('Cara').first);
+    await tester.tap(find.text('Flatmates').first);
     await tester.pump();
     expect(tester.takeException(), isNull);
+    expect(state.currentUserId, 'u_a'); // sanity
   });
 
   testWidgets('home screen surfaces a prominent add income action', (
@@ -174,6 +191,40 @@ void main() {
     // It sits next to the other primary actions, within the first screenful.
     final top = tester.getTopLeft(find.text('Add income')).dy;
     expect(top, lessThan(780));
+  });
+
+  testWidgets('received by section lists member groups and saves them', (
+    tester,
+  ) async {
+    usePhoneViewport(tester);
+
+    final state = await makeState();
+    await tester.pumpWidget(harness(state, const IncomeFormScreen()));
+    await tester.pump();
+
+    // The group chip is offered right next to individual members in the
+    // "Received by" section.
+    expect(find.text('Flatmates'), findsWidgets);
+
+    // Selecting the group as receiver, then saving, records the GROUP as
+    // the receiving financial participant.
+    await tester.tap(find.text('Flatmates').first);
+    await tester.pump();
+    await tester.enterText(find.byType(TextField).at(1), 'Room rent');
+    await tester.enterText(find.byType(TextField).first, '500');
+    await tester.scrollUntilVisible(
+      find.text('Save income'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Save income'));
+    await tester.pumpAndSettle();
+
+    expect(state.repo.hissaIncomes, hasLength(1));
+    final income = state.repo.hissaIncomes.single;
+    expect(income.receivedByUserId, 'g1');
+    // The group also joined the split as one participant.
+    expect(income.participantIds, contains('g1'));
   });
 
   testWidgets('category picker behaves like Add Expense: select and keep', (

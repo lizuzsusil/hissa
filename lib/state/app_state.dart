@@ -1732,10 +1732,37 @@ class AppState extends ChangeNotifier {
     return BalanceCalculator.totalIncome(_repo.hissaIncomes, id);
   }
 
+  /// Whether every [partyId] is a valid financial participant of the current
+  /// Space: either an individual member OR an active Member Group. Income
+  /// parties follow the exact same rule as expense parties (Rule 8): grouped
+  /// members participate through their group, never individually.
+  bool _incomePartiesAreValid(List<String> partyIds) {
+    final sid = _spaceId;
+    if (sid == null) return false;
+    final memberIds = {for (final m in _repo.members) m.userId};
+    final groupIds = {
+      for (final g in _repo.memberGroups)
+        if (g.spaceId == sid && g.isActive) g.id,
+    };
+    for (final id in partyIds) {
+      if (!memberIds.contains(id) && !groupIds.contains(id)) return false;
+    }
+    // A grouped member must never appear alongside (or instead of) their
+    // group: their finances are carried by the group entity.
+    final grouped = groupedUserIds;
+    final activeGroupIds = groupIds;
+    for (final id in partyIds) {
+      if (activeGroupIds.contains(id)) continue;
+      if (grouped.contains(id)) return false;
+    }
+    return true;
+  }
+
   /// Records a shared hissa contribution (Split Spaces only). The member
   /// who received the money is only its holder — the benefit is distributed
   /// across [participantIds] with the same split rules used for expenses,
-  /// lowering everyone's share of the net hissa expense.
+  /// lowering everyone's share of the net hissa expense. Both the receiver
+  /// and the participants may be individual members OR Member Groups.
   Future<bool> addHissaIncome({
     required String description,
     required Money amount,
@@ -1754,10 +1781,10 @@ class AppState extends ChangeNotifier {
     if (s == null || s.mode == SpaceMode.personal || cycle == null) {
       return false;
     }
-    // Same membership guarantees as expenses: no phantom participants and no
-    // receiver outside the Space.
-    if (!_participantsAreMembers(participantIds, const [])) return false;
-    if (!_participantsAreMembers([receivedByUserId], const [])) return false;
+    // Same participation guarantees as expenses: only real Space members or
+    // active Member Groups, and no grouped member split individually.
+    if (!_incomePartiesAreValid(participantIds)) return false;
+    if (!_incomePartiesAreValid([receivedByUserId])) return false;
     if (amount.paisa <= 0) return false;
 
     final now = DateTime.now();
@@ -1805,8 +1832,8 @@ class AppState extends ChangeNotifier {
   }) async {
     final s = space;
     if (s == null || income.spaceId != s.id) return false;
-    if (!_participantsAreMembers(participantIds, const [])) return false;
-    if (!_participantsAreMembers([receivedByUserId], const [])) return false;
+    if (!_incomePartiesAreValid(participantIds)) return false;
+    if (!_incomePartiesAreValid([receivedByUserId])) return false;
     if (amount.paisa <= 0) return false;
 
     final updated = income.copyWith(

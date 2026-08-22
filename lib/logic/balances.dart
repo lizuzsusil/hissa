@@ -132,19 +132,36 @@ class BalanceCalculator {
     }
 
     for (final income in incomesInCycle) {
-      // The recipient holds the hissa's cash: their effective
-      // contribution towards hissa costs drops by what they received.
+      // The recipient holds the household's cash: their effective
+      // contribution towards household costs drops by what they received.
+      // The receiver may be a member OR a Member Group (a financial
+      // participant), so map it through entityFor like everything else.
       final receiverKey = entityFor(income.receivedByUserId);
       incomeReceivedBy[receiverKey] =
           (incomeReceivedBy[receiverKey] ?? 0) + income.amount.paisa;
 
       // The benefit is distributed across the participants with the SAME
       // split calculator used for expenses — equal, percentage, custom or
-      // shares all behave exactly like an expense split.
-      final benefitShares = SplitCalculator.build(
+      // shares all behave exactly like an expense split. Participant ids may
+      // reference Member Groups: those become single group parties whose
+      // share is never divided internally, exactly like expense splits.
+      final activeGroupIds = {for (final g in activeGroups) g.id};
+      final groupNameById = {
+        for (final g in activeGroups) g.id: g.name,
+      };
+      final benefitShares = SplitCalculator.buildGrouped(
         expenseId: income.id,
         amount: income.amount,
-        participantIds: income.participantIds,
+        parties: [
+          for (final id in income.participantIds)
+            activeGroupIds.contains(id)
+                ? SplitParty.group(
+                    groupId: id,
+                    name: groupNameById[id] ?? id,
+                    userIds: const [],
+                  )
+                : SplitParty.individual(id),
+        ],
         type: income.splitType,
         percentages: income.percentages,
         customAmounts: income.customAmounts,

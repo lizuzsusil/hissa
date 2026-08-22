@@ -308,4 +308,126 @@ void main() {
     expect(ok, isFalse);
     expect(repo.hissaIncomes, isEmpty);
   });
+
+  /// Adds an active Member Group g1 owned by B with C as its other member.
+  /// Grouped members never appear individually on the balance sheet.
+  Future<void> addGroupB(AppState state) async {
+    final repo = state.repo;
+    await repo.saveMemberGroup(
+      MemberGroup(
+        id: 'g1',
+        spaceId: 'h1',
+        ownerUserId: 'u_b',
+        name: "B's Group",
+        isActive: true,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        // The in-memory repo has no member-join step, so seed the roster.
+        memberIds: ['u_c'],
+      ),
+    );
+    await repo.addGroupMember('g1', 'u_c');
+  }
+
+  test('a Member Group can be the receiver of household income', () async {
+    final state = await makeState();
+    await addGroupB(state);
+
+    // Income of 1000 received by the GROUP, split equally between A and the
+    // group (the group is ONE financial participant).
+    final ok = await state.addHissaIncome(
+      description: 'Room rent',
+      amount: const Money(100000),
+      date: DateTime(2026, 1, 7),
+      receivedByUserId: 'g1',
+      participantIds: ['u_a', 'g1'],
+    );
+    expect(ok, isTrue);
+
+    final balances = {
+      for (final b in state.computeBalances()) b.userId: b,
+    };
+    // The group entry exists and carries both its benefit and the cash.
+    expect(balances.containsKey('g1'), isTrue);
+    expect(balances['g1']!.incomeReceived.paisa, 100000);
+    expect(balances['g1']!.incomeShare.paisa, 50000);
+    expect(balances['g1']!.remaining.paisa, -50000);
+    // A benefits by their equal half.
+    expect(balances['u_a']!.incomeShare.paisa, 50000);
+    expect(balances['u_a']!.remaining.paisa, 50000);
+    // Grouped members B and C never surface individually.
+    expect(balances.containsKey('u_b'), isFalse);
+    expect(balances.containsKey('u_c'), isFalse);
+    // Mathematically balanced.
+    expect(
+      balances.values.fold<int>(0, (acc, b) => acc + b.remaining.paisa),
+      0,
+    );
+  });
+
+  test('a Member Group participates in the income split as one party',
+      () async {
+    final state = await makeState();
+    await addGroupB(state);
+
+    // Income received by A but shared between A and the group. The group's
+    // share stays whole — it is never divided between B and C internally.
+    final ok = await state.addHissaIncome(
+      description: 'Cashback',
+      amount: const Money(90000),
+      date: DateTime(2026, 1, 8),
+      receivedByUserId: 'u_a',
+      participantIds: ['u_a', 'g1'],
+    );
+    expect(ok, isTrue);
+
+    final balances = {
+      for (final b in state.computeBalances()) b.userId: b,
+    };
+    // Equal split across two parties: A and the group each get 450.
+    expect(balances['u_a']!.incomeShare.paisa, 45000);
+    expect(balances['u_a']!.incomeReceived.paisa, 90000);
+    expect(balances['u_a']!.remaining.paisa, -45000);
+    expect(balances['g1']!.incomeShare.paisa, 45000);
+    expect(balances['g1']!.remaining.paisa, 45000);
+    expect(
+      balances.values.fold<int>(0, (acc, b) => acc + b.remaining.paisa),
+      0,
+    );
+  });
+
+  test('grouped members cannot bypass their group in income splits',
+      () async {
+    final state = await makeState();
+    await addGroupB(state);
+
+    // u_c belongs to g1: listing them individually must be rejected...
+    var ok = await state.addHissaIncome(
+      description: 'Refund',
+      amount: const Money(50000),
+      date: DateTime(2026, 1, 9),
+      receivedByUserId: 'u_a',
+      participantIds: ['u_a', 'u_c'],
+    );
+    expect(ok, isFalse);
+    // ...and so must receiving through a grouped member directly.
+    ok = await state.addHissaIncome(
+      description: 'Refund',
+      amount: const Money(50000),
+      date: DateTime(2026, 1, 9),
+      receivedByUserId: 'u_c',
+      participantIds: ['u_a', 'g1'],
+    );
+    expect(ok, isFalse);
+    // Unknown ids stay rejected too.
+    ok = await state.addHissaIncome(
+      description: 'Refund',
+      amount: const Money(50000),
+      date: DateTime(2026, 1, 9),
+      receivedByUserId: 'u_ghost',
+      participantIds: ['u_a', 'g1'],
+    );
+    expect(ok, isFalse);
+    expect(state.repo.hissaIncomes, isEmpty);
+  });
 }
