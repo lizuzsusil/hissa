@@ -1470,15 +1470,15 @@ class AppState extends ChangeNotifier {
   /// actual spending totals or balances.
   List<EstimatedExpense> get estimatedExpenses {
     if (_spaceId == null) return const [];
-    return _repo.estimatedExpenses
-        .where((e) => e.spaceId == _spaceId)
-        .toList();
+    return _repo.estimatedExpenses.where((e) => e.spaceId == _spaceId).toList();
   }
 
   /// Estimated expenses whose [EstimatedExpense.month] falls within [month].
   List<EstimatedExpense> estimatedExpensesForMonth(DateTime month) {
     return estimatedExpenses
-        .where((e) => e.month.year == month.year && e.month.month == month.month)
+        .where(
+          (e) => e.month.year == month.year && e.month.month == month.month,
+        )
         .toList();
   }
 
@@ -1573,11 +1573,13 @@ class AppState extends ChangeNotifier {
     final owedTo = balances[creditorId]?.paisa ?? 0;
     final cap = owedBy < owedTo ? owedBy : owedTo;
     final pendingBetween = _repo.settlements
-        .where((s) =>
-            s.cycleId == selectedCycle?.id &&
-            s.status.awaitsDecision &&
-            s.fromUserId == debtorId &&
-            s.toUserId == creditorId)
+        .where(
+          (s) =>
+              s.cycleId == selectedCycle?.id &&
+              s.status.awaitsDecision &&
+              s.fromUserId == debtorId &&
+              s.toUserId == creditorId,
+        )
         .fold<int>(0, (acc, s) => acc + s.amount.paisa);
     final left = cap - pendingBetween;
     return left > 0 ? Money(left) : Money.zero();
@@ -1605,7 +1607,8 @@ class AppState extends ChangeNotifier {
     final myEntity = financialEntityFor(me);
     if (myEntity == financialEntityFor(toUserId)) return false;
 
-    if (amount.paisa <= 0 || amount.paisa > outstandingBetween(myEntity, toUserId).paisa) {
+    if (amount.paisa <= 0 ||
+        amount.paisa > outstandingBetween(myEntity, toUserId).paisa) {
       return false;
     }
 
@@ -1647,8 +1650,9 @@ class AppState extends ChangeNotifier {
   /// is owed the money may approve.
   Future<bool> approveSettlement(String settlementId) async {
     final me = _currentUserId;
-    final settlement =
-        _repo.settlements.where((x) => x.id == settlementId).firstOrNull;
+    final settlement = _repo.settlements
+        .where((x) => x.id == settlementId)
+        .firstOrNull;
     if (me == null ||
         settlement == null ||
         !settlement.status.awaitsDecision ||
@@ -1681,8 +1685,9 @@ class AppState extends ChangeNotifier {
   /// Only the member who is owed the money may reject.
   Future<bool> rejectSettlement(String settlementId) async {
     final me = _currentUserId;
-    final settlement =
-        _repo.settlements.where((x) => x.id == settlementId).firstOrNull;
+    final settlement = _repo.settlements
+        .where((x) => x.id == settlementId)
+        .firstOrNull;
     if (me == null ||
         settlement == null ||
         !settlement.status.awaitsDecision ||
@@ -1708,6 +1713,153 @@ class AppState extends ChangeNotifier {
     );
     await _commit();
     return true;
+  }
+
+  // ---- hissa income (Split Spaces) ----
+
+  /// Hissa incomes recorded in the current cycle, newest first.
+  List<HissaIncome> get hissaIncomesInCycle {
+    final cycle = selectedCycle;
+    if (cycle == null) return const [];
+    return _repo.hissaIncomes.where((i) => i.cycleId == cycle.id).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  /// Total hissa income for [cycleId] (defaults to the selected cycle).
+  Money totalHissaIncome([String? cycleId]) {
+    final id = cycleId ?? selectedCycle?.id;
+    if (id == null) return Money.zero();
+    return BalanceCalculator.totalIncome(_repo.hissaIncomes, id);
+  }
+
+  /// Records a shared hissa contribution (Split Spaces only). The member
+  /// who received the money is only its holder — the benefit is distributed
+  /// across [participantIds] with the same split rules used for expenses,
+  /// lowering everyone's share of the net hissa expense.
+  Future<bool> addHissaIncome({
+    required String description,
+    required Money amount,
+    required DateTime date,
+    required String receivedByUserId,
+    String? categoryId,
+    String? note,
+    required List<String> participantIds,
+    SplitType splitType = SplitType.equal,
+    Map<String, double> percentages = const {},
+    Map<String, Money> customAmounts = const {},
+    Map<String, int> shareUnits = const {},
+  }) async {
+    final s = space;
+    final cycle = selectedCycle;
+    if (s == null || s.mode == SpaceMode.personal || cycle == null) {
+      return false;
+    }
+    // Same membership guarantees as expenses: no phantom participants and no
+    // receiver outside the Space.
+    if (!_participantsAreMembers(participantIds, const [])) return false;
+    if (!_participantsAreMembers([receivedByUserId], const [])) return false;
+    if (amount.paisa <= 0) return false;
+
+    final now = DateTime.now();
+    final income = HissaIncome(
+      id: 'i_${genId(8)}',
+      spaceId: s.id,
+      cycleId: cycle.id,
+      receivedByUserId: receivedByUserId,
+      amount: amount,
+      categoryId: categoryId,
+      description: description.trim().isEmpty
+          ? 'Hissa income'
+          : description.trim(),
+      date: date,
+      note: note?.trim().isEmpty ?? true ? null : note!.trim(),
+      participantIds: participantIds,
+      splitType: splitType,
+      percentages: percentages,
+      customAmounts: customAmounts,
+      shareUnits: shareUnits,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await _repo.saveHissaIncome(income);
+    await _notifyHissaIncomeChanged(income, updated: false);
+    await _commit();
+    return true;
+  }
+
+  /// Updates an existing hissa income record. Balances, proposals and
+  /// outstanding dues are derived, so they refresh automatically.
+  Future<bool> updateHissaIncome(
+    HissaIncome income, {
+    required String description,
+    required Money amount,
+    required DateTime date,
+    required String receivedByUserId,
+    String? categoryId,
+    String? note,
+    required List<String> participantIds,
+    SplitType splitType = SplitType.equal,
+    Map<String, double> percentages = const {},
+    Map<String, Money> customAmounts = const {},
+    Map<String, int> shareUnits = const {},
+  }) async {
+    final s = space;
+    if (s == null || income.spaceId != s.id) return false;
+    if (!_participantsAreMembers(participantIds, const [])) return false;
+    if (!_participantsAreMembers([receivedByUserId], const [])) return false;
+    if (amount.paisa <= 0) return false;
+
+    final updated = income.copyWith(
+      description: description.trim().isEmpty
+          ? 'Hissa income'
+          : description.trim(),
+      amount: amount,
+      date: date,
+      receivedByUserId: receivedByUserId,
+      categoryId: categoryId,
+      note: note?.trim().isEmpty ?? true ? null : note!.trim(),
+      participantIds: participantIds,
+      splitType: splitType,
+      percentages: percentages,
+      customAmounts: customAmounts,
+      shareUnits: shareUnits,
+    );
+    await _repo.saveHissaIncome(updated);
+    await _notifyHissaIncomeChanged(updated, updated: true);
+    await _commit();
+    return true;
+  }
+
+  /// Deletes a hissa income record. Balances are recalculated from the
+  /// remaining records automatically.
+  Future<void> deleteHissaIncome(String incomeId) async {
+    await _repo.deleteHissaIncome(incomeId);
+    await _commit();
+  }
+
+  /// Notifies every other Space member that hissa income was added or
+  /// updated (mirrors the expense notification flow).
+  Future<void> _notifyHissaIncomeChanged(
+    HissaIncome income, {
+    required bool updated,
+  }) async {
+    final actorId = _currentUserId;
+    for (final m in members) {
+      if (m.userId == actorId) continue;
+      await _saveNotificationFor(
+        recipientId: m.userId,
+        type: updated
+            ? NotificationType.hissaIncomeUpdated
+            : NotificationType.hissaIncomeAdded,
+        eventKey: income.id,
+        spaceId: income.spaceId,
+        extra: {
+          'hissaIncomeId': income.id,
+          'spaceId': income.spaceId,
+          'amount': income.amount.paisa,
+        },
+      );
+    }
   }
 
   // ---- derived calculations ----
@@ -1765,6 +1917,7 @@ class AppState extends ChangeNotifier {
       expenses: _repo.expenses,
       shares: _repo.shares,
       settlements: _repo.settlements,
+      incomes: _repo.hissaIncomes,
     );
     return entries
         .map(
@@ -1773,6 +1926,8 @@ class AppState extends ChangeNotifier {
             paid: e.paid,
             share: e.share,
             balance: e.balance,
+            incomeReceived: e.incomeReceived,
+            incomeShare: e.incomeShare,
             settledOut: e.settledOut,
             settledIn: e.settledIn,
           ),

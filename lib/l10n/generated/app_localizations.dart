@@ -2726,6 +2726,18 @@ abstract class AppLocalizations {
   /// **'A settlement was recorded'**
   String get notificationSettlementRecorded;
 
+  /// No description provided for @notificationHissaIncomeAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'A hissa income was recorded'**
+  String get notificationHissaIncomeAdded;
+
+  /// No description provided for @notificationHissaIncomeUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'A hissa income was updated'**
+  String get notificationHissaIncomeUpdated;
+
   /// No description provided for @notificationSettlementRequested.
   ///
   /// In en, this message translates to:
@@ -2983,6 +2995,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select at least one participant.'**
   String get expenseParticipantError;
+
+  /// No description provided for @hissaIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Hissa income'**
+  String get hissaIncome;
+
+  /// No description provided for @addIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Add income'**
+  String get addIncome;
+
+  /// No description provided for @editIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit income'**
+  String get editIncome;
+
+  /// No description provided for @incomeDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get incomeDescriptionLabel;
+
+  /// No description provided for @incomeDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Room rent, refund, subsidy'**
+  String get incomeDescriptionHint;
+
+  /// No description provided for @receivedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Received by'**
+  String get receivedBy;
+
+  /// No description provided for @receivedByHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Who physically received this money?'**
+  String get receivedByHint;
+
+  /// No description provided for @incomeSplitNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} received this money for the hissa. Its benefit is split across the selected members and lowers everyone\'s share of the net expense.'**
+  String incomeSplitNote(String name);
+
+  /// No description provided for @saveIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Save income'**
+  String get saveIncome;
+
+  /// No description provided for @incomeAddedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Hissa income recorded'**
+  String get incomeAddedToast;
+
+  /// No description provided for @incomeUpdatedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Hissa income updated'**
+  String get incomeUpdatedToast;
+
+  /// No description provided for @incomeDeletedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Hissa income deleted'**
+  String get incomeDeletedToast;
+
+  /// No description provided for @deleteIncomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this hissa income?'**
+  String get deleteIncomeTitle;
+
+  /// No description provided for @deleteIncomeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Balances will be recalculated without this contribution.'**
+  String get deleteIncomeMessage;
+
+  /// No description provided for @netExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Net hissa expense'**
+  String get netExpense;
+
+  /// No description provided for @hissaIncomeSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Hissa income'**
+  String get hissaIncomeSection;
+
+  /// No description provided for @receivedByMemberDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Received by {name} · {day}'**
+  String receivedByMemberDay(String name, String day);
 
   /// No description provided for @expensePercentError.
   ///

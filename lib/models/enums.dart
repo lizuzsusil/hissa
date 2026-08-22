@@ -227,6 +227,8 @@ enum SpaceJoinRequestStatus {
 enum NotificationType {
   expenseAdded,
   expenseUpdated,
+  hissaIncomeAdded,
+  hissaIncomeUpdated,
   settlementRecorded,
   settlementRequested,
   settlementApproved,
@@ -245,6 +247,10 @@ enum NotificationType {
         return 'notificationExpenseAdded';
       case NotificationType.expenseUpdated:
         return 'notificationExpenseUpdated';
+      case NotificationType.hissaIncomeAdded:
+        return 'notificationHissaIncomeAdded';
+      case NotificationType.hissaIncomeUpdated:
+        return 'notificationHissaIncomeUpdated';
       case NotificationType.settlementRecorded:
         return 'notificationSettlementRecorded';
       case NotificationType.settlementRequested:

@@ -37,7 +37,9 @@ class FcmMessagingService {
 
   /// Sets up notification display (channel + handlers) and wires the
   /// notification-tap deep link. Safe to call once per app launch.
-  static Future<void> init({required void Function(Map<String, dynamic> data) onTap}) async {
+  static Future<void> init({
+    required void Function(Map<String, dynamic> data) onTap,
+  }) async {
     _onTap = onTap;
     FirebaseMessaging.onBackgroundMessage(_backgroundMessageHandler);
     await _initLocalNotifications();
@@ -147,6 +149,8 @@ class FcmMessagingService {
     return switch (type) {
       'expenseAdded' => 'Expense added',
       'expenseUpdated' => 'Expense updated',
+      'hissaIncomeAdded' => 'Hissa income recorded',
+      'hissaIncomeUpdated' => 'Hissa income updated',
       'settlementRecorded' => 'Settlement recorded',
       'settlementRequested' => 'Settlement request',
       'settlementApproved' => 'Settlement approved',
@@ -236,7 +240,9 @@ class FcmMessagingService {
   /// and token rotations. Injectable [prefs] is used by tests.
   static const String _deviceIdKey = 'hissa_device_id_v1';
 
-  static Future<String> getOrCreateDeviceId([SharedPreferencesAsync? prefs]) async {
+  static Future<String> getOrCreateDeviceId([
+    SharedPreferencesAsync? prefs,
+  ]) async {
     final store = prefs ?? SharedPreferencesAsync();
     final existing = await store.getString(_deviceIdKey);
     if (existing != null && existing.isNotEmpty) return existing;
@@ -247,9 +253,10 @@ class FcmMessagingService {
 
   static String _generateDeviceId() {
     final random = Random.secure();
-    return List<int>.generate(16, (_) => random.nextInt(256))
-        .map((b) => b.toRadixString(16).padLeft(2, '0'))
-        .join();
+    return List<int>.generate(
+      16,
+      (_) => random.nextInt(256),
+    ).map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 
   /// The platform this device runs on, stored on the token doc so the relay can

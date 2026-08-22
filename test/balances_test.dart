@@ -80,6 +80,7 @@ void main() {
       expenses: [expense],
       shares: shares,
       settlements: const [],
+      incomes: const [],
     );
 
     // The group's share is never attributed to its members. Group members are

@@ -53,8 +53,9 @@ class NotificationRouter {
     // A Space the user requested to join but is still awaiting approval is not
     // enterable: never select it (selectSpace already refuses, but we must not
     // even switch the dashboard's selected Space behind the scenes).
-    final pendingSpaceId =
-        spaceId != null && state.isPendingSpace(spaceId) ? spaceId : null;
+    final pendingSpaceId = spaceId != null && state.isPendingSpace(spaceId)
+        ? spaceId
+        : null;
     if (spaceId != null &&
         pendingSpaceId == null &&
         state.spaces.any((s) => s.id == spaceId)) {
@@ -93,6 +94,10 @@ class NotificationRouter {
       case NotificationType.expenseUpdated:
         final expense = _findExpense(data['eventKey'] as String?);
         if (expense != null) return ExpenseDetailScreen(expense: expense);
+        return const ExpensesScreen();
+      case NotificationType.hissaIncomeAdded:
+      case NotificationType.hissaIncomeUpdated:
+        // Hissa income is listed alongside expenses.
         return const ExpensesScreen();
       case NotificationType.settlementRecorded:
       case NotificationType.settlementRequested:

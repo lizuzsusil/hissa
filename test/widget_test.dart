@@ -159,6 +159,7 @@ void main() {
           participantIds: ['u_ram', 'u_sita'],
         ),
         settlements: const [],
+        incomes: const [],
       );
       final ram = balances.firstWhere((b) => b.id == 'u_ram');
       final sita = balances.firstWhere((b) => b.id == 'u_sita');
@@ -183,6 +184,7 @@ void main() {
           participantIds: ['u_ram', 'u_sita'],
         ),
         settlements: [_settlement('s1', 'u_sita', 'u_ram', 500000, 'c')],
+        incomes: const [],
       );
       final ram = balances.firstWhere((b) => b.id == 'u_ram');
       final sita = balances.firstWhere((b) => b.id == 'u_sita');
@@ -226,6 +228,7 @@ void main() {
           ),
         ],
         settlements: const [],
+        incomes: const [],
       );
       // Grouped members never appear individually.
       expect(

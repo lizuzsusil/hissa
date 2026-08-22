@@ -529,6 +529,8 @@
   "notificationExpenseAdded": "एउटा खर्च थपियो",
   "notificationExpenseUpdated": "एउटा खर्च अद्यावधिक गरियो",
   "notificationSettlementRecorded": "एउटा भुक्तानी दर्ता गरियो",
+  "notificationHissaIncomeAdded": "घरायसी आम्दानी दर्ता भयो",
+  "notificationHissaIncomeUpdated": "घरायसी आम्दानी अद्यावधिक भयो",
   "notificationSettlementRequested": "एउटा सेटलमेन्ट अनुरोध तपाईंको स्वीकृतिको पर्खाइमा छ",
   "notificationSettlementApproved": "तपाईंको सेटलमेन्ट अनुरोध स्वीकृत भयो",
   "notificationSettlementRejected": "तपाईंको सेटलमेन्ट अनुरोध अस्वीकृत भयो",
@@ -575,6 +577,35 @@
   "expenseDescriptionError": "छोटो विवरण लेख्नुहोस्।",
   "expensePayerError": "तिर्ने व्यक्ति छान्नुहोस्।",
   "expenseParticipantError": "कम्तीमा एक जना सहभागी छान्नुहोस्।",
+
+  "hissaIncome": "घरायसी आम्दानी",
+  "addIncome": "आम्दानी थप्नुहोस्",
+  "editIncome": "आम्दानी सम्पादन",
+  "incomeDescriptionLabel": "स्रोत",
+  "incomeDescriptionHint": "जस्तै: कोठा भाडा, फिर्ता, सहयोग",
+  "receivedBy": "प्राप्त गर्ने व्यक्ति",
+  "receivedByHint": "यो पैसा शारीरिक रूपमा कसले प्राप्त गर्यो?",
+  "incomeSplitNote": "{name} ले घरायसी खर्चका लागि यो पैसा प्राप्त गरेका हुन्। यसको लाभ छानिएका सदस्यहरूमा बाँडिनेछ र सबैको शुद्ध खर्चबाट हिस्सा घट्नेछ।",
+  "@incomeSplitNote": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "saveIncome": "आम्दानी सेभ गर्नुहोस्",
+  "incomeAddedToast": "घरायसी आम्दानी दर्ता भयो",
+  "incomeUpdatedToast": "घरायसी आम्दानी अद्यावधिक भयो",
+  "incomeDeletedToast": "घरायसी आम्दानी मेटियो",
+  "deleteIncomeTitle": "यो घरायसी आम्दानी मेट्ने?",
+  "deleteIncomeMessage": "यो आम्दानी बिना ब्यालेन्स पुनः गणना गरिनेछ।",
+  "netExpense": "शुद्ध घरायसी खर्च",
+  "hissaIncomeSection": "घरायसी आम्दानी",
+  "receivedByMemberDay": "{name} ले प्राप्त गर्यो · {day}",
+  "@receivedByMemberDay": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "day": { "type": "String" }
+    }
+  },
   "expensePercentError": "प्रतिशतहरूको जोड १००% हुनुपर्छ।",
   "expenseCustomError": "अनुकूल रकमहरूको जोड जम्मा बराबर हुनुपर्छ।",
   "expenseSharesError": "कम्तीमा एक सेयर लेख्नुहोस्।",

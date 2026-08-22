@@ -213,6 +213,28 @@ service cloud.firestore {
         && spaceOwner(resource.data.spaceId);
     }
 
+    // Shared hissa contributions (Split Spaces). Scoped like expenses:
+    // any member may record income and keep their own records updated, only
+    // the space owner may delete (mirrors expense cleanup on space deletion).
+    match /hissaIncomes/{incomeId} {
+      allow read: if signedIn()
+        && memberOf(resource.data.spaceId);
+
+      allow create: if signedIn()
+        && memberOf(request.resource.data.spaceId)
+        && memberById(
+          request.resource.data.spaceId,
+          request.resource.data.receivedByUserId
+        );
+
+      allow update: if signedIn()
+        && memberOf(resource.data.spaceId)
+        && request.resource.data.spaceId == resource.data.spaceId;
+
+      allow delete: if signedIn()
+        && spaceOwner(resource.data.spaceId);
+    }
+
     match /memberGroups/{groupId} {
       allow read: if signedIn()
         && memberOf(resource.data.spaceId);

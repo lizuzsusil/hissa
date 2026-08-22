@@ -1484,6 +1484,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationSettlementRecorded => 'A settlement was recorded';
 
   @override
+  String get notificationHissaIncomeAdded => 'A hissa income was recorded';
+
+  @override
+  String get notificationHissaIncomeUpdated => 'A hissa income was updated';
+
+  @override
   String get notificationSettlementRequested =>
       'A settlement request awaits your approval';
 
@@ -1618,6 +1624,62 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseParticipantError => 'Select at least one participant.';
+
+  @override
+  String get hissaIncome => 'Hissa income';
+
+  @override
+  String get addIncome => 'Add income';
+
+  @override
+  String get editIncome => 'Edit income';
+
+  @override
+  String get incomeDescriptionLabel => 'Source';
+
+  @override
+  String get incomeDescriptionHint => 'e.g. Room rent, refund, subsidy';
+
+  @override
+  String get receivedBy => 'Received by';
+
+  @override
+  String get receivedByHint => 'Who physically received this money?';
+
+  @override
+  String incomeSplitNote(String name) {
+    return '$name received this money for the hissa. Its benefit is split across the selected members and lowers everyone\'s share of the net expense.';
+  }
+
+  @override
+  String get saveIncome => 'Save income';
+
+  @override
+  String get incomeAddedToast => 'Hissa income recorded';
+
+  @override
+  String get incomeUpdatedToast => 'Hissa income updated';
+
+  @override
+  String get incomeDeletedToast => 'Hissa income deleted';
+
+  @override
+  String get deleteIncomeTitle => 'Delete this hissa income?';
+
+  @override
+  String get deleteIncomeMessage =>
+      'Balances will be recalculated without this contribution.';
+
+  @override
+  String get netExpense => 'Net hissa expense';
+
+  @override
+  String get hissaIncomeSection => 'Hissa income';
+
+  @override
+  String receivedByMemberDay(String name, String day) {
+    return 'Received by $name · $day';
+  }
 
   @override
   String get expensePercentError => 'Percentages must add up to 100%.';

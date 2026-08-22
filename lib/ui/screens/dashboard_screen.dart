@@ -71,6 +71,13 @@ class DashboardScreen extends StatelessWidget {
                   _YourBalanceCard(balances: balances),
                   const SizedBox(height: 16),
                   _QuickActions(proposals: proposals),
+                  // Shared hissa contribution summary. Income lowers the
+                  // hissa's net expense, so surface it right next to the
+                  // spending total whenever it exists this cycle.
+                  if (state.hissaIncomesInCycle.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _IncomeBanner(total: state.totalHissaIncome()),
+                  ],
                   const SizedBox(height: 24),
                   SectionHeader(title: l10n.spaceBalances),
                   // Grouped members are represented by their Member Group, so
@@ -906,6 +913,68 @@ class _ExpenseTile extends StatelessWidget {
             Text(
               formatMoney(expense.amount),
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact summary of the hissa income recorded this cycle. Tapping it
+/// opens the expenses tab where income records can be added, edited and
+/// deleted.
+class _IncomeBanner extends StatelessWidget {
+  final Money total;
+
+  const _IncomeBanner({required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return PressableScale(
+      onTap: () => context.read<ShellTabController>().switchTo(1),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.positiveSoft,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.positive.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.positive.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: const Icon(
+                Icons.savings_outlined,
+                size: 20,
+                color: AppColors.positive,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.hissaIncome,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.positive,
+                ),
+              ),
+            ),
+            Text(
+              '+ ${formatMoney(total)}',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: AppColors.positive,
+              ),
             ),
           ],
         ),

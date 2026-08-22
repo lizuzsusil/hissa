@@ -53,24 +53,24 @@ class User {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'avatarUrl': avatarUrl,
-        'defaultSpaceId': defaultSpaceId,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'avatarUrl': avatarUrl,
+    'defaultSpaceId': defaultSpaceId,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        email: json['email'] as String,
-        phone: json['phone'] as String?,
-        avatarUrl: json['avatarUrl'] as String?,
-        defaultSpaceId: json['defaultSpaceId'] as String?,
-        createdAt: DateTime.parse(json['createdAt'] as String),
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    email: json['email'] as String,
+    phone: json['phone'] as String?,
+    avatarUrl: json['avatarUrl'] as String?,
+    defaultSpaceId: json['defaultSpaceId'] as String?,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+  );
 }
 
 /// The container for expenses and members in Hissa. Persisted in the
@@ -82,7 +82,7 @@ class Space {
   final String inviteCode;
   final String? createdBy;
 
-/// The mode of this Space.
+  /// The mode of this Space.
   SpaceMode mode;
 
   /// How the spending cycle is scheduled for Split Spaces. Legacy Spaces
@@ -128,30 +128,30 @@ class Space {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'currency': currency,
-        'inviteCode': inviteCode,
-        'createdBy': createdBy,
-        'mode': mode.value,
-        'cycleType': cycleType.value,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt?.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'currency': currency,
+    'inviteCode': inviteCode,
+    'createdBy': createdBy,
+    'mode': mode.value,
+    'cycleType': cycleType.value,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt?.toIso8601String(),
+  };
 
   factory Space.fromJson(Map<String, dynamic> json) => Space(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        currency: json['currency'] as String,
-        inviteCode: json['inviteCode'] as String,
-        createdBy: json['createdBy'] as String?,
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        updatedAt: json['updatedAt'] == null
-            ? null
-            : DateTime.parse(json['updatedAt'] as String),
-        mode: _parseMode(json['mode']),
-        cycleType: _parseCycleType(json['cycleType']),
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    currency: json['currency'] as String,
+    inviteCode: json['inviteCode'] as String,
+    createdBy: json['createdBy'] as String?,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    updatedAt: json['updatedAt'] == null
+        ? null
+        : DateTime.parse(json['updatedAt'] as String),
+    mode: _parseMode(json['mode']),
+    cycleType: _parseCycleType(json['cycleType']),
+  );
 
   static SpaceMode _parseMode(Object? value) {
     if (value is String) {
@@ -231,28 +231,28 @@ class SpaceMember {
   }
 
   Map<String, dynamic> toJson() => {
-        'userId': userId,
-        'name': name,
-        'role': role.name,
-        'joinedAt': joinedAt.toIso8601String(),
-        'avatarUrl': avatarUrl,
-        'spaceId': spaceId,
-        'status': status.name,
-        'invitedEmail': invitedEmail,
-        'invitedByUserId': invitedByUserId,
-      };
+    'userId': userId,
+    'name': name,
+    'role': role.name,
+    'joinedAt': joinedAt.toIso8601String(),
+    'avatarUrl': avatarUrl,
+    'spaceId': spaceId,
+    'status': status.name,
+    'invitedEmail': invitedEmail,
+    'invitedByUserId': invitedByUserId,
+  };
 
   factory SpaceMember.fromJson(Map<String, dynamic> json) => SpaceMember(
-        userId: json['userId'] as String,
-        name: json['name'] as String,
-        role: MemberRole.values.byName(json['role'] as String),
-        joinedAt: DateTime.parse(json['joinedAt'] as String),
-        avatarUrl: json['avatarUrl'] as String?,
-        spaceId: json['spaceId'] as String?,
-        status: _parseStatus(json['status']),
-        invitedEmail: json['invitedEmail'] as String?,
-        invitedByUserId: json['invitedByUserId'] as String?,
-      );
+    userId: json['userId'] as String,
+    name: json['name'] as String,
+    role: MemberRole.values.byName(json['role'] as String),
+    joinedAt: DateTime.parse(json['joinedAt'] as String),
+    avatarUrl: json['avatarUrl'] as String?,
+    spaceId: json['spaceId'] as String?,
+    status: _parseStatus(json['status']),
+    invitedEmail: json['invitedEmail'] as String?,
+    invitedByUserId: json['invitedByUserId'] as String?,
+  );
 
   static MembershipStatus _parseStatus(Object? value) {
     if (value is String) {
@@ -299,22 +299,22 @@ class Category {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'spaceId': spaceId,
-        'name': name,
-        'iconCodePoint': iconCodePoint,
-        'colorValue': colorValue,
-        'isDefault': isDefault,
-      };
+    'id': id,
+    'spaceId': spaceId,
+    'name': name,
+    'iconCodePoint': iconCodePoint,
+    'colorValue': colorValue,
+    'isDefault': isDefault,
+  };
 
   factory Category.fromJson(Map<String, dynamic> json) => Category(
-        id: json['id'] as String,
-        spaceId: json['spaceId'] as String,
-        name: json['name'] as String,
-        iconCodePoint: json['iconCodePoint'] as int?,
-        colorValue: json['colorValue'] as int?,
-        isDefault: json['isDefault'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    spaceId: json['spaceId'] as String,
+    name: json['name'] as String,
+    iconCodePoint: json['iconCodePoint'] as int?,
+    colorValue: json['colorValue'] as int?,
+    isDefault: json['isDefault'] as bool? ?? false,
+  );
 }
 
 class Cycle {
@@ -354,26 +354,26 @@ class Cycle {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'spaceId': spaceId,
-        'name': name,
-        'startDate': startDate.toIso8601String(),
-        'endDate': endDate.toIso8601String(),
-        'status': status.name,
-        'closedAt': closedAt?.toIso8601String(),
-      };
+    'id': id,
+    'spaceId': spaceId,
+    'name': name,
+    'startDate': startDate.toIso8601String(),
+    'endDate': endDate.toIso8601String(),
+    'status': status.name,
+    'closedAt': closedAt?.toIso8601String(),
+  };
 
   factory Cycle.fromJson(Map<String, dynamic> json) => Cycle(
-        id: json['id'] as String,
-        spaceId: json['spaceId'] as String,
-        name: json['name'] as String,
-        startDate: DateTime.parse(json['startDate'] as String),
-        endDate: DateTime.parse(json['endDate'] as String),
-        status: CycleStatus.values.byName(json['status'] as String),
-        closedAt: json['closedAt'] == null
-            ? null
-            : DateTime.parse(json['closedAt'] as String),
-      );
+    id: json['id'] as String,
+    spaceId: json['spaceId'] as String,
+    name: json['name'] as String,
+    startDate: DateTime.parse(json['startDate'] as String),
+    endDate: DateTime.parse(json['endDate'] as String),
+    status: CycleStatus.values.byName(json['status'] as String),
+    closedAt: json['closedAt'] == null
+        ? null
+        : DateTime.parse(json['closedAt'] as String),
+  );
 }
 
 class Expense {
@@ -443,40 +443,40 @@ class Expense {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'spaceId': spaceId,
-        'cycleId': cycleId,
-        'paidByUserId': paidByUserId,
-        'createdBy': createdBy,
-        'amountPaisa': amount.paisa,
-        'categoryId': categoryId,
-        'description': description,
-        'date': date.toIso8601String(),
-        'note': note,
-        'receiptUrl': receiptUrl,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-        'participantGroups': participantGroups.map((g) => g.toJson()).toList(),
-      };
+    'id': id,
+    'spaceId': spaceId,
+    'cycleId': cycleId,
+    'paidByUserId': paidByUserId,
+    'createdBy': createdBy,
+    'amountPaisa': amount.paisa,
+    'categoryId': categoryId,
+    'description': description,
+    'date': date.toIso8601String(),
+    'note': note,
+    'receiptUrl': receiptUrl,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'participantGroups': participantGroups.map((g) => g.toJson()).toList(),
+  };
 
   factory Expense.fromJson(Map<String, dynamic> json) => Expense(
-        id: json['id'] as String,
-        spaceId: json['spaceId'] as String,
-        cycleId: json['cycleId'] as String?,
-        paidByUserId: json['paidByUserId'] as String,
-        createdBy: json['createdBy'] as String?,
-        amount: Money(json['amountPaisa'] as int),
-        categoryId: json['categoryId'] as String?,
-        description: json['description'] as String?,
-        date: DateTime.parse(json['date'] as String),
-        note: json['note'] as String?,
-        receiptUrl: json['receiptUrl'] as String?,
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        updatedAt: DateTime.parse(json['updatedAt'] as String),
-        participantGroups: (json['participantGroups'] as List? ?? const [])
-            .map((g) => ParticipantGroup.fromJson(g as Map<String, dynamic>))
-            .toList(),
-      );
+    id: json['id'] as String,
+    spaceId: json['spaceId'] as String,
+    cycleId: json['cycleId'] as String?,
+    paidByUserId: json['paidByUserId'] as String,
+    createdBy: json['createdBy'] as String?,
+    amount: Money(json['amountPaisa'] as int),
+    categoryId: json['categoryId'] as String?,
+    description: json['description'] as String?,
+    date: DateTime.parse(json['date'] as String),
+    note: json['note'] as String?,
+    receiptUrl: json['receiptUrl'] as String?,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    updatedAt: DateTime.parse(json['updatedAt'] as String),
+    participantGroups: (json['participantGroups'] as List? ?? const [])
+        .map((g) => ParticipantGroup.fromJson(g as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 /// A planned / estimated expense in a Personal space. An estimate is NOT a
@@ -533,15 +533,15 @@ class EstimatedExpense {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'spaceId': spaceId,
-        'amountPaisa': amount.paisa,
-        'categoryId': categoryId,
-        'description': description,
-        'month': month.toIso8601String(),
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'spaceId': spaceId,
+    'amountPaisa': amount.paisa,
+    'categoryId': categoryId,
+    'description': description,
+    'month': month.toIso8601String(),
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 
   factory EstimatedExpense.fromJson(Map<String, dynamic> json) =>
       EstimatedExpense(
@@ -554,6 +554,142 @@ class EstimatedExpense {
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
       );
+}
+
+/// A shared hissa contribution recorded in a Split Space.
+///
+/// Hissa income is money that enters the hissa — rent from a spare
+/// room, a utility refund, a shared subsidy. It is NOT personal income of
+/// the member who physically received it ([receivedByUserId]): the benefit
+/// of the income is distributed across [participantIds] using the same split
+/// rules as expenses, which reduces everyone's share of the hissa's net
+/// expense (`net expense = expenses − income`).
+class HissaIncome {
+  final String id;
+  final String spaceId;
+  final String cycleId;
+
+  /// The member who physically received the money. This does NOT determine
+  /// who benefits from the income — it only records who is holding the
+  /// hissa's cash.
+  final String receivedByUserId;
+  final Money amount;
+  final String? categoryId;
+  final String description;
+  final DateTime date;
+  final String? note;
+
+  /// Split participation, mirroring expense split configuration so the
+  /// existing split calculator can distribute the benefit unchanged.
+  final List<String> participantIds;
+  final SplitType splitType;
+  final Map<String, double> percentages;
+  final Map<String, Money> customAmounts;
+  final Map<String, int> shareUnits;
+
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  HissaIncome({
+    required this.id,
+    required this.spaceId,
+    required this.cycleId,
+    required this.receivedByUserId,
+    required this.amount,
+    this.categoryId,
+    required this.description,
+    required this.date,
+    this.note,
+    required this.participantIds,
+    this.splitType = SplitType.equal,
+    this.percentages = const {},
+    this.customAmounts = const {},
+    this.shareUnits = const {},
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  HissaIncome copyWith({
+    Money? amount,
+    String? receivedByUserId,
+    String? categoryId,
+    String? description,
+    DateTime? date,
+    String? note,
+    List<String>? participantIds,
+    SplitType? splitType,
+    Map<String, double>? percentages,
+    Map<String, Money>? customAmounts,
+    Map<String, int>? shareUnits,
+  }) {
+    return HissaIncome(
+      id: id,
+      spaceId: spaceId,
+      cycleId: cycleId,
+      receivedByUserId: receivedByUserId ?? this.receivedByUserId,
+      amount: amount ?? this.amount,
+      categoryId: categoryId ?? this.categoryId,
+      description: description ?? this.description,
+      date: date ?? this.date,
+      note: note ?? this.note,
+      participantIds: participantIds ?? this.participantIds,
+      splitType: splitType ?? this.splitType,
+      percentages: percentages ?? this.percentages,
+      customAmounts: customAmounts ?? this.customAmounts,
+      shareUnits: shareUnits ?? this.shareUnits,
+      createdAt: createdAt,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'spaceId': spaceId,
+    'cycleId': cycleId,
+    'receivedByUserId': receivedByUserId,
+    'amountPaisa': amount.paisa,
+    'categoryId': categoryId,
+    'description': description,
+    'date': date.toIso8601String(),
+    'note': note,
+    'participantIds': participantIds,
+    'splitType': splitType.name,
+    'percentages': percentages,
+    'customAmounts': customAmounts.map((k, v) => MapEntry(k, v.paisa)),
+    'shareUnits': shareUnits,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
+
+  factory HissaIncome.fromJson(Map<String, dynamic> json) => HissaIncome(
+    id: json['id'] as String,
+    spaceId: json['spaceId'] as String,
+    cycleId: json['cycleId'] as String,
+    receivedByUserId: json['receivedByUserId'] as String,
+    amount: Money(json['amountPaisa'] as int),
+    categoryId: json['categoryId'] as String?,
+    description: json['description'] as String? ?? 'Hissa income',
+    date: DateTime.parse(json['date'] as String),
+    note: json['note'] as String?,
+    participantIds: (json['participantIds'] as List? ?? const [])
+        .cast<String>(),
+    splitType: SplitType.values.firstWhere(
+      (t) => t.name == json['splitType'],
+      orElse: () => SplitType.equal,
+    ),
+    percentages: (json['percentages'] as Map<String, dynamic>? ?? {}).map(
+      (k, v) => MapEntry(k, (v as num).toDouble()),
+    ),
+    // Legacy/JSON maps may carry raw paisa ints for custom amounts.
+    customAmounts: (json['customAmounts'] as Map<String, dynamic>? ?? {}).map(
+      (k, v) => MapEntry(k, Money(v is num ? v.round() : 0)),
+    ),
+    shareUnits: (json['shareUnits'] as Map<String, dynamic>? ?? {}).map(
+      (k, v) => MapEntry(k, v as int),
+    ),
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    updatedAt: DateTime.parse(json['updatedAt'] as String),
+  );
 }
 
 /// A group of Space members that acts as a single split party for one
@@ -584,14 +720,14 @@ class ParticipantGroup {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'expenseId': expenseId,
-        'name': name,
-        'userIds': userIds,
-        'percentage': percentage,
-        'shares': shares,
-        'customAmountPaisa': customAmountPaisa,
-      };
+    'id': id,
+    'expenseId': expenseId,
+    'name': name,
+    'userIds': userIds,
+    'percentage': percentage,
+    'shares': shares,
+    'customAmountPaisa': customAmountPaisa,
+  };
 
   factory ParticipantGroup.fromJson(Map<String, dynamic> json) =>
       ParticipantGroup(
@@ -652,20 +788,22 @@ class ExpenseShare {
   String get participantId => memberGroupId ?? userId ?? '';
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'expenseId': expenseId,
-        'userId': userId,
-        'amountPaisa': amount.paisa,
-        'percentage': percentage,
-        'shares': shares,
-        'participantType': participantType?.value,
-        'memberGroupId': memberGroupId,
-        'groupSnapshot': groupSnapshot?.toJson(),
-        'expenseGroupId': expenseGroupId,
-      };
+    'id': id,
+    'expenseId': expenseId,
+    'userId': userId,
+    'amountPaisa': amount.paisa,
+    'percentage': percentage,
+    'shares': shares,
+    'participantType': participantType?.value,
+    'memberGroupId': memberGroupId,
+    'groupSnapshot': groupSnapshot?.toJson(),
+    'expenseGroupId': expenseGroupId,
+  };
 
   factory ExpenseShare.fromJson(Map<String, dynamic> json) {
-    final participantType = ExpenseParticipantType.parse(json['participantType']);
+    final participantType = ExpenseParticipantType.parse(
+      json['participantType'],
+    );
     // Backward compat: if participantType missing but expenseGroupId present, it's
     // a legacy Phase-6 grouped expense (shares divided among members).
     final legacyGroupId = json['expenseGroupId'] as String?;
@@ -680,7 +818,9 @@ class ExpenseShare {
       participantType: participantType,
       memberGroupId: json['memberGroupId'] as String?,
       groupSnapshot: json['groupSnapshot'] != null
-          ? GroupSnapshot.fromJson(json['groupSnapshot'] as Map<String, dynamic>)
+          ? GroupSnapshot.fromJson(
+              json['groupSnapshot'] as Map<String, dynamic>,
+            )
           : null,
       expenseGroupId: legacyGroupId,
     );
@@ -733,10 +873,7 @@ class Settlement {
   /// Whether [userId] is the creditor of this settlement.
   bool isCreditor(String? userId) => userId != null && userId == toUserId;
 
-  Settlement copyWith({
-    SettlementStatus? status,
-    DateTime? respondedAt,
-  }) {
+  Settlement copyWith({SettlementStatus? status, DateTime? respondedAt}) {
     return Settlement(
       id: id,
       spaceId: spaceId,
@@ -755,40 +892,40 @@ class Settlement {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'spaceId': spaceId,
-        'cycleId': cycleId,
-        'fromUserId': fromUserId,
-        'toUserId': toUserId,
-        'amountPaisa': amount.paisa,
-        'currency': currency,
-        'paymentMethod': paymentMethod,
-        'date': date.toIso8601String(),
-        'note': note,
-        'status': status.name,
-        'createdAt': createdAt.toIso8601String(),
-        'respondedAt': respondedAt?.toIso8601String(),
-      };
+    'id': id,
+    'spaceId': spaceId,
+    'cycleId': cycleId,
+    'fromUserId': fromUserId,
+    'toUserId': toUserId,
+    'amountPaisa': amount.paisa,
+    'currency': currency,
+    'paymentMethod': paymentMethod,
+    'date': date.toIso8601String(),
+    'note': note,
+    'status': status.name,
+    'createdAt': createdAt.toIso8601String(),
+    'respondedAt': respondedAt?.toIso8601String(),
+  };
 
   factory Settlement.fromJson(Map<String, dynamic> json) => Settlement(
-        id: json['id'] as String,
-        spaceId: json['spaceId'] as String,
-        cycleId: json['cycleId'] as String,
-        fromUserId: json['fromUserId'] as String,
-        toUserId: json['toUserId'] as String,
-        amount: Money(json['amountPaisa'] as int),
-        currency: json['currency'] as String,
-        paymentMethod: json['paymentMethod'] as String,
-        date: DateTime.parse(json['date'] as String),
-        note: json['note'] as String?,
-        // Defensive parse: legacy docs may carry pre-approval statuses and an
-        // unknown value must never crash the whole Space load.
-        status: SettlementStatus.parse(json['status']),
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        respondedAt: json['respondedAt'] == null
-            ? null
-            : DateTime.parse(json['respondedAt'] as String),
-      );
+    id: json['id'] as String,
+    spaceId: json['spaceId'] as String,
+    cycleId: json['cycleId'] as String,
+    fromUserId: json['fromUserId'] as String,
+    toUserId: json['toUserId'] as String,
+    amount: Money(json['amountPaisa'] as int),
+    currency: json['currency'] as String,
+    paymentMethod: json['paymentMethod'] as String,
+    date: DateTime.parse(json['date'] as String),
+    note: json['note'] as String?,
+    // Defensive parse: legacy docs may carry pre-approval statuses and an
+    // unknown value must never crash the whole Space load.
+    status: SettlementStatus.parse(json['status']),
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    respondedAt: json['respondedAt'] == null
+        ? null
+        : DateTime.parse(json['respondedAt'] as String),
+  );
 }
 
 /// A persistent Member Group inside a Split Space (Phase 1).
@@ -850,25 +987,25 @@ class MemberGroup {
   List<String> get allUserIds => [ownerUserId, ...memberIds];
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'spaceId': spaceId,
-        'ownerUserId': ownerUserId,
-        'name': name,
-        'isActive': isActive,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'spaceId': spaceId,
+    'ownerUserId': ownerUserId,
+    'name': name,
+    'isActive': isActive,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 
   factory MemberGroup.fromJson(Map<String, dynamic> json) => MemberGroup(
-        id: json['id'] as String,
-        spaceId: json['spaceId'] as String,
-        ownerUserId: json['ownerUserId'] as String,
-        name: json['name'] as String,
-        isActive: json['isActive'] as bool? ?? true,
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        updatedAt: DateTime.parse(json['updatedAt'] as String),
-        memberIds: (json['memberIds'] as List?)?.cast<String>() ?? const [],
-      );
+    id: json['id'] as String,
+    spaceId: json['spaceId'] as String,
+    ownerUserId: json['ownerUserId'] as String,
+    name: json['name'] as String,
+    isActive: json['isActive'] as bool? ?? true,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    updatedAt: DateTime.parse(json['updatedAt'] as String),
+    memberIds: (json['memberIds'] as List?)?.cast<String>() ?? const [],
+  );
 }
 
 /// A member of a [MemberGroup] (Phase 1). The owner is implied by
@@ -898,11 +1035,11 @@ class MemberGroupMember {
   String get id => '${groupId}_$userId';
 
   Map<String, dynamic> toJson() => {
-        'groupId': groupId,
-        'userId': userId,
-        'spaceId': spaceId,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'groupId': groupId,
+    'userId': userId,
+    'spaceId': spaceId,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory MemberGroupMember.fromJson(Map<String, dynamic> json) =>
       MemberGroupMember(
@@ -950,25 +1087,24 @@ class GroupRequest {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'spaceId': spaceId,
-        'requesterUserId': requesterUserId,
-        'memberUserIds': memberUserIds,
-        'status': status.name,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'spaceId': spaceId,
+    'requesterUserId': requesterUserId,
+    'memberUserIds': memberUserIds,
+    'status': status.name,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory GroupRequest.fromJson(Map<String, dynamic> json) => GroupRequest(
-        id: json['id'] as String,
-        spaceId: json['spaceId'] as String,
-        requesterUserId: json['requesterUserId'] as String,
-        memberUserIds:
-            (json['memberUserIds'] as List).cast<String>().toList(),
-        status: GroupRequestStatus.values.byName(
-          json['status'] as String? ?? GroupRequestStatus.pending.name,
-        ),
-        createdAt: DateTime.parse(json['createdAt'] as String),
-      );
+    id: json['id'] as String,
+    spaceId: json['spaceId'] as String,
+    requesterUserId: json['requesterUserId'] as String,
+    memberUserIds: (json['memberUserIds'] as List).cast<String>().toList(),
+    status: GroupRequestStatus.values.byName(
+      json['status'] as String? ?? GroupRequestStatus.pending.name,
+    ),
+    createdAt: DateTime.parse(json['createdAt'] as String),
+  );
 }
 
 /// A user's request to join a Space with an invite code. Mirrors the Member
@@ -1009,13 +1145,13 @@ class SpaceJoinRequest {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'spaceId': spaceId,
-        'requesterUserId': requesterUserId,
-        'requesterName': requesterName,
-        'status': status.name,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'spaceId': spaceId,
+    'requesterUserId': requesterUserId,
+    'requesterName': requesterName,
+    'status': status.name,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory SpaceJoinRequest.fromJson(Map<String, dynamic> json) =>
       SpaceJoinRequest(
@@ -1048,16 +1184,16 @@ class GroupSnapshot {
   List<String> get allUserIds => [ownerUserId, ...memberUserIds];
 
   Map<String, dynamic> toJson() => {
-        'groupId': groupId,
-        'ownerUserId': ownerUserId,
-        'memberUserIds': memberUserIds,
-      };
+    'groupId': groupId,
+    'ownerUserId': ownerUserId,
+    'memberUserIds': memberUserIds,
+  };
 
   factory GroupSnapshot.fromJson(Map<String, dynamic> json) => GroupSnapshot(
-        groupId: json['groupId'] as String,
-        ownerUserId: json['ownerUserId'] as String,
-        memberUserIds: (json['memberUserIds'] as List).cast<String>(),
-      );
+    groupId: json['groupId'] as String,
+    ownerUserId: json['ownerUserId'] as String,
+    memberUserIds: (json['memberUserIds'] as List).cast<String>(),
+  );
 }
 
 /// A notification that a user has received, scoped to their [userId] and
@@ -1072,11 +1208,13 @@ class AppNotification {
   final String userId; // recipient
   final String? spaceId;
   final NotificationType type;
-  final String eventKey; // domain doc id (expenseId, settlementId, requestId, etc.)
+  final String
+  eventKey; // domain doc id (expenseId, settlementId, requestId, etc.)
   final String actorUserId;
   final String actorName;
   final DateTime createdAt;
-  final Map<String, dynamic> extra; // spaceId, expenseId, settlementId, requestId...
+  final Map<String, dynamic>
+  extra; // spaceId, expenseId, settlementId, requestId...
 
   AppNotification({
     required this.id,
@@ -1093,18 +1231,19 @@ class AppNotification {
   String get displayActor => actorName.isNotEmpty ? actorName : 'A member';
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'userId': userId,
-        'spaceId': spaceId,
-        'type': type.name,
-        'eventKey': eventKey,
-        'actorUserId': actorUserId,
-        'actorName': actorName,
-        'createdAt': createdAt.toIso8601String(),
-        'extra': extra,
-      };
+    'id': id,
+    'userId': userId,
+    'spaceId': spaceId,
+    'type': type.name,
+    'eventKey': eventKey,
+    'actorUserId': actorUserId,
+    'actorName': actorName,
+    'createdAt': createdAt.toIso8601String(),
+    'extra': extra,
+  };
 
-  factory AppNotification.fromJson(Map<String, dynamic> json) => AppNotification(
+  factory AppNotification.fromJson(Map<String, dynamic> json) =>
+      AppNotification(
         id: json['id'] as String,
         userId: json['userId'] as String,
         spaceId: json['spaceId'] as String?,

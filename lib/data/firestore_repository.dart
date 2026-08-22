@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/money.dart';
+import '../logic/splits.dart';
 import '../models/models.dart';
 import 'repository.dart';
 
@@ -16,7 +17,8 @@ import 'repository.dart';
 ///   users/{userId}                      -> global (uid or pseudo-user id)
 ///   spaces/{spaceId}                    -> global
 ///   spaceMembers/{spaceId}_{userId}
-///   categories|cycles|expenses|expenseShares|settlements/{spaceId}_{id}
+///   categories|cycles|expenses|expenseShares|settlements|
+///     estimatedExpenses|memberGroups|hissaIncomes/{spaceId}_{id}
 ///
 /// Space-scoped collections store a `spaceId` field so Firestore security
 /// rules can enforce membership and queries stay scoped.
@@ -29,6 +31,7 @@ class FirestoreRepository implements ExpenseRepository {
   final List<Expense> _expenses = [];
   final List<ExpenseShare> _shares = [];
   final List<Settlement> _settlements = [];
+  final List<HissaIncome> _hissaIncomes = [];
   final List<EstimatedExpense> _estimatedExpenses = [];
   final List<Category> _categories = [];
   final List<MemberGroup> _memberGroups = [];
@@ -85,17 +88,17 @@ class FirestoreRepository implements ExpenseRepository {
           .where('userId', isEqualTo: uid)
           .snapshots()
           .listen((snap) {
-        // Rebuild from the snapshot so documents that disappear (e.g. cleared
-        // inboxes) are reflected, not just newly added ones.
-        _notifications
-          ..clear()
-          ..addAll(
-            snap.docs
-                .map((d) => AppNotification.fromJson(d.data()))
-                .where((n) => n.userId == uid),
-          );
-        _notify();
-      }, onError: (_) {}),
+            // Rebuild from the snapshot so documents that disappear (e.g. cleared
+            // inboxes) are reflected, not just newly added ones.
+            _notifications
+              ..clear()
+              ..addAll(
+                snap.docs
+                    .map((d) => AppNotification.fromJson(d.data()))
+                    .where((n) => n.userId == uid),
+              );
+            _notify();
+          }, onError: (_) {}),
     );
 
     if (spaceId != null) {
@@ -132,6 +135,10 @@ class FirestoreRepository implements ExpenseRepository {
           .get();
       final settlementsF = _db
           .collection('settlements')
+          .where('spaceId', isEqualTo: spaceId)
+          .get();
+      final hissaIncomesF = _db
+          .collection('hissaIncomes')
           .where('spaceId', isEqualTo: spaceId)
           .get();
       final estimatedExpensesF = _db
@@ -193,6 +200,11 @@ class FirestoreRepository implements ExpenseRepository {
       _settlements
         ..clear()
         ..addAll(settlements.docs.map((d) => Settlement.fromJson(d.data())));
+
+      final hissaIncomes = await hissaIncomesF;
+      _hissaIncomes
+        ..clear()
+        ..addAll(hissaIncomes.docs.map((d) => HissaIncome.fromJson(d.data())));
 
       final estimatedExpenses = await estimatedExpensesF;
       _estimatedExpenses
@@ -361,6 +373,19 @@ class FirestoreRepository implements ExpenseRepository {
 
     _subs.add(
       _db
+          .collection('hissaIncomes')
+          .where('spaceId', isEqualTo: spaceId)
+          .snapshots()
+          .listen((snap) {
+            _hissaIncomes
+              ..clear()
+              ..addAll(snap.docs.map((d) => HissaIncome.fromJson(d.data())));
+            _notify();
+          }, onError: (_) {}),
+    );
+
+    _subs.add(
+      _db
           .collection('estimatedExpenses')
           .where('spaceId', isEqualTo: spaceId)
           .snapshots()
@@ -478,6 +503,7 @@ class FirestoreRepository implements ExpenseRepository {
     _expenses.clear();
     _shares.clear();
     _settlements.clear();
+    _hissaIncomes.clear();
     _estimatedExpenses.clear();
     _categories.clear();
     _memberGroups.clear();
@@ -508,6 +534,9 @@ class FirestoreRepository implements ExpenseRepository {
 
   @override
   List<Settlement> get settlements => List.unmodifiable(_settlements);
+
+  @override
+  List<HissaIncome> get hissaIncomes => List.unmodifiable(_hissaIncomes);
 
   @override
   List<EstimatedExpense> get estimatedExpenses =>
@@ -655,6 +684,25 @@ class FirestoreRepository implements ExpenseRepository {
   }
 
   @override
+  Future<void> saveHissaIncome(HissaIncome income) async {
+    _upsert(_hissaIncomes, income, (i) => i.id);
+    await _db
+        .collection('hissaIncomes')
+        .doc('${income.spaceId}_${income.id}')
+        .set(income.toJson());
+  }
+
+  @override
+  Future<void> deleteHissaIncome(String incomeId) async {
+    final sid =
+        _hissaIncomes.where((i) => i.id == incomeId).firstOrNull?.spaceId ??
+        _currentSpaceId;
+    _hissaIncomes.removeWhere((i) => i.id == incomeId);
+    if (sid == null) return;
+    await _db.collection('hissaIncomes').doc('${sid}_$incomeId').delete();
+  }
+
+  @override
   Future<void> saveCategory(Category category) async {
     _upsert(_categories, category, (c) => c.id);
     await _db
@@ -674,7 +722,8 @@ class FirestoreRepository implements ExpenseRepository {
 
   @override
   Future<void> deleteEstimatedExpense(String estimateId) async {
-    final sid = _estimatedExpenses
+    final sid =
+        _estimatedExpenses
             .where((e) => e.id == estimateId)
             .firstOrNull
             ?.spaceId ??
@@ -975,26 +1024,63 @@ class FirestoreRepository implements ExpenseRepository {
         )
         .toList();
 
+    final incomesSnap = await _db
+        .collection('hissaIncomes')
+        .where('spaceId', isEqualTo: spaceId)
+        .get();
+    final incomes = incomesSnap.docs
+        .map((d) => HissaIncome.fromJson(d.data()))
+        .where((i) => openCycleIds.contains(i.cycleId))
+        .toList();
+
     final paid = expenses
         .where((e) => e.paidByUserId == userId)
         .fold<int>(0, (a, e) => a + e.amount.paisa);
-    final share =
-        shares.fold<int>(0, (a, s) => a + s.amount.paisa);
+    final share = shares.fold<int>(0, (a, s) => a + s.amount.paisa);
     final settledOut = settlements
         .where((s) => s.fromUserId == userId)
         .fold<int>(0, (a, s) => a + s.amount.paisa);
     final settledIn = settlements
         .where((s) => s.toUserId == userId)
         .fold<int>(0, (a, s) => a + s.amount.paisa);
-    return Money(paid - share + settledOut - settledIn);
+
+    // Hissa income lowers the dues: everyone benefits by their split of
+    // it, and whoever received the cash holds it for the hissa.
+    var incomeShare = 0;
+    var incomeReceived = 0;
+    for (final income in incomes) {
+      if (income.receivedByUserId == userId) {
+        incomeReceived += income.amount.paisa;
+      }
+      final benefitShares = SplitCalculator.build(
+        expenseId: income.id,
+        amount: income.amount,
+        participantIds: income.participantIds,
+        type: income.splitType,
+        percentages: income.percentages,
+        customAmounts: income.customAmounts,
+        shareUnits: income.shareUnits,
+      );
+      incomeShare += benefitShares
+          .where((s) => s.participantId == userId)
+          .fold<int>(0, (a, s) => a + s.amount.paisa);
+    }
+
+    return Money(
+      paid - share + settledOut - settledIn + incomeShare - incomeReceived,
+    );
   }
 
   @override
   Future<void> deleteSpace(String spaceId) async {
-    final expenseIds =
-        _expenses.where((e) => e.spaceId == spaceId).map((e) => e.id).toSet();
-    final groupIds =
-        _memberGroups.where((g) => g.spaceId == spaceId).map((g) => g.id).toSet();
+    final expenseIds = _expenses
+        .where((e) => e.spaceId == spaceId)
+        .map((e) => e.id)
+        .toSet();
+    final groupIds = _memberGroups
+        .where((g) => g.spaceId == spaceId)
+        .map((g) => g.id)
+        .toSet();
 
     _spaces.removeWhere((s) => s.id == spaceId);
     _members.removeWhere((m) => m.spaceId == spaceId);
@@ -1002,6 +1088,7 @@ class FirestoreRepository implements ExpenseRepository {
     _expenses.removeWhere((e) => e.spaceId == spaceId);
     _shares.removeWhere((s) => expenseIds.contains(s.expenseId));
     _settlements.removeWhere((s) => s.spaceId == spaceId);
+    _hissaIncomes.removeWhere((i) => i.spaceId == spaceId);
     _estimatedExpenses.removeWhere((e) => e.spaceId == spaceId);
     _categories.removeWhere((c) => c.spaceId == spaceId);
     _memberGroups.removeWhere((g) => g.spaceId == spaceId);
@@ -1017,6 +1104,7 @@ class FirestoreRepository implements ExpenseRepository {
     await _deleteScoped('expenses', spaceId);
     await _deleteScoped('expenseShares', spaceId);
     await _deleteScoped('settlements', spaceId);
+    await _deleteScoped('hissaIncomes', spaceId);
     await _deleteScoped('estimatedExpenses', spaceId);
     await _deleteScoped('memberGroups', spaceId);
     await _deleteScoped('memberGroupMembers', spaceId);

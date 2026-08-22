@@ -1484,6 +1484,12 @@ class AppLocalizationsNe extends AppLocalizations {
   String get notificationSettlementRecorded => 'एउटा भुक्तानी दर्ता गरियो';
 
   @override
+  String get notificationHissaIncomeAdded => 'घरायसी आम्दानी दर्ता भयो';
+
+  @override
+  String get notificationHissaIncomeUpdated => 'घरायसी आम्दानी अद्यावधिक भयो';
+
+  @override
   String get notificationSettlementRequested =>
       'एउटा सेटलमेन्ट अनुरोध तपाईंको स्वीकृतिको पर्खाइमा छ';
 
@@ -1621,6 +1627,62 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get expenseParticipantError => 'कम्तीमा एक जना सहभागी छान्नुहोस्।';
+
+  @override
+  String get hissaIncome => 'घरायसी आम्दानी';
+
+  @override
+  String get addIncome => 'आम्दानी थप्नुहोस्';
+
+  @override
+  String get editIncome => 'आम्दानी सम्पादन';
+
+  @override
+  String get incomeDescriptionLabel => 'स्रोत';
+
+  @override
+  String get incomeDescriptionHint => 'जस्तै: कोठा भाडा, फिर्ता, सहयोग';
+
+  @override
+  String get receivedBy => 'प्राप्त गर्ने व्यक्ति';
+
+  @override
+  String get receivedByHint => 'यो पैसा शारीरिक रूपमा कसले प्राप्त गर्यो?';
+
+  @override
+  String incomeSplitNote(String name) {
+    return '$name ले घरायसी खर्चका लागि यो पैसा प्राप्त गरेका हुन्। यसको लाभ छानिएका सदस्यहरूमा बाँडिनेछ र सबैको शुद्ध खर्चबाट हिस्सा घट्नेछ।';
+  }
+
+  @override
+  String get saveIncome => 'आम्दानी सेभ गर्नुहोस्';
+
+  @override
+  String get incomeAddedToast => 'घरायसी आम्दानी दर्ता भयो';
+
+  @override
+  String get incomeUpdatedToast => 'घरायसी आम्दानी अद्यावधिक भयो';
+
+  @override
+  String get incomeDeletedToast => 'घरायसी आम्दानी मेटियो';
+
+  @override
+  String get deleteIncomeTitle => 'यो घरायसी आम्दानी मेट्ने?';
+
+  @override
+  String get deleteIncomeMessage =>
+      'यो आम्दानी बिना ब्यालेन्स पुनः गणना गरिनेछ।';
+
+  @override
+  String get netExpense => 'शुद्ध घरायसी खर्च';
+
+  @override
+  String get hissaIncomeSection => 'घरायसी आम्दानी';
+
+  @override
+  String receivedByMemberDay(String name, String day) {
+    return '$name ले प्राप्त गर्यो · $day';
+  }
 
   @override
   String get expensePercentError => 'प्रतिशतहरूको जोड १००% हुनुपर्छ।';

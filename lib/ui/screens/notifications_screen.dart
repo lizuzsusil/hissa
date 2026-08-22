@@ -177,6 +177,9 @@ class _NotificationTile extends StatelessWidget {
     return switch (type) {
       NotificationType.expenseAdded => l10n.notificationExpenseAdded,
       NotificationType.expenseUpdated => l10n.notificationExpenseUpdated,
+      NotificationType.hissaIncomeAdded => l10n.notificationHissaIncomeAdded,
+      NotificationType.hissaIncomeUpdated =>
+        l10n.notificationHissaIncomeUpdated,
       NotificationType.settlementRecorded =>
         l10n.notificationSettlementRecorded,
       NotificationType.settlementRequested =>

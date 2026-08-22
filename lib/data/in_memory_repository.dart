@@ -1,5 +1,6 @@
 import '../core/money.dart';
 import '../models/models.dart';
+import '../logic/splits.dart';
 import 'repository.dart';
 
 /// Simple in-memory repository. It is used as the placeholder while signed
@@ -15,6 +16,7 @@ class InMemoryRepository implements ExpenseRepository {
   final List<Expense> _expenses = [];
   final List<ExpenseShare> _shares = [];
   final List<Settlement> _settlements = [];
+  final List<HissaIncome> _hissaIncomes = [];
   final List<EstimatedExpense> _estimatedExpenses = [];
   final List<Category> _categories = [];
   final List<MemberGroup> _memberGroups = [];
@@ -46,6 +48,9 @@ class InMemoryRepository implements ExpenseRepository {
 
   @override
   List<Settlement> get settlements => List.unmodifiable(_settlements);
+
+  @override
+  List<HissaIncome> get hissaIncomes => List.unmodifiable(_hissaIncomes);
 
   @override
   List<EstimatedExpense> get estimatedExpenses =>
@@ -100,9 +105,7 @@ class InMemoryRepository implements ExpenseRepository {
 
   @override
   Future<void> removeMember(String userId, String spaceId) async {
-    _members.removeWhere(
-      (m) => m.userId == userId && m.spaceId == spaceId,
-    );
+    _members.removeWhere((m) => m.userId == userId && m.spaceId == spaceId);
   }
 
   @override
@@ -147,6 +150,21 @@ class InMemoryRepository implements ExpenseRepository {
     } else {
       _settlements.add(settlement);
     }
+  }
+
+  @override
+  Future<void> saveHissaIncome(HissaIncome income) async {
+    final idx = _hissaIncomes.indexWhere((i) => i.id == income.id);
+    if (idx >= 0) {
+      _hissaIncomes[idx] = income;
+    } else {
+      _hissaIncomes.add(income);
+    }
+  }
+
+  @override
+  Future<void> deleteHissaIncome(String incomeId) async {
+    _hissaIncomes.removeWhere((i) => i.id == incomeId);
   }
 
   @override
@@ -377,7 +395,32 @@ class InMemoryRepository implements ExpenseRepository {
                 s.toUserId == userId,
           )
           .fold<int>(0, (a, e) => a + e.amount.paisa);
-      total += paid - share + settledOut - settledIn;
+
+      // Hissa income lowers the dues: everyone benefits by their split
+      // of it, and whoever received the cash holds it for the hissa.
+      var incomeShare = 0;
+      var incomeReceived = 0;
+      for (final income in _hissaIncomes) {
+        if (income.spaceId != spaceId || income.cycleId != cycle.id) continue;
+        if (income.receivedByUserId == userId) {
+          incomeReceived += income.amount.paisa;
+        }
+        final benefitShares = SplitCalculator.build(
+          expenseId: income.id,
+          amount: income.amount,
+          participantIds: income.participantIds,
+          type: income.splitType,
+          percentages: income.percentages,
+          customAmounts: income.customAmounts,
+          shareUnits: income.shareUnits,
+        );
+        incomeShare += benefitShares
+            .where((s) => s.participantId == userId)
+            .fold<int>(0, (a, s) => a + s.amount.paisa);
+      }
+
+      total +=
+          paid - share + settledOut - settledIn + incomeShare - incomeReceived;
     }
     return Money(total);
   }
@@ -387,15 +430,20 @@ class InMemoryRepository implements ExpenseRepository {
     _spaces.removeWhere((s) => s.id == spaceId);
     _members.removeWhere((m) => m.spaceId == spaceId);
     _cycles.removeWhere((c) => c.spaceId == spaceId);
-    final expenseIds =
-        _expenses.where((e) => e.spaceId == spaceId).map((e) => e.id).toSet();
+    final expenseIds = _expenses
+        .where((e) => e.spaceId == spaceId)
+        .map((e) => e.id)
+        .toSet();
     _expenses.removeWhere((e) => e.spaceId == spaceId);
     _shares.removeWhere((s) => expenseIds.contains(s.expenseId));
     _settlements.removeWhere((s) => s.spaceId == spaceId);
+    _hissaIncomes.removeWhere((i) => i.spaceId == spaceId);
     _estimatedExpenses.removeWhere((e) => e.spaceId == spaceId);
     _categories.removeWhere((c) => c.spaceId == spaceId);
-    final groupIds =
-        _memberGroups.where((g) => g.spaceId == spaceId).map((g) => g.id).toSet();
+    final groupIds = _memberGroups
+        .where((g) => g.spaceId == spaceId)
+        .map((g) => g.id)
+        .toSet();
     _memberGroups.removeWhere((g) => g.spaceId == spaceId);
     _memberGroupMembers.removeWhere((m) => groupIds.contains(m.groupId));
     _groupRequests.removeWhere((r) => r.spaceId == spaceId);

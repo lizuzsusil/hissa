@@ -656,6 +656,8 @@
   "notificationExpenseAdded": "An expense was added",
   "notificationExpenseUpdated": "An expense was updated",
   "notificationSettlementRecorded": "A settlement was recorded",
+  "notificationHissaIncomeAdded": "A hissa income was recorded",
+  "notificationHissaIncomeUpdated": "A hissa income was updated",
   "notificationSettlementRequested": "A settlement request awaits your approval",
   "notificationSettlementApproved": "Your settlement request was approved",
   "notificationSettlementRejected": "Your settlement request was declined",
@@ -702,6 +704,35 @@
   "expenseDescriptionError": "Add a short description.",
   "expensePayerError": "Choose who paid.",
   "expenseParticipantError": "Select at least one participant.",
+
+  "hissaIncome": "Hissa income",
+  "addIncome": "Add income",
+  "editIncome": "Edit income",
+  "incomeDescriptionLabel": "Source",
+  "incomeDescriptionHint": "e.g. Room rent, refund, subsidy",
+  "receivedBy": "Received by",
+  "receivedByHint": "Who physically received this money?",
+  "incomeSplitNote": "{name} received this money for the hissa. Its benefit is split across the selected members and lowers everyone's share of the net expense.",
+  "@incomeSplitNote": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "saveIncome": "Save income",
+  "incomeAddedToast": "Hissa income recorded",
+  "incomeUpdatedToast": "Hissa income updated",
+  "incomeDeletedToast": "Hissa income deleted",
+  "deleteIncomeTitle": "Delete this hissa income?",
+  "deleteIncomeMessage": "Balances will be recalculated without this contribution.",
+  "netExpense": "Net hissa expense",
+  "hissaIncomeSection": "Hissa income",
+  "receivedByMemberDay": "Received by {name} · {day}",
+  "@receivedByMemberDay": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "day": { "type": "String" }
+    }
+  },
   "expensePercentError": "Percentages must add up to 100%.",
   "expenseCustomError": "Custom amounts must add up to the total.",
   "expenseSharesError": "Enter at least one share unit.",

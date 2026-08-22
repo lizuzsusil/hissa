@@ -13,6 +13,7 @@ abstract class ExpenseRepository {
   List<Expense> get expenses;
   List<ExpenseShare> get shares;
   List<Settlement> get settlements;
+  List<HissaIncome> get hissaIncomes;
   List<EstimatedExpense> get estimatedExpenses;
   List<Category> get categories;
   List<MemberGroup> get memberGroups;
@@ -30,6 +31,13 @@ abstract class ExpenseRepository {
   Future<void> addShare(ExpenseShare share);
   Future<void> saveSettlement(Settlement settlement);
   Future<void> saveCategory(Category category);
+
+  /// Persists a Split-space [HissaIncome]. Upserts by id.
+  Future<void> saveHissaIncome(HissaIncome income);
+
+  /// Permanently removes a [HissaIncome] by id. Balances are derived, so
+  /// no share rows need cleaning up.
+  Future<void> deleteHissaIncome(String incomeId);
 
   /// Persists a Personal-space [EstimatedExpense]. Upserts by id.
   Future<void> saveEstimatedExpense(EstimatedExpense estimate);

@@ -11,11 +11,14 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
+import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
 import '../widgets/category_icon.dart';
 import '../widgets/misc.dart';
 import '../widgets/motion.dart';
+import '../widgets/toasts.dart';
 import 'expense_detail_screen.dart';
+import 'income_form_screen.dart';
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -48,6 +51,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final allExpenses = isPersonal
         ? state.personalExpenses
         : state.expensesInCycle;
+    // Hissa income lives alongside expenses in Split Spaces; it is a
+    // separate section, unaffected by expense filters.
+    final incomes = isPersonal
+        ? const <HissaIncome>[]
+        : state.hissaIncomesInCycle;
+    final cycleOpen = state.selectedCycle?.status != CycleStatus.closed;
     var filtered = allExpenses;
 
     if (_categoryFilter != null) {
@@ -61,9 +70,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           .toList();
     }
     if (_period != _Period.all || _dateRange != null) {
-      filtered = filtered
-          .where((e) => _matchesTimeFilter(e.date))
-          .toList();
+      filtered = filtered.where((e) => _matchesTimeFilter(e.date)).toList();
     }
     if (_query.trim().isNotEmpty) {
       final q = _query.trim().toLowerCase();
@@ -83,10 +90,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
     final summaryCount = isPersonal ? filtered.length : 0;
     final summaryTotal = isPersonal
-        ? filtered.fold<Money>(
-            Money.zero(),
-            (sum, e) => sum + e.amount,
-          )
+        ? filtered.fold<Money>(Money.zero(), (sum, e) => sum + e.amount)
         : Money.zero();
     final summaryAvg = summaryCount == 0
         ? Money.zero()
@@ -106,6 +110,16 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       appBar: AppBar(
         title: Text(l10n.expenses),
         actions: [
+          if (!isPersonal && cycleOpen)
+            IconAction(
+              icon: Icons.savings_outlined,
+              tooltip: l10n.addIncome,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const IncomeFormScreen()),
+                );
+              },
+            ),
           IconAction(
             icon: _dateRange != null
                 ? Icons.date_range_rounded
@@ -116,7 +130,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           if (!isPersonal) ...[
             const SizedBox(width: 8),
             IconAction(
-              icon: _memberFilter != null ||
+              icon:
+                  _memberFilter != null ||
                       _categoryFilter != null ||
                       _period != _Period.all ||
                       _dateRange != null
@@ -154,7 +169,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               children: [
                 _FilterChip(
                   label: l10n.all,
-                  selected: _categoryFilter == null &&
+                  selected:
+                      _categoryFilter == null &&
                       _memberFilter == null &&
                       _period == _Period.all &&
                       _dateRange == null,
@@ -179,8 +195,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       color: _categoryFilter == c.id
                           ? Colors.white
                           : (c.colorValue == null
-                              ? AppColors.textSecondary
-                              : Color(c.colorValue!)),
+                                ? AppColors.textSecondary
+                                : Color(c.colorValue!)),
                     ),
                   ),
               ],
@@ -206,8 +222,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   label: l10n.thisWeek,
                   selected: _period == _Period.week,
                   onTap: () => setState(() {
-                    _period =
-                        _period == _Period.week ? _Period.all : _Period.week;
+                    _period = _period == _Period.week
+                        ? _Period.all
+                        : _Period.week;
                     _dateRange = null;
                   }),
                   compact: true,
@@ -216,8 +233,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   label: l10n.thisMonthTotal,
                   selected: _period == _Period.month,
                   onTap: () => setState(() {
-                    _period =
-                        _period == _Period.month ? _Period.all : _Period.month;
+                    _period = _period == _Period.month
+                        ? _Period.all
+                        : _Period.month;
                     _dateRange = null;
                   }),
                   compact: true,
@@ -226,8 +244,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   label: l10n.thisYearTotal,
                   selected: _period == _Period.year,
                   onTap: () => setState(() {
-                    _period =
-                        _period == _Period.year ? _Period.all : _Period.year;
+                    _period = _period == _Period.year
+                        ? _Period.all
+                        : _Period.year;
                     _dateRange = null;
                   }),
                   compact: true,
@@ -268,6 +287,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             average: summaryAvg,
                             deltaPercent: deltaPercent,
                             deltaLabel: previous?.label,
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        if (incomes.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _IncomeSection(
+                            incomes: incomes,
+                            total: state.totalHissaIncome(),
                           ),
                           const SizedBox(height: 8),
                         ],
@@ -634,10 +661,7 @@ class _FilterChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (leading != null) ...[
-                leading!,
-                const SizedBox(width: 6),
-              ],
+              if (leading != null) ...[leading!, const SizedBox(width: 6)],
               Text(
                 label,
                 style: TextStyle(
@@ -920,6 +944,202 @@ class _ExpenseRow extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Hissa income section: a shared contribution card listing every income
+/// record of the current cycle. Tapping a row edits it; the trash icon
+/// deletes it after confirmation. Balances update automatically through the
+/// existing balance pipeline.
+class _IncomeSection extends StatelessWidget {
+  final List<HissaIncome> incomes;
+  final Money total;
+
+  const _IncomeSection({required this.incomes, required this.total});
+
+  Future<void> _confirmDelete(BuildContext context, HissaIncome income) async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteIncomeTitle),
+        content: Text(l10n.deleteIncomeMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(color: AppColors.negative),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    await context.read<AppState>().deleteHissaIncome(income.id);
+    if (context.mounted) {
+      showToast(context, context.l10n.incomeDeletedToast, type: ToastType.info);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return SurfaceCard(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 18,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.positive.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: const Icon(
+                  Icons.savings_outlined,
+                  size: 20,
+                  color: AppColors.positive,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.hissaIncomeSection,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                '+ ${formatMoney(total)}',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.positive,
+                ),
+              ),
+            ],
+          ),
+          for (final income in incomes)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: _IncomeRow(
+                income: income,
+                onEdit: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => IncomeFormScreen(income: income),
+                    ),
+                  );
+                },
+                onDelete: () => _confirmDelete(context, income),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IncomeRow extends StatelessWidget {
+  final HissaIncome income;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _IncomeRow({
+    required this.income,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final l10n = context.l10n;
+    return PressableScale(
+      onTap: onEdit,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.surfaceAltDark
+              : AppColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            MemberAvatar(
+              name: state.memberName(income.receivedByUserId) ?? '?',
+              size: 30,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    income.description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.receivedByMemberDay(
+                      state.memberName(income.receivedByUserId) ?? l10n.unknown,
+                      formatRelativeDay(income.date, l10n: l10n),
+                    ),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              formatMoney(income.amount),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: AppColors.positive,
+              ),
+            ),
+            const SizedBox(width: 6),
+            SizedBox(
+              width: 34,
+              height: 34,
+              child: IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 19,
+                  color: AppColors.negative,
+                ),
+                tooltip: l10n.delete,
+                onPressed: onDelete,
               ),
             ),
           ],
