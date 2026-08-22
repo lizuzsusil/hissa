@@ -16,6 +16,7 @@ import '../widgets/misc.dart';
 import '../widgets/motion.dart';
 import 'expense_form_screen.dart';
 import 'expense_detail_screen.dart';
+import 'income_form_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -559,7 +560,22 @@ class _QuickActions extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionButton(
+                icon: Icons.savings_outlined,
+                label: l10n.addIncome,
+                gradient: AppGradients.success,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const IncomeFormScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
             Expanded(
               child: _ActionButton(
                 icon: Icons.swap_horiz_rounded,
@@ -652,13 +668,16 @@ class _ActionButton extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, size: 26, color: foreground),
+              Icon(icon, size: 24, color: foreground),
               const SizedBox(height: 6),
               Text(
                 label,
+                maxLines: 2,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: foreground,
-                  fontSize: 13,
+                  fontSize: 12,
+                  height: 1.15,
                   fontWeight: FontWeight.w700,
                 ),
               ),

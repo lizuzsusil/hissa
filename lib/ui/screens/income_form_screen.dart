@@ -214,25 +214,19 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            _Label(l10n.category),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [for (final c in state.categories) _categoryChip(c)],
-            ),
-            const SizedBox(height: 24),
-            _Label(l10n.date),
-            const SizedBox(height: 10),
-            _datePicker(isDark),
-            const SizedBox(height: 24),
+            // "Received by" sits directly after the source so it is never
+            // lost below the fold: it is core to what a household income is.
             _Label(l10n.receivedBy),
             const SizedBox(height: 4),
             Text(
               l10n.receivedByHint,
               style: TextStyle(
                 fontSize: 12,
-                color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 10),
@@ -241,19 +235,20 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               runSpacing: 8,
               children: [
                 for (final m in members)
-                  _memberChip(
-                    m,
-                    selected: m.userId == _receivedByUserId,
-                    onTap: () => setState(() {
-                      _receivedByUserId = m.userId;
-                      if (!_participants.contains(m.userId)) {
-                        _participants.add(m.userId);
-                      }
-                    }),
-                  ),
+                  _receiverChip(m, selected: m.userId == _receivedByUserId),
               ],
             ),
-            const SizedBox(height: 16),
+            if (members.isEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.expenseParticipantError,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.negative,
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -282,6 +277,12 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 24),
+            _buildCategoryPicker(state.categories),
+            const SizedBox(height: 24),
+            _Label(l10n.date),
+            const SizedBox(height: 10),
+            _datePicker(isDark),
             const SizedBox(height: 24),
             _Label(l10n.splitBetween),
             const SizedBox(height: 10),
@@ -417,48 +418,92 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
     );
   }
 
-  Widget _categoryChip(Category c) {
-    final selected = _categoryId == c.id;
-    final color = c.colorValue == null
-        ? AppColors.primary
-        : Color(c.colorValue!);
-    return GestureDetector(
-      onTap: _saving
-          ? null
-          : () => setState(() => _categoryId = selected ? null : c.id),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? color.withValues(alpha: 0.16)
-              : (Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.surfaceAltDark
-                    : AppColors.surfaceAlt),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? color : Colors.transparent,
-            width: 1.4,
+  /// The category picker mirrors Add Expense exactly: two horizontally
+  /// scrollable rows of icon+name chips, tap-to-select (no toggle-off), so
+  /// both forms manage categories identically.
+  Widget _buildCategoryPicker(List<Category> categories) {
+    final midpoint = (categories.length / 2).ceil();
+    final firstRow = categories.take(midpoint).toList();
+    final secondRow = categories.skip(midpoint).toList();
+
+    Widget categoryChip(Category c) {
+      final selected = _categoryId == c.id;
+
+      return GestureDetector(
+        onTap: _saving ? null : () => setState(() => _categoryId = c.id),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? _colorOf(c).withValues(alpha: 0.16)
+                : (Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.surfaceAltDark
+                      : AppColors.surfaceAlt),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected ? _colorOf(c) : Colors.transparent,
+              width: 1.4,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                iconForCodePoint(c.iconCodePoint),
+                size: 16,
+                color: _colorOf(c),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                c.name,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? _colorOf(c) : null,
+                ),
+              ),
+            ],
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(iconForCodePoint(c.iconCodePoint), size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(
-              c.name,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: selected ? color : null,
-              ),
-            ),
+      );
+    }
+
+    Widget categoryRow(List<Category> items) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            categoryChip(items[i]),
           ],
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label(context.l10n.category),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              categoryRow(firstRow),
+              const SizedBox(height: 10),
+              categoryRow(secondRow),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
+
+  Color _colorOf(Category c) =>
+      c.colorValue == null ? AppColors.primary : Color(c.colorValue!);
 
   Widget _datePicker(bool isDark) {
     return GestureDetector(
@@ -499,6 +544,59 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
     );
   }
 
+  /// Prominent single-select chip for "Received by". Always outlined so it
+  /// is visible in both themes; the selected member gets a filled primary
+  /// style plus a check icon.
+  Widget _receiverChip(SpaceMember member, {required bool selected}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: _saving
+          ? null
+          : () => setState(() {
+              _receivedByUserId = member.userId;
+              if (!_participants.contains(member.userId)) {
+                _participants.add(member.userId);
+              }
+            }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.14)
+              : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary
+                : (isDark ? AppColors.borderDark : AppColors.border),
+            width: selected ? 1.8 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MemberAvatar(name: member.name, size: 26),
+            const SizedBox(width: 8),
+            Text(
+              member.name,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                color: selected ? AppColors.primary : null,
+              ),
+            ),
+            if (selected) ...[
+              const SizedBox(width: 6),
+              const Icon(Icons.check_circle_rounded,
+                  size: 17, color: AppColors.primary),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _memberChip(
     SpaceMember member, {
     required bool selected,
@@ -516,8 +614,10 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? AppColors.primary : Colors.transparent,
-            width: 1.4,
+            color: selected
+                ? AppColors.primary
+                : (isDark ? AppColors.borderDark : AppColors.border),
+            width: selected ? 1.6 : 1,
           ),
         ),
         child: Row(
