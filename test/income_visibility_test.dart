@@ -160,7 +160,7 @@ void main() {
     expect(headerTop, lessThan(560));
   });
 
-  testWidgets('selecting a receiver chip updates the selection', (
+  testWidgets('received by is locked to the recording member', (
     tester,
   ) async {
     usePhoneViewport(tester);
@@ -169,13 +169,63 @@ void main() {
     await tester.pumpWidget(harness(state, const IncomeFormScreen()));
     await tester.pump();
 
-    // Individuals and groups are both selectable receivers.
-    await tester.tap(find.text('Dan').first);
+    // Alice records the income, so the locked receiver row shows her with
+    // the "You" badge.
+    expect(find.text('Received by'), findsOneWidget);
+    expect(find.text('Alice'), findsWidgets);
+    expect(find.text('You'), findsOneWidget);
+
+    // Nothing else in the received-by section is selectable: tapping another
+    // member's chip elsewhere on the form must not raise errors or change
+    // anything about the locked row.
+    await tester.tap(find.text('You'), warnIfMissed: false);
     await tester.pump();
-    await tester.tap(find.text('Flatmates').first);
-    await tester.pump();
+    expect(find.text('You'), findsOneWidget);
     expect(tester.takeException(), isNull);
-    expect(state.currentUserId, 'u_a'); // sanity
+  });
+
+  testWidgets(
+      'received by shows the recording member\'s group when they have one',
+      (tester) async {
+    usePhoneViewport(tester);
+
+    final state = await makeState();
+    // Bob belongs to the "Flatmates" Member Group: the GROUP becomes the
+    // locked receiver instead of Bob individually.
+    state.debugSetSession(userId: 'u_b', spaceId: 'h1');
+    await tester.pumpWidget(harness(state, const IncomeFormScreen()));
+    await tester.pump();
+
+    expect(find.text('Flatmates'), findsWidgets);
+    expect(find.text('You'), findsOneWidget);
+  });
+
+  testWidgets('saving records the recording member as receiver', (
+    tester,
+  ) async {
+    usePhoneViewport(tester);
+
+    final state = await makeState();
+    // Bob is in the Flatmates group, so saving must record the GROUP as the
+    // receiving financial participant — without any manual selection.
+    state.debugSetSession(userId: 'u_b', spaceId: 'h1');
+    await tester.pumpWidget(harness(state, const IncomeFormScreen()));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).at(1), 'Room rent');
+    await tester.enterText(find.byType(TextField).first, '500');
+    await tester.scrollUntilVisible(
+      find.text('Save income'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Save income'));
+    await tester.pumpAndSettle();
+
+    expect(state.repo.hissaIncomes, hasLength(1));
+    final income = state.repo.hissaIncomes.single;
+    expect(income.receivedByUserId, 'g1');
+    expect(income.participantIds, contains('g1'));
   });
 
   testWidgets('home screen surfaces a prominent add income action', (
@@ -191,40 +241,6 @@ void main() {
     // It sits next to the other primary actions, within the first screenful.
     final top = tester.getTopLeft(find.text('Add income')).dy;
     expect(top, lessThan(780));
-  });
-
-  testWidgets('received by section lists member groups and saves them', (
-    tester,
-  ) async {
-    usePhoneViewport(tester);
-
-    final state = await makeState();
-    await tester.pumpWidget(harness(state, const IncomeFormScreen()));
-    await tester.pump();
-
-    // The group chip is offered right next to individual members in the
-    // "Received by" section.
-    expect(find.text('Flatmates'), findsWidgets);
-
-    // Selecting the group as receiver, then saving, records the GROUP as
-    // the receiving financial participant.
-    await tester.tap(find.text('Flatmates').first);
-    await tester.pump();
-    await tester.enterText(find.byType(TextField).at(1), 'Room rent');
-    await tester.enterText(find.byType(TextField).first, '500');
-    await tester.scrollUntilVisible(
-      find.text('Save income'),
-      400,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Save income'));
-    await tester.pumpAndSettle();
-
-    expect(state.repo.hissaIncomes, hasLength(1));
-    final income = state.repo.hissaIncomes.single;
-    expect(income.receivedByUserId, 'g1');
-    // The group also joined the split as one participant.
-    expect(income.participantIds, contains('g1'));
   });
 
   testWidgets('category picker behaves like Add Expense: select and keep', (

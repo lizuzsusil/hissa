@@ -101,33 +101,19 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
   }
 
   void _ensureDefaults(AppState state) {
+    // "Received by" is LOCKED to whoever records the income: the signed-in
+    // user, or — when they belong to an active Member Group — that group.
+    final receiver = state.myFinancialEntityId;
+    if (receiver != null) _receivedByUserId = receiver;
     final groups = state.activeMemberGroups;
-    if (_receivedByUserId == null && state.members.isNotEmpty) {
-      // Default to the signed-in user when they participate as an
-      // individual; otherwise fall back to the first eligible party.
-      final me = state.currentUserId;
-      final eligible = me != null && !state.groupedUserIds.contains(me);
-      _receivedByUserId = eligible
-          ? me
-          : (_eligibleMembers(state).firstOrNull?.userId ??
-                groups.firstOrNull?.id);
-    }
     if (_participants.isEmpty && state.members.isNotEmpty) {
       // Preselect every ungrouped member AND every active Member Group,
-      // exactly like the expense form does.
+      // exactly like the expense form does. The receiver always joins too.
       _participants = _eligibleMembers(state)
           .map((m) => m.userId)
           .followedBy(groups.map((g) => g.id))
           .toSet();
-      if (!_participants.contains(_receivedByUserId)) {
-        final receiver = _receivedByUserId;
-        if (receiver != null) {
-          if (!state.groupedUserIds.contains(receiver) ||
-              groups.any((g) => g.id == receiver)) {
-            _participants.add(receiver);
-          }
-        }
-      }
+      if (receiver != null) _participants.add(receiver);
     }
   }
 
@@ -248,6 +234,8 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
             const SizedBox(height: 24),
             // "Received by" sits directly after the source so it is never
             // lost below the fold: it is core to what a household income is.
+            // It is LOCKED to whoever records the income — themselves, or
+            // their Member Group when they belong to one.
             _Label(l10n.receivedBy),
             const SizedBox(height: 4),
             Text(
@@ -262,22 +250,11 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final m in members)
-                  _receiverChip(m, selected: m.userId == _receivedByUserId),
-                // Member Groups are financial participants too: they may
-                // receive household income on behalf of their members.
-                for (final g in state.activeMemberGroups)
-                  _groupReceiverChip(g, selected: g.id == _receivedByUserId),
-              ],
-            ),
-            if (members.isEmpty && state.activeMemberGroups.isEmpty) ...[
+            _receiverDisplay(state),
+            if (receiverId == null) ...[
               const SizedBox(height: 8),
               Text(
-                l10n.expenseParticipantError,
+                l10n.expensePayerError,
                 style: const TextStyle(
                   fontSize: 12.5,
                   color: AppColors.negative,
@@ -598,120 +575,68 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
     );
   }
 
-  /// Prominent single-select chip for "Received by". Always outlined so it
-  /// is visible in both themes; the selected party gets a filled primary
-  /// style plus a check icon.
-  Widget _receiverChip(SpaceMember member, {required bool selected}) {
+  /// The locked "Received by" row: shows whoever is recording the income —
+  /// the signed-in member, or their Member Group when they belong to one —
+  /// with a "You" pill. Mirrors the expense form's fixed payer display and
+  /// offers no editing.
+  Widget _receiverDisplay(AppState state) {
+    final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: _saving
-          ? null
-          : () => setState(() {
-              _receivedByUserId = member.userId;
-              if (!_participants.contains(member.userId)) {
-                _participants.add(member.userId);
-              }
-            }),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary.withValues(alpha: 0.14)
-              : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : (isDark ? AppColors.borderDark : AppColors.border),
-            width: selected ? 1.8 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            MemberAvatar(name: member.name, size: 26),
-            const SizedBox(width: 8),
-            Text(
-              member.name,
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                color: selected ? AppColors.primary : null,
-              ),
-            ),
-            if (selected) ...[
-              const SizedBox(width: 6),
-              const Icon(Icons.check_circle_rounded,
-                  size: 17, color: AppColors.primary),
-            ],
-          ],
-        ),
+    final receiverId = _receivedByUserId;
+    final isGroup = receiverId != null && _isGroupId(state, receiverId);
+    final name = receiverId == null
+        ? l10n.you
+        : (state.memberName(receiverId) ?? l10n.you);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(16),
       ),
-    );
-  }
-
-  /// "Received by" chip for a Member Group. A group is one financial
-  /// participant: the income it receives belongs to the household and its
-  /// benefit still splits across all selected parties.
-  Widget _groupReceiverChip(MemberGroup group, {required bool selected}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: _saving
-          ? null
-          : () => setState(() {
-              _receivedByUserId = group.id;
-              if (!_participants.contains(group.id)) {
-                _participants.add(group.id);
-              }
-            }),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary.withValues(alpha: 0.14)
-              : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : (isDark ? AppColors.borderDark : AppColors.border),
-            width: selected ? 1.8 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      child: Row(
+        children: [
+          if (isGroup)
             Container(
-              width: 26,
-              height: 26,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 gradient: AppGradients.tint(AppColors.primary),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.groups_rounded,
-                size: 16,
+                size: 22,
+                color: AppColors.primary,
+              ),
+            )
+          else
+            MemberAvatar(name: name, size: 40),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              l10n.you,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
                 color: AppColors.primary,
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              group.name,
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                color: selected ? AppColors.primary : null,
-              ),
-            ),
-            if (selected) ...[
-              const SizedBox(width: 6),
-              const Icon(Icons.check_circle_rounded,
-                  size: 17, color: AppColors.primary),
-            ],
-          ],
-        ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.lock_outline_rounded,
+              size: 15, color: AppColors.textMuted),
+        ],
       ),
     );
   }
