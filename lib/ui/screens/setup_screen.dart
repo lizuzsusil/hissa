@@ -8,6 +8,7 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
+import '../widgets/misc.dart';
 import '../widgets/toasts.dart';
 
 class SetupScreen extends StatefulWidget {
@@ -168,17 +169,17 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimary;
+    final p = context.palette;
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refreshPending,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.lg,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -191,32 +192,54 @@ class _SetupScreenState extends State<SetupScreen> {
                         size: 46,
                         onPressed: widget.onBack,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                     ],
                     Expanded(
                       child: Text(
                         _createMode ? l10n.createSpaceTitle : l10n.joinSpace,
-                        style: TextStyle(
+                        style: AppText.displayM.copyWith(
                           fontSize: 28,
-                          fontWeight: FontWeight.w800,
                           letterSpacing: -0.6,
-                          color: textColor,
+                          color: p.textPrimary,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   _createMode ? l10n.createSpaceSubtitle : l10n.setUpSubtitle,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
+                  style: AppText.bodyL.copyWith(color: p.textSecondary),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                // Wizard progress: thin pill track with a brand fill marking
+                // the current step (Create → Join).
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  child: SizedBox(
+                    height: 4,
+                    child: Stack(
+                      children: [
+                        ColoredBox(
+                          color: p.surfaceAlt,
+                          child: const SizedBox.expand(),
+                        ),
+                        AnimatedFractionallySizedBox(
+                          duration: AppMotion.medium,
+                          curve: AppMotion.ease,
+                          widthFactor: _createMode ? 0.5 : 1,
+                          heightFactor: 1,
+                          alignment: Alignment.centerLeft,
+                          child: ColoredBox(
+                            color: AppColors.primary,
+                            child: const SizedBox.expand(),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: AppSpacing.xxl),
                 _Segmented(
                   options: [l10n.create, l10n.join],
                   index: _createMode ? 0 : 1,
@@ -224,8 +247,8 @@ class _SetupScreenState extends State<SetupScreen> {
                       ? null
                       : (i) => setState(() => _createMode = i == 0),
                 ),
-                const SizedBox(height: 28),
-                if (_createMode) _buildCreate(isDark) else _buildJoin(isDark),
+                const SizedBox(height: AppSpacing.xxl),
+                if (_createMode) _buildCreate(p) else _buildJoin(p),
               ],
             ),
           ),
@@ -234,7 +257,7 @@ class _SetupScreenState extends State<SetupScreen> {
     );
   }
 
-  Widget _buildCreate(bool isDark) {
+  Widget _buildCreate(AppPalette p) {
     final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,18 +277,8 @@ class _SetupScreenState extends State<SetupScreen> {
             if (_nameError != null) setState(() => _nameError = null);
           },
         ),
-        const SizedBox(height: 20),
-        Text(
-          l10n.chooseSpaceMode,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.xl),
+        SectionHeader(title: l10n.chooseSpaceMode),
         Row(
           children: [
             Expanded(
@@ -279,7 +292,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     : () => setState(() => _mode = SpaceMode.split),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.sm + 2),
             Expanded(
               child: _ModeCard(
                 icon: Icons.person_outline,
@@ -294,18 +307,8 @@ class _SetupScreenState extends State<SetupScreen> {
           ],
         ),
         if (_mode == SpaceMode.split) ...[
-          const SizedBox(height: 18),
-          Text(
-            l10n.chooseCycleType,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.lg + 2),
+          SectionHeader(title: l10n.chooseCycleType),
           Row(
             children: [
               Expanded(
@@ -320,7 +323,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       : () => setState(() => _cycleType = CycleType.monthly),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.sm + 2),
               Expanded(
                 child: _ModeCard(
                   key: const ValueKey('cycle_custom'),
@@ -335,22 +338,12 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          Text(
-            l10n.whoLivesHere,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.lg + 2),
+          SectionHeader(title: l10n.whoLivesHere),
           if (_members.isNotEmpty) ...[
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
                 for (final email in _members)
                   Chip(
@@ -363,7 +356,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm + 2),
           ],
           Row(
             children: [
@@ -390,7 +383,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   onSubmitted: (_) => _addMember(),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.sm + 2),
               IconAction(
                 icon: Icons.add_rounded,
                 background: AppColors.primary,
@@ -401,28 +394,25 @@ class _SetupScreenState extends State<SetupScreen> {
             ],
           ),
         ],
-        const SizedBox(height: 28),
+        const SizedBox(height: AppSpacing.xxl),
         PrimaryButton(
           label: l10n.createSpace,
           icon: Icons.check_circle_outline_rounded,
           loading: _loading,
           onPressed: _loading ? null : _create,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Center(
           child: Text(
             l10n.inviteLater,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
-            ),
+            style: AppText.caption.copyWith(color: p.textMuted),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildJoin(bool isDark) {
+  Widget _buildJoin(AppPalette p) {
     final l10n = context.l10n;
     final state = context.watch<AppState>();
     final pending = state.myPendingSpaceJoinRequests;
@@ -437,33 +427,23 @@ class _SetupScreenState extends State<SetupScreen> {
           for (final request in pending) ...[
             _PendingJoinCard(
               spaceName: state.spaceNameById(request.spaceId) ?? '',
-              isDark: isDark,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
           ],
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             l10n.joinRequestPendingDescription,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
+            style: AppText.bodyM.copyWith(color: p.textSecondary),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
         ],
+        SectionHeader(title: l10n.inviteCode),
         TextField(
           controller: _codeController,
           enabled: !_loading,
           textCapitalization: TextCapitalization.characters,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 6,
-          ),
+          style: AppText.displayM.copyWith(letterSpacing: 6),
           decoration: InputDecoration(
             labelText: l10n.inviteCode,
             hintText: l10n.inviteCodeHint,
@@ -474,18 +454,12 @@ class _SetupScreenState extends State<SetupScreen> {
             if (_codeError != null) setState(() => _codeError = null);
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Text(
           l10n.inviteCodeHelp,
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.4,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondary,
-          ),
+          style: AppText.bodyM.copyWith(color: p.textSecondary),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: AppSpacing.xxl),
         PrimaryButton(
           label: l10n.joinSpace,
           icon: Icons.group_add_outlined,
@@ -502,47 +476,48 @@ class _SetupScreenState extends State<SetupScreen> {
 /// seeing every unresolved request until the owner decides.
 class _PendingJoinCard extends StatelessWidget {
   final String spaceName;
-  final bool isDark;
 
-  const _PendingJoinCard({required this.spaceName, required this.isDark});
+  const _PendingJoinCard({required this.spaceName});
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final p = context.palette;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
+        gradient: AppGradients.tint(AppColors.primary, alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.hourglass_top_rounded,
-            color: AppColors.primary,
-            size: 28,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: AppGradients.tint(AppColors.primary, alpha: 0.16),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: const Icon(
+              Icons.hourglass_top_rounded,
+              color: AppColors.primary,
+              size: 24,
+            ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.md + 2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   spaceName,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimary,
-                  ),
+                  style: AppText.titleM.copyWith(color: p.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   l10n.pendingApproval,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: AppText.caption.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
@@ -574,23 +549,23 @@ class _ModeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final borderColor = selected
-        ? AppColors.primary
-        : (isDark ? AppColors.borderDark : AppColors.border);
+        ? AppColors.primary.withValues(alpha: 0.4)
+        : p.border;
     return Material(
       color: selected
-          ? AppColors.primary.withValues(alpha: 0.08)
-          : (isDark ? AppColors.surfaceDark : Colors.white),
+          ? AppColors.primary.withValues(alpha: 0.06)
+          : p.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpacing.lg - 2),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: borderColor, width: selected ? 1.8 : 1),
+            border: Border.all(color: borderColor, width: selected ? 1.6 : 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -601,37 +576,28 @@ class _ModeCard extends StatelessWidget {
                   Icon(
                     icon,
                     size: 22,
-                    color: selected ? AppColors.primary : AppColors.textMuted,
+                    color: selected ? AppColors.primary : p.textMuted,
                   ),
                   Icon(
                     selected
                         ? Icons.check_circle_rounded
                         : Icons.circle_outlined,
                     size: 20,
-                    color: selected ? AppColors.primary : AppColors.textMuted,
+                    color: selected ? AppColors.primary : p.textMuted,
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.sm + 2),
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimary,
-                ),
+                style: AppText.titleS.copyWith(color: p.textPrimary),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 subtitle,
-                style: TextStyle(
-                  fontSize: 11.5,
+                style: AppText.caption.copyWith(
                   height: 1.35,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondary,
+                  color: p.textSecondary,
                 ),
               ),
             ],
@@ -655,11 +621,11 @@ class _Segmented extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+        color: p.surfaceAlt,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: LayoutBuilder(
@@ -669,22 +635,16 @@ class _Segmented extends StatelessWidget {
             children: [
               AnimatedPositioned(
                 duration: AppMotion.medium,
-                curve: Curves.easeOutCubic,
+                curve: AppMotion.ease,
                 left: index * width,
                 width: width,
                 top: 0,
                 bottom: 0,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.surfaceDark : Colors.white,
+                    color: p.surface,
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    boxShadow: AppShadows.card(dark: context.isDark),
                   ),
                 ),
               ),
@@ -700,14 +660,11 @@ class _Segmented extends StatelessWidget {
                           child: Text(
                             options[i],
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
+                            style: AppText.labelL.copyWith(
                               fontWeight: FontWeight.w700,
                               color: i == index
                                   ? AppColors.primary
-                                  : (isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondary),
+                                  : p.textSecondary,
                             ),
                           ),
                         ),

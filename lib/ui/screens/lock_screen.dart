@@ -50,11 +50,14 @@ class _LockScreenState extends State<LockScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.xl,
+          ),
           child: Column(
             children: [
               const Spacer(),
@@ -62,47 +65,31 @@ class _LockScreenState extends State<LockScreen> {
                 child: Container(
                   width: 96,
                   height: 96,
-                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.surfaceDark : Colors.white,
+                    gradient: AppGradients.tint(AppColors.primary),
                     borderRadius: BorderRadius.circular(AppRadius.xl),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 24,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.14),
+                    ),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    child: Image.asset('assets/logo.png', fit: BoxFit.cover),
+                  child: const Icon(
+                    Icons.fingerprint_rounded,
+                    size: 46,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: AppSpacing.xxl),
               Text(
                 l10n.appName,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimary,
-                ),
+                style: AppText.titleL.copyWith(color: p.textPrimary),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.sm + 2),
               Text(
                 l10n.biometricLogin,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondary,
-                ),
+                style: AppText.bodyL.copyWith(color: p.textSecondary),
               ),
               const Spacer(),
               PrimaryButton(
@@ -111,12 +98,13 @@ class _LockScreenState extends State<LockScreen> {
                 loading: _scanning,
                 onPressed: _scanning ? null : _unlock,
               ),
-              const SizedBox(height: 12),
-              TextButton(
+              const SizedBox(height: AppSpacing.sm + 4),
+              GhostButton(
+                label: l10n.usePassword,
                 onPressed: widget.onUsePassword,
-                child: Text(l10n.usePassword),
+                foreground: p.textSecondary,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
             ],
           ),
         ),

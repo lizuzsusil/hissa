@@ -257,12 +257,15 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final biometricsEnabled = context.watch<BiometricAuthController>().enabled;
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.lg,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -271,10 +274,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                     child: Image.asset(
                       'assets/logo.png',
                       width: 80,
@@ -284,34 +287,26 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: AppSpacing.xxl),
               Center(
                 child: Text(
                   _isSignUp ? l10n.createYourAccount : l10n.welcomeBack,
-                  style: TextStyle(
+                  style: AppText.displayL.copyWith(
                     fontSize: 30,
-                    fontWeight: FontWeight.w800,
                     letterSpacing: -0.6,
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimary,
+                    color: p.textPrimary,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Center(
                 child: Text(
                   _isSignUp ? l10n.authSignupSubtitle : l10n.authLoginSubtitle,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
-                  ),
+                  style: AppText.bodyL.copyWith(color: p.textSecondary),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xxl + AppSpacing.xs),
               if (_isSignUp) ...[
                 TextField(
                   controller: _nameController,
@@ -322,12 +317,12 @@ class _AuthScreenState extends State<AuthScreen> {
                     prefixIcon: const Icon(Icons.person_outline, size: 18),
                     errorText: _nameError,
                   ),
-                  onChanged: (_) {
-                    if (_nameError != null) setState(() => _nameError = null);
-                  },
-                ),
-                const SizedBox(height: 14),
-              ],
+                    onChanged: (_) {
+                      if (_nameError != null) setState(() => _nameError = null);
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg - 2),
+                ],
               TextField(
                 controller: _emailController,
                 enabled: !_busy,
@@ -345,7 +340,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   if (_emailError != null) setState(() => _emailError = null);
                 },
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.lg - 2),
               TextField(
                 controller: _passwordController,
                 enabled: !_busy,
@@ -385,12 +380,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     Text(
                       l10n.rememberMe,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
-                      ),
+                      style: AppText.labelL.copyWith(color: p.textSecondary),
                     ),
                   ],
                 ),
@@ -418,48 +408,37 @@ class _AuthScreenState extends State<AuthScreen> {
                   ],
                 ),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
               PrimaryButton(
                 label: _isSignUp ? l10n.createAccount : l10n.logIn,
                 icon: _isSignUp ? Icons.person_add_alt : Icons.login_rounded,
                 loading: _loading,
                 onPressed: _busy ? null : _submit,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.lg - 2),
               Row(
                 children: [
-                  Expanded(
-                    child: Divider(
-                      color: isDark ? AppColors.borderDark : AppColors.border,
-                    ),
-                  ),
+                  Expanded(child: Divider(color: p.border)),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
                     child: Text(
                       l10n.or,
-                      style: TextStyle(
-                        color: isDark
-                            ? AppColors.textMutedDark
-                            : AppColors.textMuted,
-                        fontSize: 13,
-                      ),
+                      style: AppText.bodyM.copyWith(color: p.textMuted),
                     ),
                   ),
-                  Expanded(
-                    child: Divider(
-                      color: isDark ? AppColors.borderDark : AppColors.border,
-                    ),
-                  ),
+                  Expanded(child: Divider(color: p.border)),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.lg - 2),
               SecondaryButton(
                 label: l10n.continueWithGoogle,
                 leading: const GoogleLogo(size: 18),
                 loading: _googleLoading,
                 onPressed: _busy ? null : _google,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
               Center(
                 child: GestureDetector(
                   onTap: _busy
@@ -472,12 +451,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         }),
                   child: RichText(
                     text: TextSpan(
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
-                      ),
+                      style: AppText.labelL.copyWith(color: p.textSecondary),
                       children: [
                         TextSpan(
                           text: _isSignUp
@@ -496,7 +470,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
             ],
           ),
         ),

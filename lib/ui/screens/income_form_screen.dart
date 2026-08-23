@@ -14,6 +14,8 @@ import '../theme/app_theme.dart';
 import '../widgets/amount_field.dart';
 import '../widgets/avatars.dart';
 import '../widgets/buttons.dart';
+import '../widgets/form_bits.dart';
+import '../widgets/misc.dart';
 import '../widgets/toasts.dart';
 
 /// Add / edit a shared hissa contribution (Split Spaces only).
@@ -194,7 +196,7 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     _ensureDefaults(state);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     final members = _eligibleMembers(state);
     final error = _attemptedSave ? _validationMessage(state) : null;
@@ -236,18 +238,10 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
             // lost below the fold: it is core to what a household income is.
             // It is LOCKED to whoever records the income — themselves, or
             // their Member Group when they belong to one.
-            _Label(l10n.receivedBy),
-            const SizedBox(height: 4),
+            FormLabel(l10n.receivedBy),
             Text(
               l10n.receivedByHint,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.35,
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
-              ),
+              style: AppText.caption.copyWith(color: p.textSecondary),
             ),
             const SizedBox(height: 10),
             _receiverDisplay(state),
@@ -255,86 +249,77 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               const SizedBox(height: 8),
               Text(
                 l10n.expensePayerError,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: AppColors.negative,
-                ),
+                style: AppText.labelM.copyWith(color: AppColors.negative),
               ),
             ],
             const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.positiveSoft,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    size: 20,
-                    color: AppColors.positive,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      l10n.incomeSplitNote(receiverName),
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        height: 1.4,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.positive.withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            InfoBanner(
+              icon: Icons.info_outline_rounded,
+              message: l10n.incomeSplitNote(receiverName),
+              tone: InfoTone.positive,
             ),
             const SizedBox(height: 24),
             _buildCategoryPicker(state.categories),
             const SizedBox(height: 24),
-            _Label(l10n.date),
-            const SizedBox(height: 10),
-            _datePicker(isDark),
+            FormLabel(l10n.date),
+            _datePicker(),
             const SizedBox(height: 24),
-            _Label(l10n.splitBetween),
-            const SizedBox(height: 10),
+            FormLabel(l10n.splitBetween),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 for (final m in members)
-                  _memberChip(
-                    m,
+                  FilterChip(
+                    avatar: MemberAvatar(name: m.name, size: 22),
+                    label: Text(m.name),
                     selected: _participants.contains(m.userId),
-                    onTap: () => setState(() {
-                      if (_participants.contains(m.userId)) {
-                        if (_participants.length > 1) {
-                          _participants.remove(m.userId);
-                          _percentages.remove(m.userId);
-                        }
-                      } else {
-                        _participants.add(m.userId);
-                      }
-                    }),
+                    onSelected: _saving
+                        ? null
+                        : (_) => setState(() {
+                            if (_participants.contains(m.userId)) {
+                              if (_participants.length > 1) {
+                                _participants.remove(m.userId);
+                                _percentages.remove(m.userId);
+                              }
+                            } else {
+                              _participants.add(m.userId);
+                            }
+                          }),
+                    showCheckmark: false,
                   ),
                 // Each Member Group joins the split as a SINGLE participant —
                 // its share is never divided between its members.
                 for (final g in state.activeMemberGroups)
-                  _groupChip(
-                    state,
-                    g,
+                  FilterChip(
+                    avatar: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        gradient: AppGradients.tint(AppColors.primary),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.groups_rounded,
+                        size: 14,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    label: Text(g.name),
                     selected: _participants.contains(g.id),
-                    onTap: () => setState(() {
-                      if (_participants.contains(g.id)) {
-                        if (_participants.length > 1) {
-                          _participants.remove(g.id);
-                          _percentages.remove(g.id);
-                        }
-                      } else {
-                        _participants.add(g.id);
-                      }
-                    }),
+                    onSelected: _saving
+                        ? null
+                        : (_) => setState(() {
+                            if (_participants.contains(g.id)) {
+                              if (_participants.length > 1) {
+                                _participants.remove(g.id);
+                                _percentages.remove(g.id);
+                              }
+                            } else {
+                              _participants.add(g.id);
+                            }
+                          }),
+                    showCheckmark: false,
                   ),
               ],
             ),
@@ -379,15 +364,12 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     l10n.expensePercentError,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.negative,
-                    ),
+                    style: AppText.caption.copyWith(color: AppColors.negative),
                   ),
                 ),
             ],
             const SizedBox(height: 24),
-            _Label(l10n.note),
+            FormLabel(l10n.note),
             const SizedBox(height: 10),
             TextField(
               controller: _noteController,
@@ -403,38 +385,7 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
             if (_amount.isPositive && _participants.isNotEmpty)
               _sharePreview(state, l10n),
             if (error != null) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.negativeSoft,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      size: 18,
-                      color: AppColors.negative,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        error,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.negative,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ErrorBanner(message: error),
               const SizedBox(height: 12),
             ],
             PrimaryButton(
@@ -453,6 +404,8 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
   /// scrollable rows of icon+name chips, tap-to-select (no toggle-off), so
   /// both forms manage categories identically.
   Widget _buildCategoryPicker(List<Category> categories) {
+    final p = context.palette;
+    final dark = context.isDark;
     final midpoint = (categories.length / 2).ceil();
     final firstRow = categories.take(midpoint).toList();
     final secondRow = categories.skip(midpoint).toList();
@@ -463,17 +416,19 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
       return GestureDetector(
         onTap: _saving ? null : () => setState(() => _categoryId = c.id),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: AppMotion.fast,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: selected
-                ? _colorOf(c).withValues(alpha: 0.16)
-                : (Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.surfaceAltDark
-                      : AppColors.surfaceAlt),
-            borderRadius: BorderRadius.circular(16),
+            gradient: selected
+                ? AppGradients.tint(
+                    AppColors.primary,
+                    alpha: dark ? 0.18 : 0.12,
+                  )
+                : null,
+            color: selected ? null : p.surfaceAlt,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
-              color: selected ? _colorOf(c) : Colors.transparent,
+              color: selected ? AppColors.primary : Colors.transparent,
               width: 1.4,
             ),
           ),
@@ -483,15 +438,13 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               Icon(
                 iconForCodePoint(c.iconCodePoint),
                 size: 16,
-                color: _colorOf(c),
+                color: selected ? AppColors.primary : p.textSecondary,
               ),
               const SizedBox(width: 6),
               Text(
                 c.name,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? _colorOf(c) : null,
+                style: AppText.labelM.copyWith(
+                  color: selected ? AppColors.primary : p.textSecondary,
                 ),
               ),
             ],
@@ -515,8 +468,7 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Label(context.l10n.category),
-        const SizedBox(height: 10),
+        FormLabel(context.l10n.category),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
@@ -533,11 +485,10 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
     );
   }
 
-  Color _colorOf(Category c) =>
-      c.colorValue == null ? AppColors.primary : Color(c.colorValue!);
-
-  Widget _datePicker(bool isDark) {
-    return GestureDetector(
+  Widget _datePicker() {
+    return DatePickerField(
+      value: _date,
+      format: formatShortDate,
       onTap: _saving
           ? null
           : () async {
@@ -549,29 +500,6 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               );
               if (picked != null) setState(() => _date = picked);
             },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.event_outlined,
-              size: 20,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              formatShortDate(_date),
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            const Icon(Icons.chevron_right, color: AppColors.textMuted),
-          ],
-        ),
-      ),
     );
   }
 
@@ -581,17 +509,20 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
   /// offers no editing.
   Widget _receiverDisplay(AppState state) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final receiverId = _receivedByUserId;
     final isGroup = receiverId != null && _isGroupId(state, receiverId);
     final name = receiverId == null
         ? l10n.you
         : (state.memberName(receiverId) ?? l10n.you);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(16),
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [
@@ -611,130 +542,17 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
             )
           else
             MemberAvatar(name: name, size: 40),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               name,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              style: AppText.bodyL.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              l10n.you,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(Icons.lock_outline_rounded,
-              size: 15, color: AppColors.textMuted),
+          ParticipantPill(label: l10n.you),
+          const SizedBox(width: AppSpacing.sm),
+          Icon(Icons.lock_outline_rounded, size: 15, color: p.textMuted),
         ],
-      ),
-    );
-  }
-
-  /// Multi-select split chip for a Member Group in "Split between".
-  Widget _groupChip(
-    AppState state,
-    MemberGroup group, {
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: _saving ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary.withValues(alpha: 0.12)
-              : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : (isDark ? AppColors.borderDark : AppColors.border),
-            width: selected ? 1.6 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                gradient: AppGradients.tint(AppColors.primary),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.groups_rounded,
-                size: 14,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 7),
-            Text(
-              group.name,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: selected ? AppColors.primary : null,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _memberChip(
-    SpaceMember member, {
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: _saving ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary.withValues(alpha: 0.12)
-              : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : (isDark ? AppColors.borderDark : AppColors.border),
-            width: selected ? 1.6 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            MemberAvatar(name: member.name, size: 22),
-            const SizedBox(width: 7),
-            Text(
-              member.name,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: selected ? AppColors.primary : null,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -751,8 +569,7 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
                   flex: 3,
                   child: Text(
                     context.read<AppState>().memberName(id) ?? id,
-                    style: const TextStyle(
-                      fontSize: 13.5,
+                    style: AppText.bodyM.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -786,19 +603,17 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
   }
 
   Widget _sharePreview(AppState state, AppLocalizations l10n) {
+    final p = context.palette;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.surfaceAltDark
-            : AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(16),
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Label(l10n.splitPreview),
-          const SizedBox(height: 10),
+          FormLabel(l10n.splitPreview),
           for (final entry in _previewShares(state))
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -807,13 +622,12 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
                   Expanded(
                     child: Text(
                       state.memberName(entry.id) ?? '?',
-                      style: const TextStyle(fontSize: 13.5),
+                      style: AppText.bodyM.copyWith(color: p.textPrimary),
                     ),
                   ),
                   Text(
                     '+ ${formatMoney(Money(entry.paisa))}',
-                    style: const TextStyle(
-                      fontSize: 13.5,
+                    style: AppText.bodyM.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.positive,
                     ),
@@ -822,24 +636,6 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _Label extends StatelessWidget {
-  final String text;
-  const _Label(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
       ),
     );
   }

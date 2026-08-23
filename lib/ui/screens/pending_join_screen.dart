@@ -87,7 +87,7 @@ class _PendingJoinScreenState extends State<PendingJoinScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final spaceName = state.spaceNameById(widget.spaceId) ?? l10n.space;
 
     // The owner approved while this screen was open: leave so the shell (now
@@ -114,48 +114,61 @@ class _PendingJoinScreenState extends State<PendingJoinScreen> {
             children: [
               SizedBox(
                 height: constraints.maxHeight - 32,
-                child: EmptyState(
-                  icon: Icons.hourglass_top_rounded,
-                  title: spaceName,
-                  message: l10n.joinRequestPendingDescription,
-                  action: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.hourglass_top_rounded,
-                                size: 15,
-                                color: isDark
-                                    ? AppColors.primaryBright
-                                    : AppColors.primary,
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxl,
+                        vertical: AppSpacing.xxl,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 76,
+                            height: 76,
+                            decoration: BoxDecoration(
+                              gradient: AppGradients.tint(
+                                AppColors.warning,
+                                alpha: context.isDark ? 0.20 : 0.14,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                l10n.pendingApproval,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? AppColors.primaryBright
-                                      : AppColors.primary,
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.lg),
+                              border: Border.all(
+                                color: AppColors.warning.withValues(
+                                  alpha: context.isDark ? 0.35 : 0.22,
                                 ),
                               ),
-                            ],
+                            ),
+                            child: const Icon(
+                              Icons.hourglass_top_rounded,
+                              size: 34,
+                              color: AppColors.warning,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: AppSpacing.sm + 4),
+                          StatusBadge(
+                            label: l10n.pendingApproval,
+                            tone: BadgeTone.warning,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            spaceName,
+                            textAlign: TextAlign.center,
+                            style: AppText.titleL.copyWith(
+                              color: p.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            l10n.joinRequestPendingDescription,
+                            textAlign: TextAlign.center,
+                            style: AppText.bodyM.copyWith(
+                              color: p.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

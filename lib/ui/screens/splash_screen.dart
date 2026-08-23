@@ -42,9 +42,10 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final p = context.palette;
     return Scaffold(
-      body: Container(
-        color: Colors.white,
+      body: ColoredBox(
+        color: p.bg,
         child: SafeArea(
           child: Center(
             child: FadeTransition(
@@ -59,42 +60,29 @@ class _SplashScreenState extends State<SplashScreen>
                       height: 108,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.18),
-                            blurRadius: 24,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
+                        color: p.surface,
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        boxShadow: AppShadows.raised(dark: context.isDark),
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         child: Image.asset(
                           'assets/logo.png',
                           fit: BoxFit.cover,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 26),
-                    const Text(
+                    const SizedBox(height: AppSpacing.xxl - 2),
+                    Text(
                       'Hissa',
-                      style: TextStyle(
+                      style: AppText.displayL.copyWith(
                         color: AppColors.primary,
-                        fontSize: 34,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       l10n.tagline,
-                      style: TextStyle(
-                        color: AppColors.textSecondary.withValues(alpha: 0.9),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: AppText.labelL.copyWith(color: p.textSecondary),
                     ),
                   ],
                 ),

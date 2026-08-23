@@ -9,6 +9,7 @@ import '../../../state/app_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/amount_field.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/sheets.dart';
 import '../../widgets/toasts.dart';
 
 /// Bottom sheet for adding or editing a planned (estimated) spending amount.
@@ -19,16 +20,19 @@ Future<void> showEstimatedExpenseSheet(
   BuildContext context, {
   EstimatedExpense? estimate,
 }) {
-  return showModalBottomSheet(
+  final l10n = context.l10n;
+  final isEdit = estimate != null;
+  return showAppSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).brightness == Brightness.dark
-        ? AppColors.surfaceDark
-        : Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    builder: (context) => _EstimatedExpenseSheet(estimate: estimate),
+    title: isEdit
+        ? l10n.editEstimate
+        : l10n.estimateForMonth(
+            formatMonthYear(
+              DateTime(DateTime.now().year, DateTime.now().month),
+            ),
+          ),
+    builder: (_) => _EstimatedExpenseSheet(estimate: estimate),
   );
 }
 
@@ -93,32 +97,21 @@ class _EstimatedExpenseSheetState extends State<_EstimatedExpenseSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
 
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 12,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
+          left: AppSpacing.xl,
+          right: AppSpacing.xl,
+          top: AppSpacing.sm,
+          bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
         ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.borderDark : AppColors.border,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               Row(
                 children: [
                   Container(
@@ -126,7 +119,7 @@ class _EstimatedExpenseSheetState extends State<_EstimatedExpenseSheet> {
                     height: 42,
                     decoration: BoxDecoration(
                       gradient: AppGradients.tint(AppColors.tertiary),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Icon(
                       _isEdit ? Icons.edit_outlined : Icons.flag_outlined,
@@ -134,43 +127,16 @@ class _EstimatedExpenseSheetState extends State<_EstimatedExpenseSheet> {
                       color: AppColors.tertiary,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isEdit
-                              ? l10n.editEstimate
-                              : l10n.estimateForMonth(
-                                  formatMonthYear(
-                                    DateTime(
-                                      DateTime.now().year,
-                                      DateTime.now().month,
-                                    ),
-                                  ),
-                                ),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          l10n.estimateSectionSubtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      l10n.estimateSectionSubtitle,
+                      style: AppText.caption.copyWith(color: p.textSecondary),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
               AmountField(
                 value: _amount,
                 label: l10n.estimatedAmount,
@@ -181,7 +147,7 @@ class _EstimatedExpenseSheetState extends State<_EstimatedExpenseSheet> {
                     : null,
                 onChanged: (m) => setState(() => _amount = m),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xxl - AppSpacing.xs),
               PrimaryButton(
                 label: _isEdit ? l10n.updateEstimate : l10n.saveEstimate,
                 icon: _isEdit ? Icons.save_rounded : Icons.add_rounded,

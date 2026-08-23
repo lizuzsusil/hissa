@@ -6,7 +6,6 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../state/shell_tab_controller.dart';
 import '../theme/app_theme.dart';
-import '../widgets/motion.dart';
 import 'dashboard_screen.dart';
 import 'expense_form_screen.dart';
 import 'expenses_screen.dart';
@@ -90,27 +89,20 @@ class _SpaceSwitchingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(
-            width: 44,
-            height: 44,
-            child: CircularProgressIndicator(strokeWidth: 4),
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(strokeWidth: 3.2),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             l10n.loadingSpace,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
+            style: AppText.labelL.copyWith(color: context.palette.textSecondary),
           ),
         ],
       ),
@@ -127,38 +119,21 @@ class _FloatingAddButton extends StatelessWidget {
         (cycle == null || cycle.status == CycleStatus.closed)) {
       return const SizedBox.shrink();
     }
-    return FloatingActionButton(
-      onPressed: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const ExpenseFormScreen()));
-      },
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      shape: const CircleBorder(),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primaryBright,
-              AppColors.primary,
-              AppColors.primaryDeep,
-            ],
-          ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryDeep.withValues(alpha: 0.45),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: const Icon(Icons.add_rounded, size: 30, color: Colors.white),
+    return Container(
+      width: 58,
+      height: 58,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: AppShadows.raised(dark: context.isDark),
+      ),
+      child: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ExpenseFormScreen()),
+          );
+        },
+        tooltip: context.l10n.add,
+        child: const Icon(Icons.add_rounded, size: 30),
       ),
     );
   }
@@ -177,7 +152,7 @@ class _NavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     final items = isPersonal
         ? [
@@ -215,19 +190,17 @@ class _NavBar extends StatelessWidget {
           ];
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      margin: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-        boxShadow: cardShadow(),
+        color: p.surface,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: p.border),
+        boxShadow: AppShadows.raised(dark: context.isDark),
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 62,
+          height: 64,
           child: Row(
             children: [
               for (var i = 0; i < items.length; i++)
@@ -262,41 +235,40 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkResponse(
-      onTap: onTap,
-      radius: 40,
-      child: AnimatedScale(
-        scale: selected ? 1.04 : 1,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
+    final color = selected ? AppColors.primary : context.palette.textMuted;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 44,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 44,
+              duration: AppMotion.medium,
+              curve: AppMotion.ease,
+              width: 46,
               height: 30,
               decoration: BoxDecoration(
                 color: selected
-                    ? AppColors.primary.withValues(alpha: 0.14)
+                    ? AppColors.primary.withValues(alpha: 0.12)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
-              child: Icon(
-                icon,
-                size: 22,
-                color: selected ? AppColors.primary : AppColors.textMuted,
-              ),
+              child: Icon(icon, size: 22, color: color),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.medium,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 10.5,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? AppColors.primary : AppColors.textMuted,
+                letterSpacing: selected ? 0.1 : 0,
+                color: color,
               ),
-              child: Text(label),
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),

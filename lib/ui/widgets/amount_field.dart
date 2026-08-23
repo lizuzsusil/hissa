@@ -85,22 +85,16 @@ class _AmountFieldState extends State<AmountField> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.label != null) ...[
           Text(
             widget.label!,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
+            style: AppText.labelM.copyWith(color: p.textSecondary),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
         ],
         TextField(
           controller: _controller,
@@ -111,10 +105,11 @@ class _AmountFieldState extends State<AmountField> {
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
           ],
           onChanged: _onChanged,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
+            color: p.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: widget.hint ?? '0.00',
@@ -127,7 +122,7 @@ class _AmountFieldState extends State<AmountField> {
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                  color: p.textMuted,
                 ),
               ),
             ),

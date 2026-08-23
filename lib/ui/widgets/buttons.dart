@@ -2,14 +2,124 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Full-width solid primary button with a subtle shadow, press and focus
-/// feedback. Focusable so keyboard/tab navigation shows a clear ring.
-class PrimaryButton extends StatefulWidget {
+/// Shared behaviour for every app button: consistent height, corner radius,
+/// typography, loading spinner, disabled treatment and a visible keyboard
+/// focus ring. Visual variants differ only in decoration.
+class _AppButton extends StatefulWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final Widget? leading;
+  final bool loading;
+  final bool expanded;
+  final double height;
+  final BoxDecoration Function(AppPalette p, bool focused) decoration;
+  final Color textColor;
+
+  const _AppButton({
+    required this.label,
+    required this.decoration,
+    required this.textColor,
+    this.onPressed,
+    this.icon,
+    this.leading,
+    this.loading = false,
+  this.expanded = true,
+  this.height = 48,
+});
+
+  @override
+  State<_AppButton> createState() => _AppButtonState();
+}
+
+class _AppButtonState extends State<_AppButton> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final disabled = widget.onPressed == null || widget.loading;
+
+    final child = Center(
+      widthFactor: widget.expanded ? 1 : null,
+      child: widget.loading
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                color: widget.textColor,
+              ),
+            )
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (widget.leading != null) ...[
+                  widget.leading!,
+                  const SizedBox(width: AppSpacing.sm),
+                ] else if (widget.icon != null) ...[
+                  Icon(
+                    widget.icon,
+                    size: 19,
+                    color: disabled
+                        ? widget.textColor.withValues(alpha: 0.5)
+                        : widget.textColor,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                Flexible(
+                  child: Text(
+                    widget.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: widget.textColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+
+    final button = Focus(
+      onFocusChange: (focused) => setState(() => _focused = focused),
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        curve: AppMotion.ease,
+        height: widget.height,
+        decoration: widget.decoration(p, _focused && !disabled),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            onTap: disabled ? null : widget.onPressed,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (!widget.expanded) return button;
+    return SizedBox(width: double.infinity, child: button);
+  }
+}
+
+/// Solid brand-blue call-to-action. The single most prominent button on any
+/// screen — at most one per view.
+class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool loading;
   final bool expanded;
+  final double height;
 
   const PrimaryButton({
     super.key,
@@ -18,105 +128,52 @@ class PrimaryButton extends StatefulWidget {
     this.icon,
     this.loading = false,
     this.expanded = true,
+    this.height = 48,
   });
 
   @override
-  State<PrimaryButton> createState() => _PrimaryButtonState();
-}
-
-class _PrimaryButtonState extends State<PrimaryButton> {
-  bool _focused = false;
-
-  @override
   Widget build(BuildContext context) {
-    final disabled = widget.onPressed == null;
-    final button = Focus(
-      onFocusChange: (focused) => setState(() => _focused = focused),
-      child: AnimatedContainer(
-        duration: AppMotion.fast,
-        height: 48,
-        decoration: BoxDecoration(
-          gradient: disabled
-              ? null
-              : const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppColors.primaryBright, AppColors.primary],
-                ),
-          color: disabled
-              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08)
-              : null,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: _focused && !disabled
-              ? Border.all(color: Colors.white, width: 2)
-              : null,
-          boxShadow: disabled
-              ? null
-              : [
-                  BoxShadow(
-                    color: AppColors.primaryDeep.withValues(alpha: 0.30),
-                    blurRadius: 12,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            onTap: widget.onPressed,
-            child: Center(
-              child: widget.loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (widget.icon != null) ...[
-                          Icon(widget.icon, size: 19, color: Colors.white),
-                          const SizedBox(width: 9),
-                        ],
-                        Text(
-                          widget.label,
-                          style: TextStyle(
-                            color: disabled
-                                ? Theme.of(context).colorScheme.onSurface
-                                      .withValues(alpha: 0.38)
-                                : Colors.white,
-                            fontSize: 15.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
+    return _AppButton(
+      label: label,
+      onPressed: onPressed,
+      icon: icon,
+      loading: loading,
+      expanded: expanded,
+      height: height,
+      textColor: Colors.white,
+      decoration: (_, focused) => BoxDecoration(
+        color: onPressed == null
+            ? context.palette.textPrimary.withValues(alpha: 0.08)
+            : AppColors.primary,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: [
+          if (onPressed != null)
+            BoxShadow(
+              color: AppColors.primaryDeep.withValues(alpha: 0.28),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
             ),
-          ),
+        ],
+        border: Border.all(
+          color: focused ? Colors.white.withValues(alpha: 0.9) : Colors.transparent,
+          width: 2,
         ),
       ),
     );
-    if (!widget.expanded) return button;
-    return SizedBox(width: double.infinity, child: button);
   }
 }
 
-/// Outlined secondary button.
-class SecondaryButton extends StatefulWidget {
+/// Tonal secondary action: quiet surface fill, strong ink label.
+class SecondaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
 
-  /// Optional custom leading widget (e.g. a brand logo). Takes precedence
-  /// over [icon] when both are provided.
+  /// Custom leading widget (e.g. a brand logo); takes precedence over [icon].
   final Widget? leading;
-
   final bool loading;
+  final bool expanded;
+  final double height;
 
   const SecondaryButton({
     super.key,
@@ -125,93 +182,182 @@ class SecondaryButton extends StatefulWidget {
     this.icon,
     this.leading,
     this.loading = false,
+    this.expanded = true,
+    this.height = 48,
   });
 
   @override
-  State<SecondaryButton> createState() => _SecondaryButtonState();
-}
-
-class _SecondaryButtonState extends State<SecondaryButton> {
-  bool _focused = false;
-
-  @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final disabled = widget.onPressed == null || widget.loading;
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: Focus(
-        onFocusChange: (focused) => setState(() => _focused = focused),
-        child: Material(
-          color: isDark ? AppColors.surfaceAltDark : Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            side: BorderSide(
-              color: _focused
-                  ? AppColors.primary
-                  : isDark
-                  ? AppColors.borderDark
-                  : AppColors.border,
-              width: _focused ? 2 : 1.2,
-            ),
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            onTap: disabled ? null : widget.onPressed,
-            child: Center(
-              child: widget.loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2.4),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.leading != null) ...[
-                          widget.leading!,
-                          const SizedBox(width: 9),
-                        ] else if (widget.icon != null) ...[
-                          Icon(
-                            widget.icon,
-                            size: 19,
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimary,
-                          ),
-                          const SizedBox(width: 9),
-                        ],
-                        Text(
-                          widget.label,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15.5,
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ),
+    final p = context.palette;
+    return _AppButton(
+      label: label,
+      onPressed: onPressed,
+      icon: icon,
+      leading: leading,
+      loading: loading,
+      expanded: expanded,
+      height: height,
+      textColor: p.textPrimary,
+      decoration: (_, focused) => BoxDecoration(
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: focused ? AppColors.primary : Colors.transparent,
+          width: 2,
         ),
       ),
     );
   }
 }
 
-/// Small circular icon action button.
+/// Hairline outline button for tertiary actions next to filled ones.
+class OutlineButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final Color? foreground;
+  final bool loading;
+  final bool expanded;
+  final double height;
+
+  const OutlineButton({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.foreground,
+    this.loading = false,
+    this.expanded = true,
+    this.height = 48,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final fg =
+        foreground ?? (context.isDark ? p.textPrimary : AppColors.primary);
+    return _AppButton(
+      label: label,
+      onPressed: onPressed,
+      icon: icon,
+      loading: loading,
+      expanded: expanded,
+      height: height,
+      textColor: fg,
+      decoration: (_, focused) => BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: focused ? AppColors.primary : p.borderStrong,
+          width: focused ? 2 : 1.2,
+        ),
+      ),
+    );
+  }
+}
+
+/// Destructive action (delete, remove, reject). Always paired with a
+/// confirmation dialog by convention.
+class DangerButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final bool loading;
+  final bool expanded;
+  final double height;
+
+  const DangerButton({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.loading = false,
+    this.expanded = true,
+    this.height = 48,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _AppButton(
+      label: label,
+      onPressed: onPressed,
+      icon: icon,
+      loading: loading,
+      expanded: expanded,
+      height: height,
+      textColor: Colors.white,
+      decoration: (_, focused) => BoxDecoration(
+        color: onPressed == null
+            ? context.palette.textPrimary.withValues(alpha: 0.08)
+            : AppColors.negative,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: [
+          if (onPressed != null)
+            BoxShadow(
+              color: AppColors.negative.withValues(alpha: 0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+        ],
+        border: Border.all(
+          color: focused ? Colors.white.withValues(alpha: 0.9) : Colors.transparent,
+          width: 2,
+        ),
+      ),
+    );
+  }
+}
+
+/// Low-emphasis inline action rendered as tinted text.
+class GhostButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final Color? foreground;
+  final bool expanded;
+
+  const GhostButton({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.foreground,
+    this.expanded = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = foreground ?? AppColors.primary;
+    final btn = TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(foregroundColor: fg),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 17),
+            const SizedBox(width: 6),
+          ],
+          Text(label),
+        ],
+      ),
+    );
+    return expanded ? SizedBox(width: double.infinity, child: btn) : btn;
+  }
+}
+
+/// Compact circular icon-only control (44px touch target). Used in list rows
+/// and app bars; provide [tooltip] for accessibility.
 class IconAction extends StatefulWidget {
   final IconData icon;
   final VoidCallback? onPressed;
+
+  /// Fill colour of the circular well; defaults to a subtle surface tint.
   final Color? background;
   final Color? foreground;
   final double size;
 
-  /// Accessible label announced by screen readers. Falls back to a text
-  /// description of [icon] when not provided.
+  /// Accessible label announced by screen readers and shown as a tooltip.
   final String? tooltip;
 
   const IconAction({
@@ -233,38 +379,39 @@ class _IconActionState extends State<IconAction> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Tooltip(
       message: widget.tooltip ?? '',
-      child: Focus(
-        onFocusChange: (focused) => setState(() => _focused = focused),
-        child: InkResponse(
-          onTap: widget.onPressed,
-          radius: 26,
-          child: Semantics(
-            button: true,
-            label: widget.tooltip,
-            child: AnimatedContainer(
-              duration: AppMotion.fast,
-              width: widget.size,
-              height: widget.size,
-              decoration: BoxDecoration(
-                color:
-                    widget.background ??
-                    (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
-                shape: BoxShape.circle,
-                border: _focused
-                    ? Border.all(color: AppColors.primary, width: 2)
-                    : null,
-              ),
-              child: Icon(
-                widget.icon,
-                size: widget.size * 0.5,
-                color:
-                    widget.foreground ??
-                    (isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimary),
+      child: Semantics(
+        button: true,
+        enabled: widget.onPressed != null,
+        label: widget.tooltip,
+        child: Focus(
+          onFocusChange: (focused) => setState(() => _focused = focused),
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: widget.onPressed,
+              child: AnimatedContainer(
+                duration: AppMotion.fast,
+                width: widget.size,
+                height: widget.size,
+                decoration: BoxDecoration(
+                  color: widget.background ?? p.surfaceAlt,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _focused ? AppColors.primary : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  widget.icon,
+                  size: widget.size * 0.48,
+                  color:
+                      widget.foreground ?? p.textSecondary,
+                ),
               ),
             ),
           ),

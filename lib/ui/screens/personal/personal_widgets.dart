@@ -9,7 +9,9 @@ import '../../../state/app_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/category_icon.dart';
+import '../../widgets/dialogs.dart';
 import '../../widgets/motion.dart';
+import '../../widgets/sheets.dart';
 import 'estimated_expense_sheet.dart';
 
 /// Constrains personal-space content to a comfortable reading width on large
@@ -76,15 +78,15 @@ class SegmentedControl<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final selectedIndex = options.indexWhere((o) => o.value == value);
     final clamp = selectedIndex < 0 ? 0 : selectedIndex;
 
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(16),
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -92,17 +94,17 @@ class SegmentedControl<T> extends StatelessWidget {
           return Stack(
             children: [
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 240),
-                curve: Curves.easeOutCubic,
+                duration: AppMotion.medium,
+                curve: AppMotion.ease,
                 left: clamp * width,
                 width: width,
                 top: 0,
                 bottom: 0,
-                child: Container(
+                child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.surfaceDark : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: cardShadow(opacity: isDark ? 0.35 : 0.10),
+                    color: p.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    boxShadow: AppShadows.card(dark: context.isDark),
                   ),
                 ),
               ),
@@ -117,9 +119,10 @@ class SegmentedControl<T> extends StatelessWidget {
                           onTap: () {
                             if (option.value != value) onChanged(option.value);
                           },
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.pill),
                           child: SizedBox(
-                            height: height - 8,
+                            height: height - AppSpacing.sm,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
@@ -130,11 +133,9 @@ class SegmentedControl<T> extends StatelessWidget {
                                     size: fontSize + 3,
                                     color: option.value == value
                                         ? AppColors.primary
-                                        : isDark
-                                        ? AppColors.textMutedDark
-                                        : AppColors.textMuted,
+                                        : p.textMuted,
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: AppSpacing.xs),
                                 ],
                                 Flexible(
                                   child: Text(
@@ -147,9 +148,7 @@ class SegmentedControl<T> extends StatelessWidget {
                                           : FontWeight.w500,
                                       color: option.value == value
                                           ? AppColors.primary
-                                          : isDark
-                                          ? AppColors.textSecondaryDark
-                                          : AppColors.textSecondary,
+                                          : p.textSecondary,
                                     ),
                                   ),
                                 ),
@@ -194,7 +193,7 @@ class EstimateProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
 
     final hasEstimate = !estimated.isZero;
     final fraction =
@@ -209,8 +208,7 @@ class EstimateProgressCard extends StatelessWidget {
         : AppColors.primary;
 
     return SurfaceCard(
-      padding: const EdgeInsets.all(18),
-      borderRadius: 20,
+      padding: const EdgeInsets.all(AppSpacing.lg + 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -220,10 +218,8 @@ class EstimateProgressCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  gradient: AppGradients.tint(
-                    hasEstimate ? AppColors.tertiary : AppColors.tertiary,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
+                  gradient: AppGradients.tint(AppColors.tertiary),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(
                   hasEstimate
@@ -233,27 +229,20 @@ class EstimateProgressCard extends StatelessWidget {
                   color: AppColors.tertiary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       l10n.estimateForMonth(formatMonthYear(month)),
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style:
+                          AppText.titleS.copyWith(color: p.textPrimary),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       l10n.estimateSectionSubtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
-                      ),
+                      style: AppText.caption.copyWith(color: p.textSecondary),
                     ),
                   ],
                 ),
@@ -267,27 +256,25 @@ class EstimateProgressCard extends StatelessWidget {
             ],
           ),
           if (!hasEstimate) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.lg - 2),
             Text(
               l10n.noEstimatesYet,
-              style: const TextStyle(
-                fontSize: 13.5,
+              style: AppText.bodyM.copyWith(
                 fontWeight: FontWeight.w600,
+                color: p.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               l10n.noEstimatesMessage,
-              style: TextStyle(
-                fontSize: 12.5,
+              style: AppText.labelM.copyWith(
                 height: 1.4,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
+                fontWeight: FontWeight.w400,
+                color: p.textSecondary,
               ),
             ),
             if (onAddEstimate != null && showEmptyAction) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               OutlinedButton.icon(
                 onPressed: onAddEstimate,
                 icon: const Icon(Icons.add_rounded, size: 18),
@@ -295,16 +282,14 @@ class EstimateProgressCard extends StatelessWidget {
               ),
             ],
           ] else ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.lg - 2),
             Row(
               children: [
                 Expanded(
                   child: _StatColumn(
                     label: l10n.spentSoFar,
                     value: formatMoneyCompact(spent),
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimary,
+                    color: p.textPrimary,
                   ),
                 ),
                 Expanded(
@@ -332,9 +317,9 @@ class EstimateProgressCard extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: LinearProgressIndicator(
                 value: fraction,
                 minHeight: 8,
@@ -342,18 +327,15 @@ class EstimateProgressCard extends StatelessWidget {
                 color: progressColor,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               l10n.spentOfEstimate(
                 formatMoneyCompact(spent),
                 formatMoneyCompact(estimated),
               ),
-              style: TextStyle(
-                fontSize: 12,
+              style: AppText.caption.copyWith(
                 fontWeight: FontWeight.w600,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
+                color: p.textSecondary,
               ),
             ),
           ],
@@ -381,18 +363,17 @@ class EstimateTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.read<AppState>();
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final category = state.categoryFor(estimate.categoryId);
 
     return PressableScale(
       onTap: onEdit,
       child: SurfaceCard(
-        padding: const EdgeInsets.all(14),
-        borderRadius: 18,
+        padding: const EdgeInsets.all(AppSpacing.md + 2),
         child: Row(
           children: [
             CategoryIcon(category: category, size: 40),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,10 +382,7 @@ class EstimateTile extends StatelessWidget {
                     estimate.description ?? l10n.estimatedExpense,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppText.titleS.copyWith(color: p.textPrimary),
                   ),
                   const SizedBox(height: 3),
                   Row(
@@ -417,15 +395,16 @@ class EstimateTile extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.tertiary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Text(
                             l10n.estimatedExpense,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: AppText.overline.copyWith(
+                              letterSpacing: 0.1,
                               fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
                               color: AppColors.tertiary,
                             ),
                           ),
@@ -437,12 +416,8 @@ class EstimateTile extends StatelessWidget {
                           formatMonthYear(estimate.month),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
-                          ),
+                          style:
+                              AppText.caption.copyWith(color: p.textSecondary),
                         ),
                       ),
                     ],
@@ -456,9 +431,10 @@ class EstimateTile extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   formatMoney(estimate.amount),
-                  style: const TextStyle(
+                  style: AppText.titleL.copyWith(
                     fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                    color: p.textPrimary,
                   ),
                 ),
               ),
@@ -478,7 +454,7 @@ class EstimateTile extends StatelessWidget {
                   child: Row(
                     children: [
                       const Icon(Icons.edit_outlined, size: 18),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Text(l10n.editEstimate),
                     ],
                   ),
@@ -492,7 +468,7 @@ class EstimateTile extends StatelessWidget {
                         size: 18,
                         color: AppColors.negative,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Text(
                         l10n.removeEstimate,
                         style: const TextStyle(color: AppColors.negative),
@@ -523,19 +499,16 @@ class _RoundIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return IconButton(
       onPressed: onTap,
       tooltip: tooltip,
       icon: Icon(
         icon,
         size: 20,
-        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+        color: context.palette.textSecondary,
       ),
       style: IconButton.styleFrom(
-        backgroundColor: isDark
-            ? AppColors.surfaceAltDark
-            : AppColors.surfaceAlt,
+        backgroundColor: context.palette.surfaceAlt,
         minimumSize: const Size(36, 36),
       ),
     );
@@ -555,15 +528,16 @@ class _StatColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11.5,
-            color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+          style: AppText.overline.copyWith(
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0,
+            color: p.textMuted,
           ),
         ),
         const SizedBox(height: 3),
@@ -587,27 +561,14 @@ class _StatColumn extends StatelessWidget {
 /// Confirmation dialog before removing an estimate.
 Future<bool> confirmRemoveEstimate(BuildContext context) async {
   final l10n = context.l10n;
-  final result = await showDialog<bool>(
+  return showConfirmDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      title: Text(l10n.removeEstimateTitle),
-      content: Text(l10n.removeEstimateMessage),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: Text(l10n.cancel),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: Text(
-            l10n.removeEstimate,
-            style: const TextStyle(color: AppColors.negative),
-          ),
-        ),
-      ],
-    ),
+    title: l10n.removeEstimateTitle,
+    message: l10n.removeEstimateMessage,
+    confirmLabel: l10n.removeEstimate,
+    destructive: true,
+    icon: Icons.delete_outline_rounded,
   );
-  return result ?? false;
 }
 
 /// Shows the full list of estimates for [month] in a bottom sheet, allowing
@@ -624,65 +585,45 @@ Future<void> showMonthEstimatesSheet(
     await showEstimatedExpenseSheet(context);
     return;
   }
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  await showModalBottomSheet<void>(
+  await showAppSheet<void>(
     context: context,
-    backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+    title: l10n.estimatedExpenses,
+    builder: (sheetContext) {
+      final p = sheetContext.palette;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          0,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.borderDark : AppColors.border,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.estimatedExpenses,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 4),
             Text(
               formatMonthYear(month),
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
+              style: AppText.bodyM.copyWith(color: p.textSecondary),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Flexible(
               child: ListView(
                 shrinkWrap: true,
                 children: [
                   for (final estimate in estimates)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm + 2),
                       child: EstimateTile(
                         estimate: estimate,
                         onEdit: () {
-                          Navigator.pop(context);
+                          Navigator.pop(sheetContext);
                           showEstimatedExpenseSheet(
                             context,
                             estimate: estimate,
                           );
                         },
                         onRemove: () {
-                          Navigator.pop(context);
+                          Navigator.pop(sheetContext);
                           final appState = context.read<AppState>();
                           confirmRemoveEstimate(context).then((ok) {
                             if (ok) {
@@ -695,10 +636,9 @@ Future<void> showMonthEstimatesSheet(
                 ],
               ),
             ),
-            const SizedBox(height: 12),
           ],
         ),
-      ),
-    ),
+      );
+    },
   );
 }

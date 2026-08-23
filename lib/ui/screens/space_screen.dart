@@ -11,6 +11,9 @@ import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/buttons.dart';
+import '../widgets/cards.dart';
+import '../widgets/dialogs.dart';
+import '../widgets/misc.dart';
 import '../widgets/toasts.dart';
 import 'member_groups_screen.dart';
 
@@ -35,10 +38,7 @@ class _SpaceScreenState extends State<SpaceScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final space = state.space;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textSecondary = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondary;
+    final p = context.palette;
     final l10n = context.l10n;
 
     if (space == null) {
@@ -51,38 +51,30 @@ class _SpaceScreenState extends State<SpaceScreen> {
         onRefresh: () => context.read<AppState>().refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            AppSpacing.xxxl,
+          ),
           children: [
-            Container(
+            HeroCard(
               padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                gradient: AppColors.heroGradient,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 22,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.home_work_rounded,
                         color: Colors.white,
                         size: 22,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Text(
                         l10n.space,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                        style: AppText.labelM.copyWith(
+                          color: Colors.white.withValues(alpha: 0.75),
                         ),
                       ),
                     ],
@@ -90,63 +82,55 @@ class _SpaceScreenState extends State<SpaceScreen> {
                   const SizedBox(height: 6),
                   Text(
                     space.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
+                    style: AppText.displayM.copyWith(color: Colors.white),
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Text(
-                        '${space.currency} · ${l10n.spaceMembersCount(state.members.length)}',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: AppSpacing.sm + 2),
+                  Text(
+                    '${space.currency} · ${l10n.spaceMembersCount(state.members.length)}',
+                    style: AppText.bodyM.copyWith(
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              l10n.inviteCode,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.xl),
+            SectionHeader(title: l10n.inviteCode),
             Text(
               l10n.shareInviteHint,
-              style: TextStyle(fontSize: 13, color: textSecondary),
+              style: AppText.bodyM.copyWith(color: p.textSecondary),
             ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.25),
-                ),
-              ),
+            const SizedBox(height: AppSpacing.md),
+            SurfaceCard(
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      space.inviteCode,
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 8,
-                        color: AppColors.primary,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.md,
+                      ),
+                      decoration: BoxDecoration(
+                        color: p.surfaceAlt,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        space.inviteCode,
+                        style: AppText.displayM.copyWith(
+                          letterSpacing: 8,
+                          fontFamily: 'monospace',
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   ),
-                  InkResponse(
-                    onTap: () {
+                  const SizedBox(width: AppSpacing.md),
+                  IconAction(
+                    icon: Icons.copy_rounded,
+                    background: AppColors.primary,
+                    foreground: Colors.white,
+                    tooltip: l10n.inviteCodeCopied,
+                    onPressed: () {
                       Clipboard.setData(ClipboardData(text: space.inviteCode));
                       showToast(
                         context,
@@ -154,79 +138,53 @@ class _SpaceScreenState extends State<SpaceScreen> {
                         type: ToastType.success,
                       );
                     },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.copy_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: AppSpacing.xxl),
             Row(
               children: [
-                Text(
-                  l10n.members,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Spacer(),
+                Expanded(child: SectionHeader(title: l10n.members)),
                 Text(
                   l10n.spaceMembersCount(state.members.length),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
+                  style: AppText.labelL.copyWith(color: AppColors.primary),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
             for (final member in state.members)
-              _MemberRow(
-                member: member,
-                isYou: member.userId == state.currentUser?.id,
-                canRemove:
-                    state.isOwner && member.userId != state.currentUser?.id,
-                onRemove: () => _confirmRemove(state, member),
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: _MemberRow(
+                  member: member,
+                  isYou: member.userId == state.currentUser?.id,
+                  canRemove:
+                      state.isOwner && member.userId != state.currentUser?.id,
+                  onRemove: () => _confirmRemove(state, member),
+                ),
               ),
             if (!state.isPersonalMode) ...[
-              const SizedBox(height: 20),
               _MemberGroupsTile(onTap: () => _openMemberGroups(context)),
             ],
             if (state.isOwner && state.pendingSpaceJoinRequests.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              Text(
-                l10n.pendingJoinRequests,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.xl),
+              SectionHeader(title: l10n.pendingJoinRequests),
               Text(
                 l10n.pendingJoinRequestsDescription,
-                style: TextStyle(fontSize: 13, color: textSecondary),
+                style: AppText.bodyM.copyWith(color: p.textSecondary),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               for (final request in state.pendingSpaceJoinRequests)
-                _JoinRequestCard(
-                  request: request,
-                  onApprove: () => _approveJoin(state, request),
-                  onReject: () => _rejectJoin(state, request),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: _JoinRequestCard(
+                    request: request,
+                    onApprove: () => _approveJoin(state, request),
+                    onReject: () => _rejectJoin(state, request),
+                  ),
                 ),
             ],
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             Row(
               children: [
                 Expanded(
@@ -251,7 +209,7 @@ class _SpaceScreenState extends State<SpaceScreen> {
                     onSubmitted: (_) => _inviteMember(state),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.sm + 2),
                 IconAction(
                   icon: Icons.add_rounded,
                   background: AppColors.primary,
@@ -261,10 +219,10 @@ class _SpaceScreenState extends State<SpaceScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text(
               l10n.inviteMemberHelper,
-              style: TextStyle(fontSize: 12, color: textSecondary),
+              style: AppText.caption.copyWith(color: p.textSecondary),
             ),
           ],
         ),
@@ -321,25 +279,15 @@ class _SpaceScreenState extends State<SpaceScreen> {
 
   Future<void> _confirmRemove(AppState state, SpaceMember member) async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.removeMemberTitle(member.name)),
-        content: Text(l10n.removeMemberMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.negative),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
+      title: l10n.removeMemberTitle(member.name),
+      message: l10n.removeMemberMessage,
+      confirmLabel: l10n.delete,
+      destructive: true,
+      icon: Icons.person_remove_outlined,
     );
-    if (confirmed == true) {
+    if (confirmed) {
       await state.removeMember(member.userId);
     }
   }
@@ -348,6 +296,17 @@ class _SpaceScreenState extends State<SpaceScreen> {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const MemberGroupsScreen()));
+  }
+}
+
+BadgeTone _roleTone(MemberRole role) {
+  switch (role) {
+    case MemberRole.owner:
+      return BadgeTone.brand;
+    case MemberRole.admin:
+      return BadgeTone.info;
+    case MemberRole.member:
+      return BadgeTone.neutral;
   }
 }
 
@@ -366,93 +325,62 @@ class _MemberRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.border,
-          ),
-        ),
-        child: Row(
-          children: [
-            MemberAvatar(name: member.name, size: 44),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
+    return SurfaceCard(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          MemberAvatar(name: member.name, size: 44),
+          const SizedBox(width: AppSpacing.lg - 2),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
                         member.name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.titleS.copyWith(fontSize: 15),
                       ),
-                      if (isYou) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            l10n.you,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
+                    ),
+                    if (isYou) ...[
+                      const SizedBox(width: 6),
+                      StatusBadge(label: l10n.you),
                     ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    l10n.memberJoinedDate(
-                      _roleLabel(l10n, member.role),
-                      formatShortDate(member.joinedAt),
+                    const SizedBox(width: 6),
+                    StatusBadge(
+                      label: _roleLabel(l10n, member.role),
+                      tone: _roleTone(member.role),
                     ),
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (canRemove)
-              InkResponse(
-                onTap: onRemove,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.negativeSoft,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.person_remove_outlined,
-                    size: 18,
-                    color: AppColors.negative,
-                  ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 3),
+                Text(
+                  l10n.memberJoinedDate(
+                    _roleLabel(l10n, member.role),
+                    formatShortDate(member.joinedAt),
+                  ),
+                  style: AppText.caption.copyWith(color: p.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          if (canRemove) ...[
+            const SizedBox(width: AppSpacing.sm),
+            IconAction(
+              icon: Icons.person_remove_outlined,
+              size: 36,
+              foreground: AppColors.negative,
+              background: context.isDark
+                  ? AppColors.negative.withValues(alpha: 0.16)
+                  : AppColors.negativeSoft,
+              onPressed: onRemove,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -484,100 +412,62 @@ class _JoinRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.border,
+    return SurfaceCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              MemberAvatar(name: request.requesterName, size: 40),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request.requesterName,
+                      style: AppText.titleS.copyWith(fontSize: 15),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.wantsToJoinSpace,
+                      style: AppText.caption.copyWith(color: p.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              StatusBadge(label: l10n.pendingApproval, tone: BadgeTone.warning),
+            ],
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                MemberAvatar(name: request.requesterName, size: 40),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        request.requesterName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        l10n.wantsToJoinSpace,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: OutlineButton(
+                  label: l10n.reject,
+                  icon: Icons.close_rounded,
+                  foreground: AppColors.negative,
+                  onPressed: onReject,
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.check_rounded, size: 18),
+                  label: Text(l10n.approve),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.positive,
+                    disabledBackgroundColor: AppColors.positive,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    l10n.pendingApproval,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
+                  onPressed: onApprove,
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    label: Text(l10n.reject),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.negative,
-                      side: const BorderSide(color: AppColors.negative),
-                    ),
-                    onPressed: onReject,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    icon: const Icon(Icons.check_rounded, size: 18),
-                    label: Text(l10n.approve),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.positive,
-                      disabledBackgroundColor: AppColors.positive,
-                    ),
-                    onPressed: onApprove,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -593,69 +483,45 @@ class _MemberGroupsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
-    return Material(
-      color: isDark ? AppColors.surfaceDark : Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: isDark ? AppColors.borderDark : AppColors.border,
+    return SurfaceCard(
+      padding: const EdgeInsets.all(14),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: AppGradients.tint(AppColors.primary),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: const Icon(
+              Icons.groups_rounded,
+              size: 20,
+              color: AppColors.primary,
             ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+          const SizedBox(width: AppSpacing.lg - 2),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.memberGroups,
+                  style: AppText.titleS.copyWith(color: p.textPrimary),
                 ),
-                child: const Icon(
-                  Icons.groups_rounded,
-                  size: 20,
-                  color: AppColors.primary,
+                const SizedBox(height: 2),
+                Text(
+                  l10n.memberGroupsSubtitle,
+                  style: AppText.caption.copyWith(color: p.textSecondary),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.memberGroups,
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.memberGroupsSubtitle,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          Icon(Icons.chevron_right_rounded, size: 20, color: p.textMuted),
+        ],
       ),
     );
   }

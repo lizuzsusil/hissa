@@ -180,8 +180,7 @@ void main() {
     expect(find.text('Yearly'), findsOneWidget);
     expect(find.text('Lifetime'), findsNothing);
     expect(find.text('Category breakdown'), findsOneWidget);
-    // The top-categories leaderboard follows the selected window, so an
-    // expense from outside the last 6 months is not listed.
+    // The top-categories leaderboard was intentionally removed.
     expect(find.text('Top categories'), findsNothing);
   });
 
@@ -203,8 +202,9 @@ void main() {
     expect(find.text('Spending overview'), findsOneWidget);
     // Same-day spending must produce chart bars, not the empty state.
     expect(find.text('Nothing to chart yet'), findsNothing);
-    // The top-categories leaderboard covers the selected window.
-    expect(find.text('Top categories'), findsOneWidget);
+    // The top-categories leaderboard was intentionally removed; the pie
+    // chart below covers the category breakdown for the window.
+    expect(find.text('Top categories'), findsNothing);
   });
 
   testWidgets('personal insights overlays the planned amount on the chart', (
@@ -255,8 +255,8 @@ void main() {
 
     // Month-over-month comparison (this + last month both have spending).
     expect(find.text('This month vs last month'), findsOneWidget);
-    // All-time category leaderboard is shown; removed sections are absent.
-    expect(find.text('Top categories'), findsOneWidget);
+    // The top-categories leaderboard was intentionally removed.
+    expect(find.text('Top categories'), findsNothing);
     expect(find.text('Spending by day'), findsNothing);
     expect(find.text('Lifetime trend'), findsNothing);
   });

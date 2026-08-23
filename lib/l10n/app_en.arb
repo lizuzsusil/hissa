@@ -12,6 +12,7 @@
   "add": "Add",
   "loadingSpace": "Switching space…",
   "cancel": "Cancel",
+  "confirm": "Confirm",
   "delete": "Delete",
   "save": "Save",
   "saveChanges": "Save changes",

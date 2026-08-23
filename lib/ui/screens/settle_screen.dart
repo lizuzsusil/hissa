@@ -10,8 +10,10 @@ import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
+import '../widgets/dialogs.dart';
 import '../widgets/misc.dart';
 import '../widgets/motion.dart';
+import '../widgets/sheets.dart';
 import '../widgets/toasts.dart';
 import 'settlement_form.dart';
 
@@ -55,7 +57,12 @@ class SettleScreen extends StatelessWidget {
         onRefresh: () => context.read<AppState>().refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            AppSpacing.xxxl * 2 + AppSpacing.xl,
+          ),
           children: [
             if (proposals.isEmpty && pendingRequests.isEmpty)
               // With no expenses at all there is nothing to settle, so a plain
@@ -66,71 +73,49 @@ class SettleScreen extends StatelessWidget {
                 const _NothingToSettleCard()
             else ...[
               _OutstandingCard(totalOutstanding: Money(totalOutstanding)),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
               SectionHeader(title: l10n.whoOwesWhom),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               for (final proposal in proposals)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: Reveal(child: _ProposalCard(proposal: proposal)),
                 ),
             ],
             if (pendingRequests.isNotEmpty) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.md),
               SectionHeader(title: l10n.pendingRequestsSection),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               for (final request in pendingRequests)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: Reveal(
                     child: _PendingRequestRow(settlement: request),
                   ),
                 ),
             ],
             if (proposals.isNotEmpty && pendingRequests.isEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.warningSoft,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.lightbulb_outline_rounded,
-                      color: AppColors.warning,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        l10n.settleHint,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.4,
-                          color: AppColors.warning,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: AppSpacing.sm),
+              InfoBanner(
+                icon: Icons.lightbulb_outline_rounded,
+                message: l10n.settleHint,
+                tone: InfoTone.warning,
               ),
             ],
             if (history.isNotEmpty) ...[
-              const SizedBox(height: 28),
+              const SizedBox(height: AppSpacing.xxl),
               SectionHeader(title: l10n.settlementHistory),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               for (final settlement in history)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: _HistoryRow(settlement: settlement),
                 ),
             ],
             if (proposals.isEmpty &&
                 pendingRequests.isEmpty &&
                 history.isEmpty)
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xxl),
           ],
         ),
       ),
@@ -143,21 +128,15 @@ class SettleScreen extends StatelessWidget {
     required String toUserId,
     required Money amount,
   }) {
-    showModalBottomSheet(
+    showAppSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
       builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xxl,
+          AppSpacing.xxl,
+          AppSpacing.xxl,
+          AppSpacing.xxl,
         ),
         child: SettlementForm(
           fromUserId: fromUserId,
@@ -169,6 +148,7 @@ class SettleScreen extends StatelessWidget {
   }
 }
 
+/// Accent-gradient statement of everything still awaiting settlement.
 class _OutstandingCard extends StatelessWidget {
   final Money totalOutstanding;
 
@@ -177,67 +157,68 @@ class _OutstandingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Container(
-      padding: const EdgeInsets.all(22),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: AppGradients.accent,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: AppColors.secondaryDark.withValues(alpha: 0.40),
-            blurRadius: 26,
-            offset: const Offset(0, 12),
+            color: AppColors.secondary.withValues(alpha: 0.28),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: HeroCard(
+        gradient: AppGradients.accent,
+        radius: BorderRadius.circular(AppRadius.xl),
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.swap_horiz_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
-            child: const Icon(
-              Icons.swap_horiz_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.toBeSettled,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.toBeSettled,
+                    style: AppText.bodyM.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                AnimatedMoney(
-                  paisa: totalOutstanding.paisa,
-                  formatter: (p) => formatMoney(Money(p)),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
+                  const SizedBox(height: 2),
+                  AnimatedMoney(
+                    paisa: totalOutstanding.paisa,
+                    formatter: (p) => formatMoney(Money(p)),
+                    style: AppText.displayM.copyWith(
+                      letterSpacing: -0.5,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
+/// Celebratory all-clear shown once every balance is zero.
 class _AllSettledCard extends StatelessWidget {
   final Money totalOutstanding;
 
@@ -246,51 +227,49 @@ class _AllSettledCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final dark = context.isDark;
+    final p = context.palette;
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       decoration: BoxDecoration(
-        color: AppColors.positiveSoft,
+        gradient: AppGradients.tint(
+          AppColors.positive,
+          alpha: dark ? 0.16 : 0.10,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.positive.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.positive.withValues(alpha: 0.25)),
       ),
       child: Column(
         children: [
           Container(
-            width: 76,
-            height: 76,
+            width: 72,
+            height: 72,
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: AppGradients.tint(
+                AppColors.positive,
+                alpha: dark ? 0.22 : 0.16,
+              ),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.positive.withValues(alpha: 0.3),
-                  blurRadius: 24,
-                ),
-              ],
+              border: Border.all(
+                color: AppColors.positive.withValues(alpha: 0.25),
+              ),
             ),
             child: const Icon(
               Icons.check_rounded,
               color: AppColors.positive,
-              size: 40,
+              size: 36,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             l10n.allSettled,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: AppColors.positive,
-            ),
+            style: AppText.titleL.copyWith(color: AppColors.positive),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             l10n.allSettledMessage,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.positive.withValues(alpha: 0.85),
-            ),
+            style: AppText.bodyM.copyWith(color: p.textSecondary),
           ),
         ],
       ),
@@ -331,6 +310,7 @@ class _ProposalCard extends StatelessWidget {
     final fromName = state.memberName(proposal.fromUserId) ?? '?';
     final toName = state.memberName(proposal.toUserId) ?? '?';
     final l10n = context.l10n;
+    final p = context.palette;
     final iAmDebtor = myEntity == proposal.fromUserId;
     final iAmCreditor = myEntity == proposal.toUserId;
 
@@ -338,23 +318,19 @@ class _ProposalCard extends StatelessWidget {
       child: Row(
         children: [
           _AvatarPair(fromName: fromName, toName: toName),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   l10n.owes(fromName, toName),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppText.titleS.copyWith(color: p.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   formatMoney(proposal.amount),
-                  style: const TextStyle(
-                    fontSize: 15,
+                  style: AppText.bodyL.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.negative,
                   ),
@@ -365,40 +341,22 @@ class _ProposalCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     l10n.awaitingDebtorRequest(fromName),
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color:
-                          Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary,
-                    ),
+                    style: AppText.caption.copyWith(color: p.textSecondary),
                   ),
                 ],
               ],
             ),
           ),
           if (iAmDebtor)
-            PressableScale(
+            _MiniPillButton(
+              label: l10n.settleAction,
+              background: AppColors.secondary,
+              foreground: Colors.white,
               onTap: () => SettleScreen.openSettlementSheet(
                 context,
                 fromUserId: proposal.fromUserId,
                 toUserId: proposal.toUserId,
                 amount: proposal.amount,
-              ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  l10n.settleAction,
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
               ),
             ),
         ],
@@ -441,30 +399,17 @@ class _PendingRequestRow extends StatelessWidget {
 
   Future<void> _reject(BuildContext context) async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
+    final debtorName =
+        context.read<AppState>().memberName(settlement.fromUserId) ?? '?';
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.reject),
-        content: Text(l10n.creditorApprovalNote(
-          dialogContext.read<AppState>().memberName(settlement.fromUserId) ??
-              '?',
-        )),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(
-              l10n.reject,
-              style: const TextStyle(color: AppColors.negative),
-            ),
-          ),
-        ],
-      ),
+      title: l10n.reject,
+      message: l10n.creditorApprovalNote(debtorName),
+      confirmLabel: l10n.reject,
+      destructive: true,
+      icon: Icons.cancel_outlined,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     final state = context.read<AppState>();
     final ok = await state.rejectSettlement(settlement.id);
     if (!context.mounted) return;
@@ -497,18 +442,19 @@ class _PendingRequestRow extends StatelessWidget {
     final fromName = state.memberName(settlement.fromUserId) ?? '?';
     final toName = state.memberName(settlement.toUserId) ?? '?';
     final l10n = context.l10n;
+    final p = context.palette;
+    final dark = context.isDark;
     final iAmCreditor = settlement.isCreditor(myEntity);
 
     return SurfaceCard(
-      padding: const EdgeInsets.all(14),
-      borderRadius: 18,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
           Container(
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.14),
+              gradient: AppGradients.tint(AppColors.warning, alpha: 0.14),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
@@ -517,75 +463,43 @@ class _PendingRequestRow extends StatelessWidget {
               size: 22,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   l10n.fromTo(fromName, toName),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppText.titleS.copyWith(color: p.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   iAmCreditor
                       ? '${l10n.requestedBy} $fromName'
                       : l10n.waitingApprovalFrom(toName),
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
-                  ),
+                  style: AppText.caption.copyWith(color: p.textSecondary),
                 ),
               ],
             ),
           ),
           if (iAmCreditor) ...[
-            PressableScale(
+            _MiniPillButton(
+              label: l10n.approve,
+              background: AppColors.positive,
+              foreground: Colors.white,
               onTap: () => _approve(context),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.positive.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Text(
-                  l10n.approve,
-                  style: const TextStyle(
-                    color: AppColors.positive,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12.5,
-                  ),
-                ),
-              ),
             ),
-            const SizedBox(width: 8),
-            PressableScale(
+            const SizedBox(width: AppSpacing.sm),
+            _MiniPillButton(
+              label: l10n.reject,
+              background: dark
+                  ? AppColors.negative.withValues(alpha: 0.16)
+                  : AppColors.negativeSoft,
+              foreground: AppColors.negative,
               onTap: () => _reject(context),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.negative.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Text(
-                  l10n.reject,
-                  style: const TextStyle(
-                    color: AppColors.negative,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12.5,
-                  ),
-                ),
-              ),
             ),
           ] else
-            _StatusChip(status: settlement.status),
+            _statusBadge(settlement.status, context),
         ],
       ),
     );
@@ -606,22 +520,23 @@ class _HistoryRow extends StatelessWidget {
     final fromName = state.memberName(settlement.fromUserId) ?? '?';
     final toName = state.memberName(settlement.toUserId) ?? '?';
     final l10n = context.l10n;
+    final p = context.palette;
     final rejected = settlement.status == SettlementStatus.rejected;
     final iAmDebtor =
         settlement.isDebtor(myEntity) && rejected;
 
     return SurfaceCard(
-      padding: const EdgeInsets.all(14),
-      borderRadius: 18,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
           Container(
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: rejected
-                  ? AppColors.negative.withValues(alpha: 0.10)
-                  : AppColors.positive.withValues(alpha: 0.12),
+              gradient: AppGradients.tint(
+                rejected ? AppColors.negative : AppColors.positive,
+                alpha: 0.12,
+              ),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
@@ -632,17 +547,14 @@ class _HistoryRow extends StatelessWidget {
               size: 22,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   l10n.fromTo(fromName, toName),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppText.titleS.copyWith(color: p.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -650,12 +562,7 @@ class _HistoryRow extends StatelessWidget {
                     settlement.paymentMethod,
                     formatRelativeDay(settlement.date, l10n: l10n),
                   ),
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
-                  ),
+                  style: AppText.caption.copyWith(color: p.textSecondary),
                 ),
               ],
             ),
@@ -665,40 +572,26 @@ class _HistoryRow extends StatelessWidget {
             children: [
               Text(
                 formatMoney(settlement.amount),
-                style: TextStyle(
-                  fontSize: 14.5,
+                style: AppText.titleS.copyWith(
                   fontWeight: FontWeight.w800,
                   color: rejected ? AppColors.negative : AppColors.positive,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               if (iAmDebtor)
-                PressableScale(
+                _MiniPillButton(
+                  label: l10n.requestAgain,
+                  background: p.surfaceAlt,
+                  foreground: p.textSecondary,
                   onTap: () => SettleScreen.openSettlementSheet(
                     context,
                     fromUserId: settlement.fromUserId,
                     toUserId: settlement.toUserId,
                     amount: settlement.amount,
                   ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Text(
-                      l10n.requestAgain,
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11.5,
-                      ),
-                    ),
-                  ),
                 )
               else
-                _StatusChip(status: settlement.status),
+                _statusBadge(settlement.status, context),
             ],
           ),
         ],
@@ -707,54 +600,64 @@ class _HistoryRow extends StatelessWidget {
   }
 }
 
-/// Small pill visualising where a settlement stands in the approval flow.
-class _StatusChip extends StatelessWidget {
-  final SettlementStatus status;
+/// Compact pill action shared by settle / approve / reject / request-again.
+class _MiniPillButton extends StatelessWidget {
+  final String label;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onTap;
 
-  const _StatusChip({required this.status});
+  const _MiniPillButton({
+    required this.label,
+    required this.background,
+    required this.foreground,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final String label;
-    final Color color;
-    switch (status) {
-      case SettlementStatus.pendingApproval:
-        label = l10n.pendingApproval;
-        color = AppColors.warning;
-      case SettlementStatus.approved:
-      case SettlementStatus.paid:
-        label = status == SettlementStatus.approved
-            ? l10n.statusApproved
-            : l10n.statusSettled;
-        color = AppColors.positive;
-      case SettlementStatus.rejected:
-        label = l10n.statusRejected;
-        color = AppColors.negative;
-      case SettlementStatus.pending:
-        label = l10n.statusPending;
-        color = AppColors.textMuted;
-      case SettlementStatus.partiallyPaid:
-        label = l10n.statusPartiallyPaid;
-        color = AppColors.textMuted;
-      case SettlementStatus.cancelled:
-        label = l10n.statusCancelled;
-        color = AppColors.textMuted;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w700,
-          fontSize: 10.5,
+    return PressableScale(
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppText.labelM.copyWith(color: foreground),
         ),
       ),
     );
+  }
+}
+
+/// Maps a settlement lifecycle state onto the shared [StatusBadge] tones.
+StatusBadge _statusBadge(SettlementStatus status, BuildContext context) {
+  final l10n = context.l10n;
+  switch (status) {
+    case SettlementStatus.pendingApproval:
+      return StatusBadge(label: l10n.pendingApproval, tone: BadgeTone.warning);
+    case SettlementStatus.approved:
+    case SettlementStatus.paid:
+      return StatusBadge(
+        label: status == SettlementStatus.approved
+            ? l10n.statusApproved
+            : l10n.statusSettled,
+        tone: BadgeTone.positive,
+      );
+    case SettlementStatus.rejected:
+      return StatusBadge(label: l10n.statusRejected, tone: BadgeTone.negative);
+    case SettlementStatus.partiallyPaid:
+      return StatusBadge(label: l10n.statusPartiallyPaid, tone: BadgeTone.info);
+    case SettlementStatus.pending:
+      return StatusBadge(label: l10n.statusPending, tone: BadgeTone.neutral);
+    case SettlementStatus.cancelled:
+      return StatusBadge(label: l10n.statusCancelled, tone: BadgeTone.neutral);
   }
 }

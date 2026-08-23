@@ -53,7 +53,7 @@ class CycleDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final cycle = state.cycles.where((c) => c.id == cycleId).firstOrNull;
 
     if (cycle == null) {
@@ -66,7 +66,6 @@ class CycleDetailScreen extends StatelessWidget {
     final expenses = state.expensesForCycle(cycleId);
     final balances = state.computeBalances(cycleId);
     final total = state.totalSpent(cycleId);
-    final isClosed = cycle.status == CycleStatus.closed;
 
     return Scaffold(
       appBar: AppBar(title: Text(cycle.name)),
@@ -77,8 +76,8 @@ class CycleDetailScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: [
             SurfaceCard(
-              padding: const EdgeInsets.all(18),
-              borderRadius: 20,
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              borderRadius: AppRadius.lg,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -87,38 +86,32 @@ class CycleDetailScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           cycle.name,
-                          style: const TextStyle(
+                          style: AppText.titleL.copyWith(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
-                      _StatusBadge(
-                        closed: isClosed,
+                      StatusBadge(
                         label: _cycleStatusLabel(l10n, cycle.status),
+                        tone: _cycleStatusTone(cycle.status),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     _cycleRange(cycle),
-                    style: TextStyle(
+                    style: AppText.bodyM.copyWith(
                       fontSize: 13,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
+                      color: p.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     state.space?.cycleType == CycleType.custom
                         ? l10n.customCycle
                         : l10n.monthlyCycle,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
+                    style: AppText.labelM.copyWith(color: AppColors.primary),
                   ),
                   const Divider(height: 28),
                   Row(
@@ -140,33 +133,27 @@ class CycleDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             if (balances.isNotEmpty) ...[
               SectionHeader(title: l10n.whoPaidThisCycle),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               for (final b in balances) _BalanceRow(state: state, info: b),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
             ],
             SectionHeader(title: l10n.expenses),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             if (expenses.isEmpty)
               SurfaceCard(
-                padding: const EdgeInsets.all(16),
-                borderRadius: 16,
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Text(
                   l10n.noExpensesInCycle,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondary,
-                  ),
+                  style: AppText.bodyM.copyWith(color: p.textSecondary),
                 ),
               )
             else
               for (final expense in expenses)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: _CycleExpenseTile(expense: expense),
                 ),
           ],
@@ -185,7 +172,7 @@ class PreviousCyclesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final cycles = state.closedCycles;
 
     return Scaffold(
@@ -202,10 +189,8 @@ class PreviousCyclesScreen extends StatelessWidget {
                       child: Center(
                         child: Text(
                           l10n.noPreviousCycles,
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
+                          style: AppText.bodyM.copyWith(
+                            color: p.textSecondary,
                           ),
                         ),
                       ),
@@ -219,69 +204,61 @@ class PreviousCyclesScreen extends StatelessWidget {
                 children: [
                   for (final c in cycles)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
                       child: SurfaceCard(
-                        padding: const EdgeInsets.all(16),
-                        borderRadius: 18,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => CycleDetailScreen(cycleId: c.id),
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => CycleDetailScreen(cycleId: c.id),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                gradient: AppGradients.tint(AppColors.primary),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
+                              ),
+                              child: const Icon(
+                                Icons.history_rounded,
+                                color: AppColors.primary,
+                                size: 22,
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.12,
+                            const SizedBox(width: AppSpacing.lg),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    c.name,
+                                    style: AppText.titleS.copyWith(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.history_rounded,
-                                  color: AppColors.primary,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      c.name,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    _cycleRange(c),
+                                    style: AppText.bodyM.copyWith(
+                                      fontSize: 12.5,
+                                      color: p.textSecondary,
                                     ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      _cycleRange(c),
-                                      style: TextStyle(
-                                        fontSize: 12.5,
-                                        color: isDark
-                                            ? AppColors.textSecondaryDark
-                                            : AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                formatMoney(state.totalSpent(c.id)),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Text(
+                              formatMoney(state.totalSpent(c.id)),
+                              style: AppText.labelL.copyWith(
+                                fontWeight: FontWeight.w800,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -292,30 +269,17 @@ class PreviousCyclesScreen extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final bool closed;
-  final String label;
-
-  const _StatusBadge({required this.closed, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = closed ? AppColors.textMuted : AppColors.positive;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
+/// Maps a cycle status to the shared semantic badge tone.
+BadgeTone _cycleStatusTone(CycleStatus status) {
+  switch (status) {
+    case CycleStatus.active:
+      return BadgeTone.positive;
+    case CycleStatus.readyToSettle:
+      return BadgeTone.warning;
+    case CycleStatus.settled:
+      return BadgeTone.brand;
+    case CycleStatus.closed:
+      return BadgeTone.neutral;
   }
 }
 
@@ -327,23 +291,22 @@ class _StatLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          style: AppText.titleL.copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: p.textPrimary,
+          ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12.5,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondary,
-          ),
+          style: AppText.labelM.copyWith(color: p.textSecondary),
         ),
       ],
     );
@@ -358,38 +321,33 @@ class _BalanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final name = state.memberName(info.userId) ?? '?';
     final remaining = info.remaining;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: SurfaceCard(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        borderRadius: 14,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        borderRadius: AppRadius.md,
         child: Row(
           children: [
             MemberAvatar(name: name, size: 34),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AppText.labelL.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${formatMoney(info.paid)} · ${context.l10n.spentLabel}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
-                    ),
+                    style: AppText.caption.copyWith(color: p.textSecondary),
                   ),
                 ],
               ),
@@ -398,12 +356,10 @@ class _BalanceRow extends StatelessWidget {
               remaining.isNegative
                   ? '· ${formatMoney(remaining.abs())}'
                   : formatMoney(remaining),
-              style: TextStyle(
-                fontSize: 14,
+              style: AppText.labelL.copyWith(
                 fontWeight: FontWeight.w800,
-                color: remaining.isNegative
-                    ? AppColors.negative
-                    : AppColors.positive,
+                color:
+                    remaining.isNegative ? AppColors.negative : AppColors.positive,
               ),
             ),
           ],
@@ -422,8 +378,8 @@ class _CycleExpenseTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final l10n = context.l10n;
+    final p = context.palette;
     final category = state.categoryFor(expense.categoryId);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PressableScale(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
@@ -431,31 +387,30 @@ class _CycleExpenseTile extends StatelessWidget {
         ),
       ),
       child: SurfaceCard(
-        padding: const EdgeInsets.all(14),
-        borderRadius: 16,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md + 2,
+        ),
         child: Row(
           children: [
             CategoryIcon(category: category, size: 38),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     expense.description ?? l10n.expense,
-                    style: const TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppText.titleS.copyWith(color: p.textPrimary),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     '${state.memberName(expense.paidByUserId)} · ${formatRelativeDay(expense.date, l10n: l10n)}',
-                    style: TextStyle(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.bodyM.copyWith(
                       fontSize: 12.5,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
+                      color: p.textSecondary,
                     ),
                   ),
                 ],
@@ -463,10 +418,7 @@ class _CycleExpenseTile extends StatelessWidget {
             ),
             Text(
               formatMoney(expense.amount),
-              style: const TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w800,
-              ),
+              style: AppText.titleS.copyWith(fontWeight: FontWeight.w800),
             ),
           ],
         ),

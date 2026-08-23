@@ -8,6 +8,7 @@ import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
+import '../widgets/cards.dart';
 import '../widgets/misc.dart' show EmptyState;
 
 /// The signed-in user's in-app notification inbox. Fed in real time by the
@@ -52,9 +53,15 @@ class NotificationsScreen extends StatelessWidget {
               )
             : ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                ),
                 itemCount: notifications.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.sm),
                 itemBuilder: (context, index) {
                   final note = notifications[index];
                   final unread = note.createdAt.isAfter(readAt);
@@ -95,81 +102,73 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
+    final dark = context.isDark;
     final l10n = context.l10n;
-    final bg = unread
-        ? AppColors.primary.withValues(alpha: 0.08)
-        : (isDark ? AppColors.surfaceDark : Colors.white);
-    final border = unread
-        ? AppColors.primary.withValues(alpha: 0.35)
-        : (isDark ? AppColors.borderDark : AppColors.border);
 
-    return InkWell(
+    final tile = SurfaceCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            MemberAvatar(name: notification.actorName, size: 42),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _titleFor(l10n, notification.type),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: unread ? FontWeight.w800 : FontWeight.w600,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${notification.displayActor}'
-                    '${notification.spaceId != null ? ' · ${l10n.inSpace}' : ''}',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    formatRelativeDay(notification.createdAt, l10n: l10n),
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: isDark
-                          ? AppColors.textMutedDark
-                          : AppColors.textMuted,
-                    ),
-                  ),
-                ],
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      border: !unread,
+      color: unread ? Colors.transparent : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MemberAvatar(name: notification.actorName, size: 42),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _titleFor(l10n, notification.type),
+                  style: (unread
+                          ? AppText.titleS.copyWith(fontWeight: FontWeight.w800)
+                          : AppText.titleS)
+                      .copyWith(color: p.textPrimary),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${notification.displayActor}'
+                  '${notification.spaceId != null ? ' · ${l10n.inSpace}' : ''}',
+                  style: AppText.labelM.copyWith(color: p.textSecondary),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  formatRelativeDay(notification.createdAt, l10n: l10n),
+                  style: AppText.caption.copyWith(color: p.textMuted),
+                ),
+              ],
+            ),
+          ),
+          if (unread)
+            Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.only(top: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
               ),
             ),
-            if (unread)
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.only(top: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-          ],
-        ),
+        ],
       ),
+    );
+
+    if (!unread) return tile;
+
+    // Unread rows get a subtle primary tint plus a primary hairline ring on
+    // top of the standard card chrome.
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppGradients.tint(
+          AppColors.primary,
+          alpha: dark ? 0.10 : 0.06,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: tile,
     );
   }
 

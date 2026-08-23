@@ -10,6 +10,9 @@ import '../theme/app_theme.dart';
 import '../widgets/amount_field.dart';
 import '../widgets/avatars.dart';
 import '../widgets/buttons.dart';
+import '../widgets/cards.dart';
+import '../widgets/form_bits.dart';
+import '../widgets/misc.dart';
 import '../widgets/toasts.dart';
 
 /// Step 1 of the Split-Mode approval flow: opened by the DEBTOR only. The
@@ -108,7 +111,7 @@ class _SettlementFormState extends State<SettlementForm> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     final fromName = state.memberName(widget.fromUserId) ?? '?';
     final toName = state.memberName(widget.toUserId) ?? '?';
@@ -119,80 +122,70 @@ class _SettlementFormState extends State<SettlementForm> {
       children: [
         Text(
           l10n.requestSettlementTitle,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+          style: AppText.titleL.copyWith(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: p.textPrimary,
           ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        SurfaceCard(
           child: Row(
             children: [
-              MemberAvatar(name: fromName, size: 40),
-              const SizedBox(width: 8),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    MemberAvatar(name: fromName, size: 40),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       fromName,
-                      style: const TextStyle(
-                        fontSize: 14,
+                      textAlign: TextAlign.center,
+                      style: AppText.labelL.copyWith(
                         fontWeight: FontWeight.w700,
+                        color: p.textPrimary,
                       ),
                     ),
                     Text(
                       l10n.pays,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
-                      ),
+                      textAlign: TextAlign.center,
+                      style: AppText.caption.copyWith(color: p.textSecondary),
                     ),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.arrow_forward_rounded,
-                color: AppColors.primary,
-                size: 22,
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
               ),
-              const SizedBox(width: 8),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    MemberAvatar(name: toName, size: 40),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       toName,
-                      textAlign: TextAlign.end,
-                      style: const TextStyle(
-                        fontSize: 14,
+                      textAlign: TextAlign.center,
+                      style: AppText.labelL.copyWith(
                         fontWeight: FontWeight.w700,
+                        color: p.textPrimary,
                       ),
                     ),
                     Text(
                       l10n.receives,
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondary,
-                      ),
+                      textAlign: TextAlign.center,
+                      style: AppText.caption.copyWith(color: p.textSecondary),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              MemberAvatar(name: toName, size: 40),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         AmountField(
           value: _amount,
           label: l10n.amount,
@@ -202,56 +195,17 @@ class _SettlementFormState extends State<SettlementForm> {
         Center(
           child: Text(
             l10n.maxOutstanding(formatMoney(_maxOutstanding(state))),
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
+            style: AppText.labelM.copyWith(color: p.textSecondary),
           ),
         ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.warningSoft,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.hourglass_top_rounded,
-                size: 20,
-                color: AppColors.warning,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  l10n.creditorApprovalNote(toName),
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.warning,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        const SizedBox(height: AppSpacing.md),
+        InfoBanner(
+          icon: Icons.hourglass_top_rounded,
+          message: l10n.creditorApprovalNote(toName),
+          tone: InfoTone.warning,
         ),
-        const SizedBox(height: 16),
-        Text(
-          l10n.paymentMethod,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.lg),
+        FormLabel(l10n.paymentMethod),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -266,8 +220,10 @@ class _SettlementFormState extends State<SettlementForm> {
               ),
           ],
         ),
-        const SizedBox(height: 16),
-        GestureDetector(
+        const SizedBox(height: AppSpacing.lg),
+        DatePickerField(
+          value: _date,
+          format: formatShortDate,
           onTap: _saving
               ? null
               : () async {
@@ -279,31 +235,8 @@ class _SettlementFormState extends State<SettlementForm> {
                   );
                   if (picked != null) setState(() => _date = picked);
                 },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.event_outlined,
-                  size: 20,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  formatShortDate(_date),
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const Spacer(),
-                const Icon(Icons.chevron_right, color: AppColors.textMuted),
-              ],
-            ),
-          ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         TextField(
           controller: _noteController,
           enabled: !_saving,

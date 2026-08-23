@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
 import '../../state/app_state.dart';
+import '../theme/app_theme.dart';
 
 const List<Color> _avatarColors = [
   Color(0xFF3D7DE0), // royal blue
@@ -137,9 +138,7 @@ class AvatarStack extends StatelessWidget {
                 width: size,
                 height: size,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF21262F)
-                      : const Color(0xFFF0ECE3),
+                  color: context.palette.surfaceAlt,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Theme.of(context).colorScheme.surface,
@@ -152,9 +151,7 @@ class AvatarStack extends StatelessWidget {
                   style: TextStyle(
                     fontSize: size * 0.32,
                     fontWeight: FontWeight.w700,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF6E7785)
-                        : const Color(0xFF5B6470),
+                    color: context.palette.textSecondary,
                   ),
                 ),
               ),

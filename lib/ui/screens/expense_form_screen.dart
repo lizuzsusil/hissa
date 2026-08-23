@@ -15,6 +15,7 @@ import '../theme/app_theme.dart';
 import '../widgets/amount_field.dart';
 import '../widgets/avatars.dart';
 import '../widgets/buttons.dart';
+import '../widgets/form_bits.dart';
 
 class ExpenseFormScreen extends StatefulWidget {
   final Expense? expense;
@@ -273,7 +274,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     }
 
     final categories = state.categories;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
 
     return Scaffold(
@@ -313,17 +313,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               },
             ),
             const SizedBox(height: 24),
-            _Label(l10n.date),
-            const SizedBox(height: 10),
-            _buildDatePicker(isDark),
+            FormLabel(l10n.date),
+            _buildDatePicker(),
             if (!isPersonal) ...[
               const SizedBox(height: 24),
-              _Label(l10n.paidBy),
-              const SizedBox(height: 10),
+              FormLabel(l10n.paidBy),
               _buildPayerDisplay(state),
               const SizedBox(height: 24),
-              _Label(l10n.splitBetween),
-              const SizedBox(height: 10),
+              FormLabel(l10n.splitBetween),
               _buildParticipantSelector(state),
               const SizedBox(height: 20),
               _buildSplitTypeSelector(),
@@ -331,8 +328,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               _buildSplitInput(state),
             ],
             const SizedBox(height: 24),
-            _Label(l10n.note),
-            const SizedBox(height: 10),
+            FormLabel(l10n.note),
             TextField(
               controller: _noteController,
               enabled: !_saving,
@@ -349,37 +345,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             ],
             const SizedBox(height: 20),
             if (_attemptedSave && !_canSave(state, l10n)) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.negativeSoft,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      size: 18,
-                      color: AppColors.negative,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _validationMessage(state, l10n)!,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.negative,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ErrorBanner(message: _validationMessage(state, l10n)!),
               const SizedBox(height: 12),
             ],
             PrimaryButton(
@@ -395,6 +361,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Widget _buildCategoryPicker(List<Category> categories) {
+    final p = context.palette;
+    final dark = context.isDark;
     final midpoint = (categories.length / 2).ceil();
     final firstRow = categories.take(midpoint).toList();
     final secondRow = categories.skip(midpoint).toList();
@@ -405,17 +373,19 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       return GestureDetector(
         onTap: _saving ? null : () => setState(() => _categoryId = c.id),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: AppMotion.fast,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: selected
-                ? _colorOf(c).withValues(alpha: 0.16)
-                : (Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.surfaceAltDark
-                      : AppColors.surfaceAlt),
-            borderRadius: BorderRadius.circular(16),
+            gradient: selected
+                ? AppGradients.tint(
+                    AppColors.primary,
+                    alpha: dark ? 0.18 : 0.12,
+                  )
+                : null,
+            color: selected ? null : p.surfaceAlt,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
-              color: selected ? _colorOf(c) : Colors.transparent,
+              color: selected ? AppColors.primary : Colors.transparent,
               width: 1.4,
             ),
           ),
@@ -425,15 +395,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               Icon(
                 iconForCodePoint(c.iconCodePoint),
                 size: 16,
-                color: _colorOf(c),
+                color: selected ? AppColors.primary : p.textSecondary,
               ),
               const SizedBox(width: 6),
               Text(
                 c.name,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? _colorOf(c) : null,
+                style: AppText.labelM.copyWith(
+                  color: selected ? AppColors.primary : p.textSecondary,
                 ),
               ),
             ],
@@ -457,8 +425,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Label(context.l10n.category),
-        const SizedBox(height: 10),
+        FormLabel(context.l10n.category),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
@@ -475,56 +442,42 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
   }
 
-  Color _colorOf(Category c) =>
-      c.colorValue == null ? AppColors.primary : Color(c.colorValue!);
-
   Widget _buildPayerDisplay(AppState state) {
     final l10n = context.l10n;
+    final p = context.palette;
     final uid = state.currentUserId;
     final name = uid == null
         ? l10n.you
         : (state.memberName(uid) ?? state.currentUser?.name ?? l10n.you);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.surfaceAltDark
-            : AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(16),
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [
           MemberAvatar(name: name, size: 40),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               name,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              style: AppText.bodyL.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-          if (uid != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                l10n.you,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
+          if (uid != null) ParticipantPill(label: l10n.you),
         ],
       ),
     );
   }
 
-  Widget _buildDatePicker(bool isDark) {
-    return GestureDetector(
+  Widget _buildDatePicker() {
+    return DatePickerField(
+      value: _date,
+      format: formatFullDate,
       onTap: _saving
           ? null
           : () async {
@@ -536,36 +489,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               );
               if (picked != null) setState(() => _date = picked);
             },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_today_outlined,
-              size: 20,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              formatFullDate(_date),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            const Icon(Icons.chevron_right, color: AppColors.textMuted),
-          ],
-        ),
-      ),
     );
   }
 
   /// Builds the unified participant selector showing both individual members
   /// and persistent Member Groups.
   Widget _buildParticipantSelector(AppState state) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
 
     // Get active Member Groups for this space
     final currentSpaceId = state.space?.id;
@@ -625,8 +555,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         })
                       : null,
                   showCheckmark: false,
-                  selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                  checkmarkColor: AppColors.primary,
                 ),
             for (final g in memberGroups)
               FilterChip(
@@ -635,10 +563,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                   size: 22,
                 ),
                 label: Text(g.name),
-                labelStyle: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                ),
                 selected: _selectedGroups.any((sg) => sg.id == g.id),
                 onSelected: isGroupSelectable(g) && !_saving
                     ? (selected) => setState(() {
@@ -656,13 +580,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           _selectedGroups.removeWhere((sg) => sg.id == g.id);
                         }
                       })
-                    : null,
-                showCheckmark: false,
-                selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                checkmarkColor: AppColors.primary,
-                tooltip: g.memberIds.isNotEmpty
-                    ? '${context.l10n.groupMembers}: ${g.memberIds.map((id) => state.memberName(id) ?? id).join(', ')}'
-                    : null,
+                      : null,
+                  showCheckmark: false,
+                  tooltip: g.memberIds.isNotEmpty
+                      ? '${context.l10n.groupMembers}: ${g.memberIds.map((id) => state.memberName(id) ?? id).join(', ')}'
+                      : null,
               ),
           ],
         ),
@@ -670,13 +592,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           const SizedBox(height: 8),
           Text(
             context.l10n.groupCountsAsOneParticipant,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
+            style: AppText.caption.copyWith(color: p.textSecondary),
           ),
         ],
       ],
@@ -690,12 +606,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   // Groups are now selected from persistent MemberGroups only
 
   Widget _buildSplitTypeSelector() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
+    final dark = context.isDark;
     return Container(
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(16),
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -705,16 +622,17 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           return Stack(
             children: [
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 240),
-                curve: Curves.easeOutCubic,
+                duration: AppMotion.medium,
+                curve: AppMotion.ease,
                 left: selected * width,
                 width: width,
                 top: 0,
                 bottom: 0,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.surfaceDark : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    color: p.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    boxShadow: AppShadows.card(dark: dark),
                   ),
                 ),
               ),
@@ -732,12 +650,12 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           child: Text(
                             _splitLabel(type),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 11.5,
+                            style: AppText.labelL.copyWith(
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: _splitType == type
                                   ? AppColors.primary
-                                  : AppColors.textSecondary,
+                                  : p.textSecondary,
                             ),
                           ),
                         ),
@@ -803,6 +721,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Widget _buildPreview(AppState state) {
+    final p = context.palette;
     final parties = _parties;
     if (parties.isEmpty || _amount.isZero) return const SizedBox.shrink();
     final shares = SplitCalculator.buildGrouped(
@@ -816,10 +735,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
       child: Column(
@@ -827,13 +746,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         children: [
           Text(
             context.l10n.splitPreview,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            style: AppText.labelL.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           for (final share in shares)
             if (share.userId != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: Row(
                   children: [
                     MemberAvatar(
@@ -844,17 +763,17 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     Expanded(
                       child: Text(
                         state.memberName(share.userId!) ?? '?',
-                        style: const TextStyle(
-                          fontSize: 13.5,
+                        style: AppText.bodyM.copyWith(
                           fontWeight: FontWeight.w600,
+                          color: p.textPrimary,
                         ),
                       ),
                     ),
                     Text(
                       formatMoney(share.amount),
-                      style: const TextStyle(
-                        fontSize: 13.5,
+                      style: AppText.bodyM.copyWith(
                         fontWeight: FontWeight.w700,
+                        color: p.textPrimary,
                       ),
                     ),
                   ],
@@ -862,7 +781,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               )
             else if (share.isGroup)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: Row(
                   children: [
                     MemberAvatar(
@@ -875,17 +794,17 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     Expanded(
                       child: Text(
                         _groupNameOf(share, state),
-                        style: const TextStyle(
-                          fontSize: 13.5,
+                        style: AppText.bodyM.copyWith(
                           fontWeight: FontWeight.w600,
+                          color: p.textPrimary,
                         ),
                       ),
                     ),
                     Text(
                       formatMoney(share.amount),
-                      style: const TextStyle(
-                        fontSize: 13.5,
+                      style: AppText.bodyM.copyWith(
                         fontWeight: FontWeight.w700,
+                        color: p.textPrimary,
                       ),
                     ),
                   ],
@@ -896,17 +815,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             children: [
               Text(
                 context.l10n.total,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppText.labelM.copyWith(color: p.textSecondary),
               ),
               const Spacer(),
               Text(
                 formatMoney(_amount),
-                style: const TextStyle(
-                  fontSize: 14,
+                style: AppText.labelL.copyWith(
                   fontWeight: FontWeight.w800,
+                  color: p.textPrimary,
                 ),
               ),
             ],
@@ -1096,13 +1012,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                       final val = double.tryParse(v) ?? 0;
                       setState(() => _percentages[p.id] = val);
                     },
-                    decoration: const InputDecoration(
-                      suffixText: '%',
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                    ),
+                    decoration: const InputDecoration(suffixText: '%'),
                   ),
                 ),
               ],
@@ -1112,13 +1022,12 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           children: [
             Text(
               context.l10n.total,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              style: AppText.labelM.copyWith(fontWeight: FontWeight.w700),
             ),
             const Spacer(),
             Text(
               '${NumberFormat.decimalPattern('en_IN').format(sum)}%',
-              style: TextStyle(
-                fontSize: 14,
+              style: AppText.labelL.copyWith(
                 fontWeight: FontWeight.w800,
                 color: (sum - 100).abs() <= 0.01
                     ? AppColors.positive
@@ -1185,13 +1094,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         () => _customAmounts[p.id] = Money((val * 100).round()),
                       );
                     },
-                    decoration: const InputDecoration(
-                      prefixText: 'Rs. ',
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                    ),
+                    decoration: const InputDecoration(prefixText: 'Rs. '),
                   ),
                 ),
               ],
@@ -1201,13 +1104,12 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           children: [
             Text(
               context.l10n.assigned,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              style: AppText.labelM.copyWith(fontWeight: FontWeight.w700),
             ),
             const Spacer(),
             Text(
               '${formatMoneyCompact(Money(assigned), showSymbol: false)} / ${formatMoneyCompact(_amount, showSymbol: false)}',
-              style: TextStyle(
-                fontSize: 13.5,
+              style: AppText.bodyM.copyWith(
                 fontWeight: FontWeight.w800,
                 color: ok ? AppColors.positive : AppColors.negative,
               ),
@@ -1229,6 +1131,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     required AppState state,
     required List<SplitParty> parties,
   }) {
+    final palette = context.palette;
     final total = _shareUnits.values.fold<int>(0, (a, b) => a + b);
     return Column(
       children: [
@@ -1247,11 +1150,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 ),
                 Text(
                   _shareAmountFor(p.id, total),
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppText.labelM.copyWith(color: palette.textSecondary),
                 ),
                 const SizedBox(width: 12),
                 IconButton(
@@ -1267,10 +1166,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 ),
                 Text(
                   '${_shareUnits[p.id] ?? 1}',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: AppText.bodyL.copyWith(fontWeight: FontWeight.w800),
                 ),
                 IconButton(
                   onPressed: _saving
@@ -1289,12 +1185,12 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           children: [
             Text(
               context.l10n.totalShares,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              style: AppText.labelM.copyWith(fontWeight: FontWeight.w700),
             ),
             const Spacer(),
             Text(
               '$total',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+              style: AppText.labelL.copyWith(fontWeight: FontWeight.w800),
             ),
           ],
         ),
@@ -1307,24 +1203,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final units = _shareUnits[partyId] ?? 1;
     final share = (_amount.paisa * units) ~/ totalUnits;
     return formatMoney(Money(share), showSymbol: false);
-  }
-}
-
-class _Label extends StatelessWidget {
-  final String text;
-  const _Label(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-      ),
-    );
   }
 }
 

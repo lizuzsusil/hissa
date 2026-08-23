@@ -65,7 +65,6 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
     );
     final currentEstimate =
         thisMonthEstimates.isEmpty ? null : thisMonthEstimates.first;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
 
     return RefreshIndicator(
@@ -76,7 +75,7 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
           SliverAppBar(
             pinned: true,
             expandedHeight: 208,
-            backgroundColor: isDark ? AppColors.bgDark : AppColors.bg,
+            backgroundColor: context.palette.bg,
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
               background: _Header(
@@ -96,7 +95,12 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
           ),
           SliverToBoxAdapter(
             child: ResponsiveContent(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.lg + 2,
+                AppSpacing.xl,
+                0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -108,12 +112,13 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                     onAddEstimate: () => _openEstimateSheet(),
                     onManageEstimates: () => _openEstimatesEditor(),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: _ActionButton(
-                          gradient: AppGradients.accent,
+                        flex: 2,
+                        child: _PrimaryAction(
                           icon: Icons.add_rounded,
                           label: l10n.addExpense,
                           onTap: () => Navigator.of(context).push(
@@ -123,10 +128,9 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
-                        child: _ActionButton(
-                          gradient: null,
+                        child: _TonalAction(
                           icon: currentEstimate == null
                               ? Icons.flag_outlined
                               : Icons.edit_outlined,
@@ -140,7 +144,7 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xxl),
                   SectionHeader(
                     title: l10n.recentExpenses,
                     actionLabel: l10n.viewAll,
@@ -161,14 +165,15 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
                         .entries
                         .map(
                           (entry) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
+                            padding:
+                                const EdgeInsets.only(bottom: AppSpacing.sm),
                             child: Reveal(
                               delay: Duration(milliseconds: 60 * entry.key),
                               child: _PersonalExpenseTile(expense: entry.value),
                             ),
                           ),
                         ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxxl - AppSpacing.sm),
                 ],
               ),
             ),
@@ -187,6 +192,8 @@ class _PersonalDashboardScreenState extends State<PersonalDashboardScreen> {
   }
 }
 
+/// Gradient statement header: identity, month switcher and this month's
+/// total spend — the single most important number on the page.
 class _Header extends StatelessWidget {
   final Space space;
   final DateTime month;
@@ -217,14 +224,15 @@ class _Header extends StatelessWidget {
         ? null
         : user.name.trim().split(RegExp(r'\s+')).first;
     return Container(
-      decoration: BoxDecoration(
-        gradient: AppColors.shimmerGradient,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+      decoration: const BoxDecoration(
+        gradient: AppColors.heroGradient,
+        borderRadius:
+            BorderRadius.vertical(bottom: Radius.circular(AppRadius.xl)),
       ),
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 8, AppSpacing.xl, AppSpacing.xl + 2),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -237,7 +245,7 @@ class _Header extends StatelessWidget {
                       size: 36,
                       outline: true,
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpacing.sm + 2),
                   ],
                   Expanded(
                     child: Row(
@@ -248,14 +256,11 @@ class _Header extends StatelessWidget {
                                 ? l10n.welcomeUser(firstName)
                                 : space.name,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                            ),
+                            style:
+                                AppText.titleM.copyWith(color: Colors.white),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Flexible(child: ModeChip(label: l10n.personalMode)),
                       ],
                     ),
@@ -270,10 +275,9 @@ class _Header extends StatelessWidget {
               const Spacer(),
               Text(
                 l10n.totalSpending,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12.5,
+                style: AppText.labelM.copyWith(
                   fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
                 ),
               ),
               const SizedBox(height: 2),
@@ -287,43 +291,37 @@ class _Header extends StatelessWidget {
                       child: AnimatedMoney(
                         paisa: total.paisa,
                         formatter: (p) => formatMoney(Money(p)),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 38,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -1,
-                        ),
+                        style:
+                            AppText.displayL.copyWith(color: Colors.white),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpacing.sm + 2),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
+                      horizontal: AppSpacing.sm + 2,
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Text(
                       _deltaLabel(l10n),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
+                      style: AppText.caption.copyWith(
                         fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 formatMonthYear(month),
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12.5,
+                style: AppText.labelM.copyWith(
                   fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -358,7 +356,7 @@ class _MonthSwitcher extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -366,11 +364,7 @@ class _MonthSwitcher extends StatelessWidget {
           _chevron(Icons.chevron_left_rounded, onPrevious),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppText.labelM.copyWith(color: Colors.white),
           ),
           _chevron(Icons.chevron_right_rounded, onNext),
         ],
@@ -393,17 +387,13 @@ class _MonthSwitcher extends StatelessWidget {
   }
 }
 
-/// One of the two quick actions on the dashboard: adding a real expense
-/// (gradient) or adding a planned amount (outlined, tertiary). The two are
-/// deliberately styled differently so actual vs estimated is never ambiguous.
-class _ActionButton extends StatelessWidget {
-  final LinearGradient? gradient;
+/// The dominant quick action: solid brand gradient fill with a soft shadow.
+class _PrimaryAction extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
-  const _ActionButton({
-    required this.gradient,
+  const _PrimaryAction({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -411,57 +401,99 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return PressableScale(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          gradient: gradient,
-          color: gradient == null
-              ? (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt)
-              : null,
-          borderRadius: BorderRadius.circular(18),
-          border: gradient == null
-              ? Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.border,
-                )
-              : null,
-          boxShadow: gradient != null
-              ? [
-                  BoxShadow(
-                    color: AppColors.secondaryDark.withValues(alpha: 0.28),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Ink(
+          height: 76,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          decoration: BoxDecoration(
+            gradient: AppColors.heroGradient,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryDeep.withValues(alpha: 0.24),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 22, color: Colors.white),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.titleS.copyWith(
+                    letterSpacing: -0.1,
+                    color: Colors.white,
                   ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: gradient == null ? AppColors.tertiary : Colors.white,
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: gradient == null
-                      ? (isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimary)
-                      : Colors.white,
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Quiet secondary quick action with a colour-coded icon.
+class _TonalAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _TonalAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Ink(
+          height: 76,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            color: p.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: p.border),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 21, color: AppColors.tertiary),
+              const SizedBox(height: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: p.textSecondary,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -477,8 +509,8 @@ class _PersonalExpenseTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final l10n = context.l10n;
+    final p = context.palette;
     final category = state.categoryFor(expense.categoryId);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PressableScale(
       onTap: () {
         Navigator.of(context).push(
@@ -488,37 +520,28 @@ class _PersonalExpenseTile extends StatelessWidget {
         );
       },
       child: SurfaceCard(
-        padding: const EdgeInsets.all(14),
-        borderRadius: 18,
+        padding: const EdgeInsets.all(AppSpacing.md + 2),
         child: Row(
           children: [
             CategoryIcon(category: category, size: 42),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppSpacing.lg - 2),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     expense.description ?? l10n.expense,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppText.titleS.copyWith(fontSize: 15),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     formatRelativeDay(expense.date, l10n: l10n),
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
-                    ),
+                    style: AppText.caption.copyWith(color: p.textSecondary),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Flexible(
               child: Align(
                 alignment: Alignment.centerRight,
@@ -526,9 +549,10 @@ class _PersonalExpenseTile extends StatelessWidget {
                   formatMoney(expense.amount),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: AppText.titleS.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
+                    color: p.textPrimary,
                   ),
                 ),
               ),

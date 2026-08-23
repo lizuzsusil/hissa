@@ -14,8 +14,10 @@ import '../widgets/buttons.dart';
 import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
 import '../widgets/category_icon.dart';
+import '../widgets/dialogs.dart';
 import '../widgets/misc.dart';
 import '../widgets/motion.dart';
+import '../widgets/sheets.dart';
 import '../widgets/toasts.dart';
 import 'expense_detail_screen.dart';
 import 'income_form_screen.dart';
@@ -44,7 +46,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     final isPersonal = state.isPersonalMode;
 
@@ -128,7 +130,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             onPressed: () => _pickDateRange(),
           ),
           if (!isPersonal) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             IconAction(
               icon:
                   _memberFilter != null ||
@@ -141,23 +143,24 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               onPressed: () => _showFilterSheet(state, members, categories),
             ),
           ],
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
         ],
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.xs,
+              AppSpacing.xl,
+              AppSpacing.sm,
+            ),
             child: TextField(
               controller: _searchController,
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
                 hintText: l10n.searchExpenses,
                 prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
               ),
             ),
           ),
@@ -165,7 +168,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             height: 34,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: AppSpacing.pageH,
               children: [
                 _FilterChip(
                   label: l10n.all,
@@ -195,19 +198,19 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       color: _categoryFilter == c.id
                           ? Colors.white
                           : (c.colorValue == null
-                                ? AppColors.textSecondary
+                                ? p.textSecondary
                                 : Color(c.colorValue!)),
                     ),
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           SizedBox(
-            height: 30,
+            height: 34,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: AppSpacing.pageH,
               children: [
                 _FilterChip(
                   label: l10n.allTimeTotal,
@@ -254,7 +257,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => context.read<AppState>().refresh(),
@@ -276,10 +279,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     )
                   : ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xl,
+                        AppSpacing.sm,
+                        AppSpacing.xl,
+                        100,
+                      ),
                       children: [
                         if (isPersonal) ...[
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                           _LifetimeCard(
                             title: summaryTitle,
                             total: summaryTotal,
@@ -288,19 +296,24 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             deltaPercent: deltaPercent,
                             deltaLabel: previous?.label,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                         ],
                         if (incomes.isNotEmpty) ...[
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                           _IncomeSection(
                             incomes: incomes,
                             total: state.totalHissaIncome(),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                         ],
                         for (final entry in _groupByDay(filtered).entries) ...[
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(2, 14, 2, 10),
+                            padding: const EdgeInsets.fromLTRB(
+                              2,
+                              AppSpacing.lg,
+                              2,
+                              AppSpacing.sm,
+                            ),
                             child: Row(
                               children: [
                                 Text(
@@ -308,23 +321,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                     entry.value.first.date,
                                     l10n: l10n,
                                   ),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondary,
+                                  style: AppText.overline.copyWith(
+                                    color: p.textMuted,
                                   ),
                                 ),
                                 const Spacer(),
                                 Text(
                                   _dayTotal(entry.value),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? AppColors.textMutedDark
-                                        : AppColors.textMuted,
+                                  style: AppText.overline.copyWith(
+                                    color: p.textMuted,
                                   ),
                                 ),
                               ],
@@ -332,7 +337,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           ),
                           for (final expense in entry.value)
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.sm,
+                              ),
                               child: _ExpenseRow(expense: expense),
                             ),
                         ],
@@ -374,43 +381,32 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   ) {
     final l10n = context.l10n;
 
-    showModalBottomSheet(
+    showAppSheet<void>(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      title: l10n.filterExpenses,
       builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+        builder: (context, setSheetState) {
+          final p = context.palette;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              0,
+              AppSpacing.xl,
+              AppSpacing.xl,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.filterExpenses,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 20),
                 if (!state.isPersonalMode) ...[
                   Text(
                     l10n.paidBy,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: AppText.labelM.copyWith(color: p.textSecondary),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
                     children: [
                       ChoiceChip(
                         label: Text(l10n.everyone),
@@ -427,7 +423,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                 ],
                 _FilterDropdown(
                   label: l10n.category,
@@ -447,7 +443,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     () => _categoryFilter = (v ?? '') == '' ? null : v,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
                 PrimaryButton(
                   label: l10n.apply,
                   onPressed: () {
@@ -457,8 +453,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -639,24 +635,20 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Padding(
-      padding: EdgeInsets.only(right: compact ? 6 : 8),
+      padding: EdgeInsets.only(right: compact ? 6 : AppSpacing.sm),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 14),
+          duration: AppMotion.fast,
+          curve: AppMotion.ease,
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: selected
-                ? const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.primaryBright, AppColors.primary],
-                  )
-                : null,
-            color: selected ? null : AppColors.surfaceAlt,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            color: selected ? AppColors.primary : p.surfaceAlt,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -664,10 +656,9 @@ class _FilterChip extends StatelessWidget {
               if (leading != null) ...[leading!, const SizedBox(width: 6)],
               Text(
                 label,
-                style: TextStyle(
+                style: AppText.labelM.copyWith(
                   fontSize: compact ? 12.5 : 13,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : AppColors.textSecondary,
+                  color: selected ? Colors.white : p.textSecondary,
                 ),
               ),
             ],
@@ -693,49 +684,12 @@ class _FilterDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? AppColors.borderDark : AppColors.border,
-            ),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-              icon: const Icon(
-                Icons.arrow_drop_down_rounded,
-                color: AppColors.textSecondary,
-              ),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1F2A35),
-              ),
-              items: items,
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-      ],
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      isExpanded: true,
+      decoration: InputDecoration(labelText: label),
+      items: items,
+      onChanged: onChanged,
     );
   }
 }
@@ -762,13 +716,11 @@ class _LifetimeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.primaryBright : AppColors.primary;
+    final p = context.palette;
     return SurfaceCard(
       padding: EdgeInsets.zero,
-      borderRadius: 20,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -778,50 +730,43 @@ class _LifetimeCard extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: isDark ? 0.22 : 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: AppGradients.tint(AppColors.primary),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.account_balance_wallet_rounded,
                     size: 20,
-                    color: accent,
+                    color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AppText.titleS.copyWith(color: p.textPrimary),
                   ),
                 ),
                 if (deltaPercent != null && deltaLabel != null) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   _DeltaChip(percent: deltaPercent!, label: deltaLabel!),
                 ],
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.md),
             Text(
               formatMoney(total),
-              style: const TextStyle(
+              style: AppText.displayL.copyWith(
                 fontSize: 28,
-                fontWeight: FontWeight.w900,
-                height: 1.1,
+                color: p.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '${l10n.expenses}: $count · '
               '${l10n.average}: ${formatMoneyCompact(average)}',
-              style: TextStyle(
+              style: AppText.caption.copyWith(
                 fontSize: 12.5,
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
+                color: p.textSecondary,
               ),
             ),
           ],
@@ -839,41 +784,20 @@ class _DeltaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final up = percent >= 0;
-    final color = up ? AppColors.negative : AppColors.positive;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.18 : 0.10),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            up ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-            size: 15,
-            color: color,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            '${percent.abs()}%',
-            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        StatusBadge(
+          label: '${up ? '+' : '-'}${percent.abs()}%',
+          tone: up ? BadgeTone.negative : BadgeTone.positive,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          label,
+          style: AppText.caption.copyWith(color: context.palette.textMuted),
+        ),
+      ],
     );
   }
 }
@@ -887,8 +811,8 @@ class _ExpenseRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final l10n = context.l10n;
+    final p = context.palette;
     final category = state.categoryFor(expense.categoryId);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PressableScale(
       onTap: () {
         Navigator.of(context).push(
@@ -898,40 +822,41 @@ class _ExpenseRow extends StatelessWidget {
         );
       },
       child: SurfaceCard(
-        padding: const EdgeInsets.all(14),
-        borderRadius: 18,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
         child: Row(
           children: [
             CategoryIcon(category: category, size: 42),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     expense.description ?? l10n.expense,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.titleS.copyWith(color: p.textPrimary),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
                     l10n.paidByMemberDay(
                       state.memberName(expense.paidByUserId) ?? l10n.unknown,
                       formatRelativeDay(expense.date, l10n: l10n),
                     ),
-                    style: TextStyle(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.caption.copyWith(
                       fontSize: 12.5,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
+                      color: p.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Flexible(
               child: Align(
                 alignment: Alignment.centerRight,
@@ -939,9 +864,11 @@ class _ExpenseRow extends StatelessWidget {
                   formatMoney(expense.amount),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: AppText.titleS.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                    color: p.textPrimary,
                   ),
                 ),
               ),
@@ -965,27 +892,15 @@ class _IncomeSection extends StatelessWidget {
 
   Future<void> _confirmDelete(BuildContext context, HissaIncome income) async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.deleteIncomeTitle),
-        content: Text(l10n.deleteIncomeMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(
-              l10n.delete,
-              style: const TextStyle(color: AppColors.negative),
-            ),
-          ),
-        ],
-      ),
+      title: l10n.deleteIncomeTitle,
+      message: l10n.deleteIncomeMessage,
+      confirmLabel: l10n.delete,
+      destructive: true,
+      icon: Icons.delete_outline_rounded,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     await context.read<AppState>().deleteHissaIncome(income.id);
     if (context.mounted) {
       showToast(context, context.l10n.incomeDeletedToast, type: ToastType.info);
@@ -995,9 +910,9 @@ class _IncomeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final p = context.palette;
     return SurfaceCard(
-      padding: const EdgeInsets.all(16),
-      borderRadius: 18,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1007,8 +922,8 @@ class _IncomeSection extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: AppColors.positive.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  gradient: AppGradients.tint(AppColors.positive),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: const Icon(
                   Icons.savings_outlined,
@@ -1016,20 +931,16 @@ class _IncomeSection extends StatelessWidget {
                   color: AppColors.positive,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   l10n.hissaIncomeSection,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppText.titleS.copyWith(color: p.textPrimary),
                 ),
               ),
               Text(
                 '+ ${formatMoney(total)}',
-                style: const TextStyle(
-                  fontSize: 15,
+                style: AppText.titleS.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.positive,
                 ),
@@ -1038,7 +949,7 @@ class _IncomeSection extends StatelessWidget {
           ),
           for (final income in incomes)
             Padding(
-              padding: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.only(top: AppSpacing.md),
               child: _IncomeRow(
                 income: income,
                 onEdit: () {
@@ -1072,15 +983,17 @@ class _IncomeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final l10n = context.l10n;
+    final p = context.palette;
     return PressableScale(
       onTap: onEdit,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.surfaceAltDark
-              : AppColors.surfaceAlt,
-          borderRadius: BorderRadius.circular(14),
+          color: p.surfaceAlt,
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           children: [
@@ -1088,7 +1001,7 @@ class _IncomeRow extends StatelessWidget {
               name: state.memberName(income.receivedByUserId) ?? '?',
               size: 30,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1097,9 +1010,9 @@ class _IncomeRow extends StatelessWidget {
                     income.description,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13.5,
+                    style: AppText.bodyM.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: p.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1108,11 +1021,11 @@ class _IncomeRow extends StatelessWidget {
                       state.memberName(income.receivedByUserId) ?? l10n.unknown,
                       formatRelativeDay(income.date, l10n: l10n),
                     ),
-                    style: TextStyle(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.caption.copyWith(
                       fontSize: 11.5,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
+                      color: p.textSecondary,
                     ),
                   ),
                 ],
@@ -1120,13 +1033,12 @@ class _IncomeRow extends StatelessWidget {
             ),
             Text(
               formatMoney(income.amount),
-              style: const TextStyle(
-                fontSize: 14,
+              style: AppText.labelL.copyWith(
                 fontWeight: FontWeight.w800,
                 color: AppColors.positive,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.xs),
             SizedBox(
               width: 34,
               height: 34,

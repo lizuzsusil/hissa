@@ -21,19 +21,19 @@ class IntroSlide {
 const List<IntroSlide> kIntroSlides = [
   IntroSlide(
     icon: Icons.home_work_outlined,
-    gradient: [Color(0xFF45A8D8), Color(0xFF1373A8)],
+    gradient: [AppColors.primaryBright, AppColors.primary],
   ),
   IntroSlide(
     icon: Icons.receipt_long_outlined,
-    gradient: [Color(0xFFED6B1E), Color(0xFFC44F07)],
+    gradient: [AppColors.secondary, AppColors.secondaryDark],
   ),
   IntroSlide(
     icon: Icons.swap_horiz_rounded,
-    gradient: [Color(0xFFF8CC4A), Color(0xFFF5A623)],
+    gradient: [Color(0xFFF8CC4A), AppColors.accent],
   ),
   IntroSlide(
     icon: Icons.donut_small_outlined,
-    gradient: [Color(0xFF34C07E), Color(0xFF158A4F)],
+    gradient: [AppColors.positive, Color(0xFF158A4F)],
   ),
 ];
 
@@ -65,16 +65,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       widget.onDone();
       return;
     }
-    _controller.nextPage(
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeOutCubic,
-    );
+    _controller.nextPage(duration: AppMotion.medium, curve: AppMotion.ease);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final titles = [
       l10n.introTitle1,
       l10n.introTitle2,
@@ -92,7 +89,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.sm,
+                AppSpacing.md,
+                0,
+              ),
               child: Row(
                 children: [
                   Container(
@@ -111,30 +113,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Text(
                     'Hissa',
-                    style: TextStyle(
+                    style: AppText.displayM.copyWith(
                       fontSize: 20,
-                      fontWeight: FontWeight.w800,
                       letterSpacing: -0.3,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimary,
+                      color: p.textPrimary,
                     ),
                   ),
                   const Spacer(),
-                  TextButton(
+                  GhostButton(
+                    label: l10n.skip,
                     onPressed: widget.onDone,
-                    style: TextButton.styleFrom(
-                      foregroundColor: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
-                    ),
-                    child: Text(
-                      l10n.skip,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
+                    foreground: p.textSecondary,
+                    expanded: false,
                   ),
                 ],
               ),
@@ -152,11 +145,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.sm,
+                AppSpacing.xl,
+                AppSpacing.xl,
+              ),
               child: Column(
                 children: [
                   _Dots(count: kIntroSlides.length, index: _index),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.xl),
                   PrimaryButton(
                     label: _isLast ? l10n.getStarted : l10n.next,
                     icon: Icons.arrow_forward_rounded,
@@ -181,9 +179,10 @@ class _IntroPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
+    final accent = slide.gradient.last;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -191,44 +190,29 @@ class _IntroPage extends StatelessWidget {
             width: 132,
             height: 132,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: slide.gradient,
-              ),
-              borderRadius: BorderRadius.circular(38),
-              boxShadow: [
-                BoxShadow(
-                  color: slide.gradient.last.withValues(alpha: 0.35),
-                  blurRadius: 26,
-                  offset: const Offset(0, 12),
-                ),
-              ],
+              gradient: AppGradients.tint(accent, alpha: 0.18),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: accent.withValues(alpha: 0.16)),
             ),
-            child: Icon(slide.icon, size: 62, color: Colors.white),
+            child: Icon(slide.icon, size: 60, color: accent),
           ),
-          const SizedBox(height: 44),
+          const SizedBox(height: AppSpacing.xxxl + AppSpacing.xs),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
+            style: AppText.displayM.copyWith(
               letterSpacing: -0.6,
               height: 1.2,
-              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+              color: p.textPrimary,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.lg - 2),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15.5,
+            style: AppText.bodyL.copyWith(
               height: 1.5,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
+              color: p.textSecondary,
             ),
           ),
         ],
@@ -245,20 +229,20 @@ class _Dots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (var i = 0; i < count; i++)
           AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.symmetric(horizontal: 4),
+            duration: AppMotion.medium,
+            curve: AppMotion.ease,
+            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             width: i == index ? 26 : 8,
             height: 8,
             decoration: BoxDecoration(
-              color: i == index
-                  ? AppColors.primary
-                  : AppColors.primary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(4),
+              color: i == index ? AppColors.primary : p.borderStrong,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
           ),
       ],

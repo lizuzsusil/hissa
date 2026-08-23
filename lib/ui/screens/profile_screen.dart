@@ -57,7 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final user = state.currentUser;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     final name = _nameController.text.trim().isEmpty
         ? (user?.name ?? 'You')
@@ -69,34 +69,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onRefresh: () => context.read<AppState>().refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            AppSpacing.xxxl,
+          ),
           children: [
             Center(
-              child: MemberAvatar(
-                name: name,
-                avatarUrl: user?.avatarUrl,
-                size: 96,
-                outline: true,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  MemberAvatar(
+                    name: name,
+                    avatarUrl: user?.avatarUrl,
+                    size: 96,
+                    outline: true,
+                  ),
+                  Positioned(
+                    right: -4,
+                    bottom: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: p.bg,
+                      ),
+                      child: IconAction(
+                        icon: Icons.camera_alt_outlined,
+                        size: 36,
+                        background: p.surfaceAlt,
+                        foreground: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
+            Center(
+              child: Text(
+                name,
+                style: AppText.titleL.copyWith(color: p.textPrimary),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
             Center(
               child: Text(
                 user?.email ?? '',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondary,
-                ),
+                style: AppText.caption.copyWith(color: p.textSecondary),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: AppSpacing.xxl),
             Text(
               l10n.displayName,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              style: AppText.labelM.copyWith(color: p.textPrimary),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: _nameController,
               focusNode: _nameFocus,
@@ -112,15 +141,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 });
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               l10n.displayNameHint,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
-              ),
+              style: AppText.caption.copyWith(color: p.textMuted),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: AppSpacing.xxl),
             PrimaryButton(
               label: l10n.saveChanges,
               icon: Icons.save_rounded,

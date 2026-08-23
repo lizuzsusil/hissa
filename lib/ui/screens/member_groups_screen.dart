@@ -8,7 +8,11 @@ import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/buttons.dart' show PrimaryButton;
+import '../widgets/cards.dart';
+import '../widgets/dialogs.dart';
 import '../widgets/misc.dart';
+import '../widgets/motion.dart';
+import '../widgets/sheets.dart';
 import '../widgets/toasts.dart';
 
 class MemberGroupsScreen extends StatelessWidget {
@@ -17,7 +21,6 @@ class MemberGroupsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = context.l10n;
     final currentSpaceId = state.space?.id;
 
@@ -62,35 +65,78 @@ class MemberGroupsScreen extends StatelessWidget {
               .where((r) => r.requesterUserId == state.currentUserId)
               .toList();
 
+    // Empty-state copy keeps the previous precedence: availability first,
+    // then role-based actions, then pending/already-grouped states.
+    final String emptyMessage;
+    if (!groupsApplicable) {
+      emptyMessage = l10n.groupCreationUnavailable;
+    } else if (canCreate) {
+      emptyMessage = l10n.noMemberGroupsDescription;
+    } else if (canRequest) {
+      emptyMessage = l10n.requestGroupDescription;
+    } else if (hasPendingRequest) {
+      // The requester's group creation request is awaiting the owner's
+      // decision (Rule 5), so the create/request actions are hidden.
+      emptyMessage = l10n.yourGroupRequestPending;
+    } else if (ownerAlreadyGrouped) {
+      // The owner already belongs to a group, so they cannot create another.
+      emptyMessage = l10n.alreadyInGroup;
+    } else {
+      emptyMessage = l10n.onlyOwnerCanCreateGroups;
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.memberGroups)),
       body: RefreshIndicator(
         onRefresh: () => context.read<AppState>().refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            AppSpacing.xl,
+          ),
           children: [
             if (pendingRequests.isNotEmpty)
               _PendingRequestsSection(requests: pendingRequests, state: state),
-            if (activeGroups.isEmpty) ...[
-              _EmptyState(
-                onCreate: canCreate
-                    ? () => _openCreateGroupSheet(context, state)
-                    : null,
-                canCreate: canCreate,
-                groupsUnavailable: !groupsApplicable,
-                onRequest: canRequest
-                    ? () => _openRequestGroupSheet(context, state)
-                    : null,
-                canRequest: canRequest,
-                ownerAlreadyGrouped: ownerAlreadyGrouped,
-                hasPendingRequest: hasPendingRequest,
-              ),
-            ] else ...[
+            if (activeGroups.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxxl),
+                child: EmptyState(
+                  icon: Icons.groups_rounded,
+                  title: l10n.noMemberGroups,
+                  message: emptyMessage,
+                  action: (canCreate || canRequest)
+                      ? Column(
+                          children: [
+                            if (canCreate)
+                              PrimaryButton(
+                                label: l10n.createGroup,
+                                icon: Icons.add_rounded,
+                                onPressed: () =>
+                                    _openCreateGroupSheet(context, state),
+                              ),
+                            if (canRequest) ...[
+                              if (canCreate)
+                                const SizedBox(height: AppSpacing.md),
+                              PrimaryButton(
+                                label: l10n.requestGroup,
+                                icon: Icons.outbox_rounded,
+                                onPressed: () =>
+                                    _openRequestGroupSheet(context, state),
+                              ),
+                            ],
+                          ],
+                        )
+                      : null,
+                ),
+              )
+            else ...[
               for (final group in activeGroups)
-                _GroupCard(group: group, state: state, isDark: isDark),
+                _GroupCard(group: group, state: state),
               if (canCreate) ...[
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.xl),
                 PrimaryButton(
                   label: l10n.createGroup,
                   icon: Icons.add_rounded,
@@ -98,7 +144,7 @@ class MemberGroupsScreen extends StatelessWidget {
                 ),
               ],
               if (canRequest) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 PrimaryButton(
                   label: l10n.requestGroup,
                   icon: Icons.outbox_rounded,
@@ -113,103 +159,20 @@ class MemberGroupsScreen extends StatelessWidget {
   }
 
   void _openCreateGroupSheet(BuildContext context, AppState state) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (sheetContext) =>
-          CreateGroupSheet(spaceId: state.space?.id ?? ''),
+      title: context.l10n.createMemberGroup,
+      builder: (_) => CreateGroupSheet(spaceId: state.space?.id ?? ''),
     );
   }
 
   void _openRequestGroupSheet(BuildContext context, AppState state) {
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (sheetContext) => const RequestGroupSheet(),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  final VoidCallback? onCreate;
-  final bool canCreate;
-  final bool groupsUnavailable;
-  final VoidCallback? onRequest;
-  final bool canRequest;
-  final bool ownerAlreadyGrouped;
-  final bool hasPendingRequest;
-
-  const _EmptyState({
-    this.onCreate,
-    required this.canCreate,
-    this.groupsUnavailable = false,
-    this.onRequest,
-    this.canRequest = false,
-    this.ownerAlreadyGrouped = false,
-    this.hasPendingRequest = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
-    final String message;
-    if (groupsUnavailable) {
-      message = l10n.groupCreationUnavailable;
-    } else if (canCreate) {
-      message = l10n.noMemberGroupsDescription;
-    } else if (canRequest) {
-      message = l10n.requestGroupDescription;
-    } else if (hasPendingRequest) {
-      // The requester's group creation request is awaiting the owner's
-      // decision (Rule 5), so the create/request actions are hidden.
-      message = l10n.yourGroupRequestPending;
-    } else if (ownerAlreadyGrouped) {
-      // The owner already belongs to a group, so they cannot create another.
-      message = l10n.alreadyInGroup;
-    } else {
-      message = l10n.onlyOwnerCanCreateGroups;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: EmptyState(
-        icon: Icons.groups_rounded,
-        title: l10n.noMemberGroups,
-        message: message,
-        action: (canCreate || canRequest)
-            ? Column(
-                children: [
-                  if (canCreate)
-                    PrimaryButton(
-                      label: l10n.createGroup,
-                      icon: Icons.add_rounded,
-                      onPressed: onCreate,
-                    ),
-                  if (canRequest) ...[
-                    if (canCreate) const SizedBox(height: 12),
-                    PrimaryButton(
-                      label: l10n.requestGroup,
-                      icon: Icons.outbox_rounded,
-                      onPressed: onRequest,
-                    ),
-                  ],
-                ],
-              )
-            : null,
-      ),
+      title: context.l10n.requestGroupTitle,
+      builder: (_) => const RequestGroupSheet(),
     );
   }
 }
@@ -222,31 +185,25 @@ class _PendingRequestsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     final isOwner = state.isOwner;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionHeader(title: l10n.pendingGroupRequests),
-          const SizedBox(height: 4),
           if (isOwner)
             Text(
               l10n.pendingGroupRequestsDescription,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
-              ),
+              style: AppText.caption.copyWith(color: p.textSecondary),
             ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           for (final request in requests) ...[
             _RequestCard(request: request, state: state),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
           ],
         ],
       ),
@@ -262,7 +219,8 @@ class _RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
+    final dark = context.isDark;
     final l10n = context.l10n;
     final requesterName =
         state.memberName(request.requesterUserId) ?? 'Unknown';
@@ -270,121 +228,81 @@ class _RequestCard extends StatelessWidget {
         .map((id) => state.memberName(id) ?? 'Unknown')
         .toList();
 
-    return Material(
-      color: isDark ? AppColors.surfaceDark : Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.border,
+    return SurfaceCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              MemberAvatar(name: requesterName, size: 40, outline: true),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      requesterName,
+                      style: AppText.bodyL.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: p.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '${l10n.requestedBy} · ${l10n.groupOwner}',
+                      style: AppText.caption.copyWith(color: p.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              StatusBadge(label: l10n.pendingApproval, tone: BadgeTone.brand),
+            ],
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          if (memberNames.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                for (final name in memberNames)
+                  Chip(
+                    avatar: MemberAvatar(name: name, size: 18),
+                    label: Text(name),
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: AppSpacing.lg),
+          // Only the Space owner may approve or reject a request (Rule 5).
+          // Non-owner members and the requester themselves see only the
+          // "pending approval" status.
+          if (state.isOwner)
             Row(
               children: [
-                MemberAvatar(name: requesterName, size: 40, outline: true),
-                const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        requesterName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        '${l10n.requestedBy} · ${l10n.groupOwner}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                  child: _ActionPill(
+                    label: l10n.reject,
+                    icon: Icons.close_rounded,
+                    background: dark
+                        ? AppColors.negative.withValues(alpha: 0.16)
+                        : AppColors.negativeSoft,
+                    foreground: AppColors.negative,
+                    onTap: () => _reject(context, state),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    l10n.pendingApproval,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _ActionPill(
+                    label: l10n.approve,
+                    icon: Icons.check_rounded,
+                    background: AppColors.positive,
+                    foreground: Colors.white,
+                    onTap: () => _approve(context, state),
                   ),
                 ),
               ],
             ),
-            if (memberNames.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final name in memberNames)
-                    Chip(
-                      avatar: MemberAvatar(name: name, size: 18),
-                      label: Text(name, style: const TextStyle(fontSize: 12.5)),
-                      backgroundColor: isDark
-                          ? AppColors.surfaceAltDark
-                          : AppColors.surfaceAlt,
-                      side: BorderSide(
-                        color: isDark ? AppColors.borderDark : AppColors.border,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 16),
-            // Only the Space owner may approve or reject a request (Rule 5).
-            // Non-owner members and the requester themselves see only the
-            // "pending approval" status.
-            if (state.isOwner)
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      label: Text(l10n.reject),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.negative,
-                        side: const BorderSide(color: AppColors.negative),
-                      ),
-                      onPressed: () => _reject(context, state),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      icon: const Icon(Icons.check_rounded, size: 18),
-                      label: Text(l10n.approve),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.positive,
-                        disabledBackgroundColor: AppColors.positive,
-                      ),
-                      onPressed: () => _approve(context, state),
-                    ),
-                  ),
-                ],
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -420,6 +338,55 @@ class _RequestCard extends StatelessWidget {
   }
 }
 
+/// Compact confirm/deny pill matching the settle screen's inline actions:
+/// solid positive for approve, soft negative for reject, h>=40, radius sm.
+class _ActionPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onTap;
+
+  const _ActionPill({
+    required this.label,
+    required this.icon,
+    required this.background,
+    required this.foreground,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: foreground),
+            const SizedBox(width: AppSpacing.xs),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.labelM.copyWith(color: foreground),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class RequestGroupSheet extends StatefulWidget {
   const RequestGroupSheet({super.key});
 
@@ -433,7 +400,7 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
   @override
   Widget build(BuildContext context) {
     final state = context.read<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
 
     final members = state.requestableGroupMembers;
@@ -455,135 +422,121 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
     final isCurrentUserOwner =
         spaceOwnerId != null && spaceOwnerId == state.currentUserId;
 
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 16,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.requestGroupTitle,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        0,
+        AppSpacing.xl,
+        AppSpacing.xl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.requestGroupDescription,
+            style: AppText.bodyM.copyWith(color: p.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(
+            l10n.groupOwner,
+            style: AppText.labelM.copyWith(
+              fontWeight: FontWeight.w700,
+              color: p.textPrimary,
             ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.requestGroupDescription,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.md,
             ),
-            const SizedBox(height: 20),
-            Text(
-              l10n.groupOwner,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            decoration: BoxDecoration(
+              color: p.surfaceAlt,
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  MemberAvatar(
-                    name: isCurrentUserOwner ? l10n.you : spaceOwnerName,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isCurrentUserOwner ? l10n.you : spaceOwnerName,
-                          style: const TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w700,
-                          ),
+            child: Row(
+              children: [
+                MemberAvatar(
+                  name: isCurrentUserOwner ? l10n.you : spaceOwnerName,
+                  size: 32,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isCurrentUserOwner ? l10n.you : spaceOwnerName,
+                        style: AppText.titleS.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: p.textPrimary,
                         ),
-                        Text(
-                          isCurrentUserOwner
-                              ? l10n.youAreOwner
-                              : l10n.groupOwnerLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              l10n.selectGroupMembers,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            if (members.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  l10n.noMembersToRequest,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? AppColors.textMutedDark
-                        : AppColors.textMuted,
+                      ),
+                      Text(
+                        isCurrentUserOwner
+                            ? l10n.youAreOwner
+                            : l10n.groupOwnerLabel,
+                        style: AppText.caption.copyWith(color: p.textSecondary),
+                      ),
+                    ],
                   ),
                 ),
-              )
-            else
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: members.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 4),
-                  itemBuilder: (_, i) {
-                    final m = members[i];
-                    return CheckboxListTile(
-                      value: _pickedMembers.contains(m.userId),
-                      title: Text(m.name),
-                      onChanged: (v) => setState(() {
-                        if (v == true) {
-                          // Rule: a group can hold at most (space members - 1)
-                          // users including the requester/owner.
-                          if (_pickedMembers.length >= maxOtherMembers) return;
-                          _pickedMembers.add(m.userId);
-                        } else {
-                          _pickedMembers.remove(m.userId);
-                        }
-                      }),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                    );
-                  },
-                ),
-              ),
-            const SizedBox(height: 20),
-            PrimaryButton(
-              label: l10n.requestGroup,
-              onPressed: _pickedMembers.isNotEmpty
-                  ? () => _submit(context, state)
-                  : null,
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(
+            l10n.selectGroupMembers,
+            style: AppText.labelM.copyWith(
+              fontWeight: FontWeight.w700,
+              color: p.textPrimary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (members.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: Text(
+                l10n.noMembersToRequest,
+                style: AppText.bodyM.copyWith(color: p.textMuted),
+              ),
+            )
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: members.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.xs),
+                itemBuilder: (_, i) {
+                  final m = members[i];
+                  return _MemberCheckRow(
+                    name: m.name,
+                    checked: _pickedMembers.contains(m.userId),
+                    onChanged: (checked) => setState(() {
+                      // Rule: a group can hold at most (space members - 1)
+                      // users including the requester/owner.
+                      if (checked) {
+                        if (_pickedMembers.length >= maxOtherMembers) return;
+                        _pickedMembers.add(m.userId);
+                      } else {
+                        _pickedMembers.remove(m.userId);
+                      }
+                    }),
+                  );
+                },
+              ),
+            ),
+          const SizedBox(height: AppSpacing.xl),
+          PrimaryButton(
+            label: l10n.requestGroup,
+            onPressed: _pickedMembers.isNotEmpty
+                ? () => _submit(context, state)
+                : null,
+          ),
+        ],
       ),
     );
   }
@@ -618,16 +571,12 @@ class _RequestGroupSheetState extends State<RequestGroupSheet> {
 class _GroupCard extends StatelessWidget {
   final MemberGroup group;
   final AppState state;
-  final bool isDark;
 
-  const _GroupCard({
-    required this.group,
-    required this.state,
-    required this.isDark,
-  });
+  const _GroupCard({required this.group, required this.state});
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final isOwner = group.ownerUserId == state.currentUserId;
     final ownerName = state.memberName(group.ownerUserId) ?? 'Unknown';
     final memberIds = state.repo.memberGroupMembers
@@ -639,99 +588,64 @@ class _GroupCard extends StatelessWidget {
         .toList();
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          onTap: () => _openGroupDetail(context),
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: isDark ? AppColors.borderDark : AppColors.border,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: SurfaceCard(
+        onTap: () => _openGroupDetail(context),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    MemberAvatar(name: ownerName, size: 40, outline: true),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            group.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          if (isOwner)
-                            Text(
-                              context.l10n.managedByYou,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                              ),
-                            )
-                          else
-                            Text(
-                              '${context.l10n.managedBy} $ownerName',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondary,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (isOwner)
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: isDark
-                            ? AppColors.textMutedDark
-                            : AppColors.textMuted,
-                      ),
-                  ],
-                ),
-                if (memberNames.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                MemberAvatar(name: ownerName, size: 40, outline: true),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      for (final name in memberNames)
-                        Chip(
-                          avatar: MemberAvatar(name: name, size: 18),
-                          label: Text(
-                            name,
-                            style: const TextStyle(fontSize: 12.5),
+                      Text(
+                        group.name,
+                        style: AppText.titleM.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: p.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      if (isOwner)
+                        Text(
+                          context.l10n.managedByYou,
+                          style: AppText.caption.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
                           ),
-                          backgroundColor: isDark
-                              ? AppColors.surfaceAltDark
-                              : AppColors.surfaceAlt,
-                          side: BorderSide(
-                            color: isDark
-                                ? AppColors.borderDark
-                                : AppColors.border,
-                          ),
+                        )
+                      else
+                        Text(
+                          '${context.l10n.managedBy} $ownerName',
+                          style: AppText.caption.copyWith(color: p.textSecondary),
                         ),
                     ],
                   ),
-                ],
+                ),
+                if (isOwner)
+                  Icon(Icons.chevron_right_rounded, color: p.textMuted),
               ],
             ),
-          ),
+            if (memberNames.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  for (final name in memberNames)
+                    Chip(
+                      avatar: MemberAvatar(name: name, size: 18),
+                      label: Text(name),
+                    ),
+                ],
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -741,6 +655,32 @@ class _GroupCard extends StatelessWidget {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => GroupDetailScreen(group: group)));
+  }
+}
+
+/// Shared checkbox row for the three member pickers in this file (request
+/// sheet, create sheet, add-member sheet). Selection/cap logic stays with
+/// the caller.
+class _MemberCheckRow extends StatelessWidget {
+  final String name;
+  final bool checked;
+  final ValueChanged<bool> onChanged;
+
+  const _MemberCheckRow({
+    required this.name,
+    required this.checked,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CheckboxListTile(
+      value: checked,
+      title: Text(name),
+      onChanged: (v) => onChanged(v ?? false),
+      controlAffinity: ListTileControlAffinity.leading,
+      dense: true,
+    );
   }
 }
 
@@ -759,7 +699,7 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
   @override
   Widget build(BuildContext context) {
     final state = context.read<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
 
     // Rule 2: every user can belong to at most one group. Users already in an
@@ -774,133 +714,119 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
     // The owner creates the group, so at most (max - 1) others can be chosen.
     final maxOtherMembers = state.maxGroupMembers - 1;
 
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 16,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.createMemberGroup,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        0,
+        AppSpacing.xl,
+        AppSpacing.xl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.createGroupDescription,
+            style: AppText.bodyM.copyWith(color: p.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            l10n.groupOwner,
+            style: AppText.labelM.copyWith(
+              fontWeight: FontWeight.w700,
+              color: p.textPrimary,
             ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.createGroupDescription,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.md,
             ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.groupOwner,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            decoration: BoxDecoration(
+              color: p.surfaceAlt,
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  MemberAvatar(
-                    name: state.currentUser?.name ?? l10n.you,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          state.currentUser?.name ?? l10n.you,
-                          style: const TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w700,
-                          ),
+            child: Row(
+              children: [
+                MemberAvatar(
+                  name: state.currentUser?.name ?? l10n.you,
+                  size: 32,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        state.currentUser?.name ?? l10n.you,
+                        style: AppText.titleS.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: p.textPrimary,
                         ),
-                        Text(
-                          l10n.youAreOwner,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              l10n.selectGroupMembers,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            if (members.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  l10n.noOtherMembersToAdd,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? AppColors.textMutedDark
-                        : AppColors.textMuted,
+                      ),
+                      Text(
+                        l10n.youAreOwner,
+                        style: AppText.caption.copyWith(color: p.textSecondary),
+                      ),
+                    ],
                   ),
                 ),
-              )
-            else
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: members.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 4),
-                  itemBuilder: (_, i) {
-                    final m = members[i];
-                    return CheckboxListTile(
-                      value: _pickedMembers.contains(m.userId),
-                      title: Text(m.name),
-                      onChanged: (v) => setState(() {
-                        if (v == true) {
-                          // Rule: a group can hold at most (space members - 1)
-                          // users including the owner.
-                          if (_pickedMembers.length >= maxOtherMembers) return;
-                          _pickedMembers.add(m.userId);
-                        } else {
-                          _pickedMembers.remove(m.userId);
-                        }
-                      }),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                    );
-                  },
-                ),
-              ),
-            const SizedBox(height: 20),
-            PrimaryButton(
-              label: l10n.createGroup,
-              onPressed: _pickedMembers.isNotEmpty
-                  ? () => _createGroup(context, state)
-                  : null,
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(
+            l10n.selectGroupMembers,
+            style: AppText.labelM.copyWith(
+              fontWeight: FontWeight.w700,
+              color: p.textPrimary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (members.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: Text(
+                l10n.noOtherMembersToAdd,
+                style: AppText.bodyM.copyWith(color: p.textMuted),
+              ),
+            )
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: members.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.xs),
+                itemBuilder: (_, i) {
+                  final m = members[i];
+                  return _MemberCheckRow(
+                    name: m.name,
+                    checked: _pickedMembers.contains(m.userId),
+                    onChanged: (checked) => setState(() {
+                      // Rule: a group can hold at most (space members - 1)
+                      // users including the owner.
+                      if (checked) {
+                        if (_pickedMembers.length >= maxOtherMembers) return;
+                        _pickedMembers.add(m.userId);
+                      } else {
+                        _pickedMembers.remove(m.userId);
+                      }
+                    }),
+                  );
+                },
+              ),
+            ),
+          const SizedBox(height: AppSpacing.xl),
+          PrimaryButton(
+            label: l10n.createGroup,
+            onPressed: _pickedMembers.isNotEmpty
+                ? () => _createGroup(context, state)
+                : null,
+          ),
+        ],
       ),
     );
   }
@@ -977,7 +903,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
 
     final isOwner = widget.group.ownerUserId == state.currentUserId;
     final ownerName = state.memberName(widget.group.ownerUserId) ?? 'Unknown';
@@ -995,26 +921,26 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
             : null,
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
         children: (() {
           final widgets = <Widget>[
-            _OwnerCard(ownerName: ownerName, isOwner: isOwner, isDark: isDark),
-            const SizedBox(height: 24),
+            _OwnerCard(ownerName: ownerName, isOwner: isOwner),
+            const SizedBox(height: AppSpacing.xxl),
             SectionHeader(title: context.l10n.members),
           ];
           if (_memberIds.isEmpty) {
             widgets.add(
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 child: Center(
                   child: Text(
                     context.l10n.noMembersInGroup,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark
-                          ? AppColors.textMutedDark
-                          : AppColors.textMuted,
-                    ),
+                    style: AppText.bodyM.copyWith(color: p.textMuted),
                   ),
                 ),
               ),
@@ -1023,19 +949,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
             widgets.addAll(
               _memberIds.map(
                 (id) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: Chip(
                     avatar: MemberAvatar(
                       name: state.memberName(id) ?? 'Unknown',
                       size: 20,
                     ),
                     label: Text(state.memberName(id) ?? 'Unknown'),
-                    backgroundColor: isDark
-                        ? AppColors.surfaceAltDark
-                        : AppColors.surfaceAlt,
-                    side: BorderSide(
-                      color: isDark ? AppColors.borderDark : AppColors.border,
-                    ),
                     deleteIcon: const Icon(Icons.close_rounded, size: 18),
                     onDeleted: isOwner
                         ? () => _confirmRemoveMember(context, id)
@@ -1050,7 +970,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           }
           if (isOwner) {
             widgets.addAll([
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xxl),
               PrimaryButton(
                 label: context.l10n.addMember,
                 icon: Icons.person_add_rounded,
@@ -1096,73 +1016,56 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     }
 
     final picked = <String>{};
-    showModalBottomSheet(
+    showAppSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 16,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.addGroupMember,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
+      title: context.l10n.addGroupMember,
+      builder: (_) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            0,
+            AppSpacing.xl,
+            AppSpacing.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 200),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: availableMembers.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppSpacing.xs),
+                  itemBuilder: (_, i) {
+                    final m = availableMembers[i];
+                    return _MemberCheckRow(
+                      name: m.name,
+                      checked: picked.contains(m.userId),
+                      onChanged: (checked) => setSheetState(() {
+                        // Rule: a group can hold at most (space members - 1)
+                        // users including the owner.
+                        if (checked) {
+                          if (picked.length >= slotsRemaining) return;
+                          picked.add(m.userId);
+                        } else {
+                          picked.remove(m.userId);
+                        }
+                      }),
+                    );
+                  },
                 ),
-                const SizedBox(height: 16),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: availableMembers.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 4),
-                    itemBuilder: (_, i) {
-                      final m = availableMembers[i];
-                      return CheckboxListTile(
-                        value: picked.contains(m.userId),
-                        title: Text(m.name),
-                        onChanged: (v) => setSheetState(() {
-                          if (v == true) {
-                            // Rule: a group can hold at most (space members - 1)
-                            // users including the owner; never exceed remaining
-                            // slots.
-                            if (picked.length >= slotsRemaining) return;
-                            picked.add(m.userId);
-                          } else {
-                            picked.remove(m.userId);
-                          }
-                        }),
-                        controlAffinity: ListTileControlAffinity.leading,
-                        dense: true,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 20),
-                PrimaryButton(
-                  label: context.l10n.addMember,
-                  onPressed: picked.isNotEmpty
-                      ? () => _addMembers(context, state, picked.toList())
-                      : null,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              PrimaryButton(
+                label: sheetContext.l10n.addMember,
+                onPressed: picked.isNotEmpty
+                    ? () => _addMembers(sheetContext, state, picked.toList())
+                    : null,
+              ),
+            ],
           ),
         ),
       ),
@@ -1192,25 +1095,15 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
 
   Future<void> _confirmDelete(BuildContext context) async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.deleteGroupTitle),
-        content: Text(l10n.deleteGroupMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.negative),
-            child: Text(l10n.deleteGroup),
-          ),
-        ],
-      ),
+      title: l10n.deleteGroupTitle,
+      message: l10n.deleteGroupMessage,
+      confirmLabel: l10n.deleteGroup,
+      destructive: true,
+      icon: Icons.delete_outline_rounded,
     );
-    if (confirmed == true && context.mounted) {
+    if (confirmed && context.mounted) {
       try {
         await context.read<AppState>().repo.deleteMemberGroup(widget.group.id);
         if (!context.mounted) return;
@@ -1226,25 +1119,15 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   Future<void> _confirmRemoveMember(BuildContext context, String userId) async {
     final l10n = context.l10n;
     final name = context.read<AppState>().memberName(userId) ?? '?';
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.removeGroupMemberTitle(name)),
-        content: Text(l10n.removeGroupMemberMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.negative),
-            child: Text(l10n.removeMember),
-          ),
-        ],
-      ),
+      title: l10n.removeGroupMemberTitle(name),
+      message: l10n.removeGroupMemberMessage,
+      confirmLabel: l10n.removeMember,
+      destructive: true,
+      icon: Icons.person_remove_rounded,
     );
-    if (confirmed == true && context.mounted) {
+    if (confirmed && context.mounted) {
       try {
         await context.read<AppState>().repo.removeGroupMember(
           widget.group.id,
@@ -1262,92 +1145,69 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 }
 
+/// Owner summary card: hero gradient statement for the current user's own
+/// group, quiet surface card when browsing someone else's.
 class _OwnerCard extends StatelessWidget {
   final String ownerName;
   final bool isOwner;
-  final bool isDark;
 
-  const _OwnerCard({
-    required this.ownerName,
-    required this.isOwner,
-    required this.isDark,
-  });
+  const _OwnerCard({required this.ownerName, required this.isOwner});
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final l10n = context.l10n;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: isOwner ? AppColors.heroGradient : null,
-        color: isOwner
-            ? null
-            : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: isOwner
-            ? null
-            : Border.all(
-                color: isDark ? AppColors.borderDark : AppColors.border,
+
+    final content = Row(
+      children: [
+        MemberAvatar(name: ownerName, size: 52, outline: isOwner),
+        const SizedBox(width: AppSpacing.lg),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isOwner ? l10n.you : ownerName,
+                style: AppText.titleL.copyWith(
+                  color: isOwner ? Colors.white : p.textPrimary,
+                ),
               ),
-      ),
-      child: Row(
-        children: [
-          MemberAvatar(name: ownerName, size: 52, outline: isOwner),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isOwner ? l10n.you : ownerName,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: isOwner
-                        ? Colors.white
-                        : (isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimary),
+              const SizedBox(height: 2),
+              Text(
+                isOwner ? l10n.groupOwner : l10n.groupOwnerLabel,
+                style: AppText.caption.copyWith(
+                  color: isOwner ? AppColors.onHeroMuted : p.textSecondary,
+                ),
+              ),
+              if (isOwner) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Text(
+                    l10n.managedByYou,
+                    style: AppText.overline.copyWith(
+                      letterSpacing: 0,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  isOwner ? l10n.groupOwner : l10n.groupOwnerLabel,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: isOwner
-                        ? Colors.white.withValues(alpha: 0.8)
-                        : (isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary),
-                  ),
-                ),
-                if (isOwner) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      l10n.managedByYou,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
+
+    if (!isOwner) {
+      return SurfaceCard(color: p.surfaceAlt, padding: const EdgeInsets.all(AppSpacing.xl), child: content);
+    }
+    return HeroCard(gradient: AppColors.heroGradient, child: content);
   }
 }

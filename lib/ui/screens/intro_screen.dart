@@ -4,6 +4,7 @@ import '../../core/constants.dart';
 import '../../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
+import '../widgets/cards.dart';
 
 class IntroScreen extends StatelessWidget {
   /// Called with the selected mode when the user confirms their choice.
@@ -38,15 +39,15 @@ class _IntroScreenContentState extends State<_IntroScreenContent> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xxxl - 8),
               Row(
                 children: [
                   Container(
@@ -65,46 +66,37 @@ class _IntroScreenContentState extends State<_IntroScreenContent> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
+                  const SizedBox(width: AppSpacing.md),
+                  Text(
                     'Hissa',
-                    style: TextStyle(
+                    style: AppText.displayM.copyWith(
                       fontSize: 22,
-                      fontWeight: FontWeight.w800,
                       letterSpacing: -0.3,
+                      color: p.textPrimary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 44),
+              const SizedBox(height: AppSpacing.xxl + AppSpacing.lg),
               Text(
                 l10n.onboardingTitle,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
+                style: AppText.displayL.copyWith(
                   height: 1.15,
                   letterSpacing: -0.8,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimary,
+                  color: p.textPrimary,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               Text(
                 l10n.onboardingSubtitle,
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.4,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondary,
-                ),
+                style: AppText.bodyL.copyWith(color: p.textSecondary),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: AppSpacing.xxl),
               Expanded(
                 child: ListView.separated(
                   itemCount: kOnboardingModes.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppSpacing.md),
                   itemBuilder: (context, index) {
                     final mode = kOnboardingModes[index];
                     final selected = _selectedMode == mode.title;
@@ -116,13 +108,13 @@ class _IntroScreenContentState extends State<_IntroScreenContent> {
                   },
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               PrimaryButton(
                 label: l10n.continueLabel,
                 icon: Icons.arrow_forward_rounded,
                 onPressed: _selectedMode == null ? null : _continue,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
             ],
           ),
         ),
@@ -145,7 +137,7 @@ class _ModeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     late final String title;
     late final String subtitle;
     switch (mode.title) {
@@ -167,89 +159,73 @@ class _ModeCard extends StatelessWidget {
     }
     return AnimatedContainer(
       duration: AppMotion.fast,
+      curve: AppMotion.ease,
       decoration: BoxDecoration(
-        color: selected
-            ? AppColors.primary.withValues(alpha: 0.08)
-            : (isDark ? AppColors.surfaceDark : Colors.white),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: selected
-              ? AppColors.primary
-              : (isDark ? AppColors.borderDark : AppColors.border),
-          width: selected ? 1.8 : 1,
+              ? AppColors.primary.withValues(alpha: 0.4)
+              : Colors.transparent,
+          width: 1.6,
         ),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.primary
-                        : (isDark
-                              ? AppColors.surfaceAltDark
-                              : AppColors.surfaceAlt),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: Icon(
-                    mode.icon,
-                    color: selected ? Colors.white : AppColors.primary,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: selected ? AppColors.primary : Colors.transparent,
-                    border: Border.all(
-                      color: selected
-                          ? AppColors.primary
-                          : (isDark ? AppColors.borderDark : AppColors.border),
-                      width: 2,
-                    ),
-                  ),
-                  child: selected
-                      ? const Icon(Icons.check, size: 16, color: Colors.white)
-                      : null,
-                ),
-              ],
+      child: SurfaceCard(
+        onTap: onTap,
+        border: !selected,
+        padding: const EdgeInsets.all(AppSpacing.lg + 2),
+        color: selected ? AppColors.primary.withValues(alpha: 0.06) : null,
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: selected ? AppColors.primary : null,
+                gradient:
+                    selected ? null : AppGradients.tint(AppColors.primary),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Icon(
+                mode.icon,
+                color: selected ? Colors.white : AppColors.primary,
+                size: 25,
+              ),
             ),
-          ),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppText.titleM.copyWith(color: p.textPrimary),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: AppText.bodyM.copyWith(color: p.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: selected ? AppColors.primary : Colors.transparent,
+                border: Border.all(
+                  color: selected
+                      ? AppColors.primary
+                      : p.borderStrong.withValues(alpha: 0.6),
+                  width: 2,
+                ),
+              ),
+              child: selected
+                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  : null,
+            ),
+          ],
         ),
       ),
     );

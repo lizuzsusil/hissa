@@ -5,9 +5,11 @@ import '../../l10n/l10n.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/cards.dart';
 import '../widgets/category_icon.dart';
 import '../widgets/buttons.dart';
 import '../widgets/misc.dart';
+import '../widgets/sheets.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
@@ -54,15 +56,10 @@ class CategoriesScreen extends StatelessWidget {
   }
 
   void _showAddDialog(BuildContext context) {
-    showModalBottomSheet(
+    showAppSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      title: context.l10n.newCategory,
       builder: (_) => const _AddCategorySheet(),
     );
   }
@@ -80,41 +77,28 @@ class _CategoryGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
+        mainAxisSpacing: AppSpacing.md,
+        crossAxisSpacing: AppSpacing.md,
         childAspectRatio: 0.82,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
         final category = categories[index];
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.surfaceDark
-                : Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.borderDark
-                  : AppColors.border,
-            ),
-          ),
+        return SurfaceCard(
+          padding: const EdgeInsets.all(AppSpacing.xs),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CategoryIcon(category: category, size: 48),
-              const SizedBox(height: 8),
+              Center(child: CategoryIcon(category: category, size: 48)),
+              const SizedBox(height: AppSpacing.sm),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                 child: Text(
                   category.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppText.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -157,7 +141,10 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
     Icons.flight_outlined,
   ];
 
-  static const List<Color> _colors = [
+  /// Canonical category colour palette offered in the add-category colour
+  /// picker. These exact hex values are user-facing choices persisted to the
+  /// database with each custom category — do NOT change them.
+  static const List<Color> categoryPalette = [
     Color(0xFF3D7DE0), // royal blue
     Color(0xFFF26B1D), // amber orange
     Color(0xFF2FA362), // emerald green
@@ -210,7 +197,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
     context.read<AppState>().addCategory(
       name,
       _icons[_iconIndex],
-      _colors[_colorIndex],
+      categoryPalette[_colorIndex],
     );
     Navigator.pop(context);
   }
@@ -218,22 +205,18 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final p = context.palette;
     return Padding(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        0,
+        AppSpacing.xl,
+        AppSpacing.xxl,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.newCategory,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 20),
           TextField(
             controller: _nameController,
             focusNode: _nameFocus,
@@ -253,12 +236,12 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
               if (_nameController.text.trim().isNotEmpty) _addCategory();
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             l10n.icon,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            style: AppText.bodyM.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           SizedBox(
             height: 46,
             child: ListView(
@@ -266,19 +249,19 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
               children: [
                 for (var i = 0; i < _icons.length; i++)
                   Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.only(right: AppSpacing.sm),
                     child: GestureDetector(
                       onTap: _saving
                           ? null
                           : () => setState(() => _iconIndex = i),
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
+                        duration: AppMotion.fast,
                         width: 46,
                         height: 46,
                         decoration: BoxDecoration(
                           color: _iconIndex == i
                               ? AppColors.primary.withValues(alpha: 0.15)
-                              : AppColors.surfaceAlt,
+                              : p.surfaceAlt,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
                             color: _iconIndex == i
@@ -291,7 +274,7 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
                           size: 22,
                           color: _iconIndex == i
                               ? AppColors.primary
-                              : AppColors.textSecondary,
+                              : p.textSecondary,
                         ),
                       ),
                     ),
@@ -299,27 +282,28 @@ class _AddCategorySheetState extends State<_AddCategorySheet> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             l10n.colour,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            style: AppText.bodyM.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.md),
           Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.md,
             children: [
-              for (var i = 0; i < _colors.length; i++)
+              for (var i = 0; i < categoryPalette.length; i++)
                 GestureDetector(
-                  onTap: _saving ? null : () => setState(() => _colorIndex = i),
+                  onTap:
+                      _saving ? null : () => setState(() => _colorIndex = i),
                   child: ColorDot(
-                    color: _colors[i],
+                    color: categoryPalette[i],
                     selected: _colorIndex == i,
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
           PrimaryButton(
             label: l10n.addCategory,
             icon: Icons.add_rounded,

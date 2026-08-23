@@ -8,7 +8,10 @@ import '../../l10n/l10n.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/avatars.dart';
 import '../widgets/buttons.dart';
+import '../widgets/cards.dart';
+import '../widgets/dialogs.dart';
 import '../widgets/misc.dart';
 import '../widgets/motion.dart';
 import '../widgets/swipe_reveal.dart';
@@ -39,6 +42,7 @@ class SpacesDashboardScreen extends StatefulWidget {
 
 class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
   Map<String, int> _counts = {};
+  Map<String, List<String>> _memberNames = {};
   List<String> _loadedIds = const [];
 
   /// Deferred Delete/Leave: nothing is destroyed until the 10s countdown in
@@ -81,13 +85,30 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
     await _loadCounts();
   }
 
+  /// Loads per-Space member counts plus member display names (for the avatar
+  /// stacks on each Space card).
   Future<void> _loadCounts() async {
     final state = context.read<AppState>();
     final counts = <String, int>{};
+    final names = <String, List<String>>{};
     for (final space in state.spaces) {
       counts[space.id] = await state.countMembers(space.id);
+      try {
+        final members = await state.repo.fetchSpaceMembers(space.id);
+        names[space.id] = [
+          for (final m in members)
+            if (m.name.trim().isNotEmpty) m.name,
+        ];
+      } catch (_) {
+        names[space.id] = const [];
+      }
     }
-    if (mounted) setState(() => _counts = counts);
+    if (mounted) {
+      setState(() {
+        _counts = counts;
+        _memberNames = names;
+      });
+    }
   }
 
   /// Marks [space] as the one to open automatically on the next launch, or
@@ -128,6 +149,7 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
           key: ValueKey('space_card_${space.id}'),
           space: space,
           memberCount: _counts[space.id],
+          memberNames: _memberNames[space.id],
           isDefault: space.id == defaultSpaceId,
           showDefaultToggle: showDefaultToggle,
           onToggleDefault: () => _toggleDefault(space),
@@ -251,25 +273,15 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
 
   Future<void> _confirmSignOut() async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.signOutTitle),
-        content: Text(l10n.signOutMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.negative),
-            child: Text(l10n.signOut),
-          ),
-        ],
-      ),
+      title: l10n.signOutTitle,
+      message: l10n.signOutMessage,
+      confirmLabel: l10n.signOut,
+      destructive: true,
+      icon: Icons.logout_rounded,
     );
-    if (confirmed == true) widget.onSignOut();
+    if (confirmed) widget.onSignOut();
   }
 
   @override
@@ -283,11 +295,8 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
     // The "open by default" toggle only makes sense when there are several
     // Spaces to choose from (a single Space is always entered automatically).
     final showDefaultToggle = (ownedSpaces.length + joinedSpaces.length) > 1;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimary;
 
     // Spaces awaiting approval are shown (with their name) but can never be
     // entered until the owner approves the request.
@@ -303,11 +312,7 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
             const SizedBox(width: 6),
             Text(
               l10n.pendingApprovalSection,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
+              style: AppText.labelM.copyWith(color: AppColors.primary),
             ),
           ],
         ),
@@ -372,7 +377,12 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 12, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.md,
+                AppSpacing.md,
+                0,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -381,21 +391,18 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
                       children: [
                         Text(
                           l10n.mySpaces,
-                          style: TextStyle(
+                          style: AppText.displayM.copyWith(
                             fontSize: 28,
-                            fontWeight: FontWeight.w800,
                             letterSpacing: -0.6,
-                            color: textColor,
+                            color: p.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpacing.xs),
                         Text(
                           l10n.mySpacesSubtitle,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondary,
+                          style: AppText.labelL.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: p.textSecondary,
                           ),
                         ),
                       ],
@@ -403,6 +410,7 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
                   ),
                   IconAction(
                     icon: Icons.logout_rounded,
+                    tooltip: l10n.signOut,
                     foreground: AppColors.negative,
                     size: 46,
                     onPressed: _confirmSignOut,
@@ -410,7 +418,7 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) => RefreshIndicator(
@@ -435,10 +443,15 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
                         )
                       : ListView.separated(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.xl,
+                            AppSpacing.sm,
+                            AppSpacing.xl,
+                            AppSpacing.xl + AppSpacing.xs,
+                          ),
                           itemCount: tiles.length,
                           separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
+                              const SizedBox(height: AppSpacing.md),
                           itemBuilder: (context, index) => tiles[index],
                         ),
                 ),
@@ -446,19 +459,30 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
             ),
             if (spaces.isNotEmpty || pendingSpaces.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                child: Column(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  0,
+                  AppSpacing.xl,
+                  AppSpacing.xl,
+                ),
+                child: Row(
                   children: [
-                    PrimaryButton(
-                      label: l10n.createSpace,
-                      icon: Icons.add_rounded,
-                      onPressed: widget.onCreate,
+                    Expanded(
+                      child: _QuickActionCard(
+                        icon: Icons.add_rounded,
+                        label: l10n.createSpace,
+                        accent: AppColors.primary,
+                        onTap: widget.onCreate,
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    SecondaryButton(
-                      label: l10n.joinSpace,
-                      icon: Icons.group_add_outlined,
-                      onPressed: widget.onJoin,
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: _QuickActionCard(
+                        icon: Icons.group_add_outlined,
+                        label: l10n.joinSpace,
+                        accent: AppColors.info,
+                        onTap: widget.onJoin,
+                      ),
                     ),
                   ],
                 ),
@@ -470,9 +494,60 @@ class _SpacesDashboardScreenState extends State<SpacesDashboardScreen> {
   }
 }
 
+/// Prominent Create/Join entry point beside the Space list: tinted icon well
+/// plus a strong label on a tappable surface card.
+class _QuickActionCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _QuickActionCard({
+    required this.icon,
+    required this.label,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return SurfaceCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              gradient: AppGradients.tint(accent, alpha: 0.18),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(icon, size: 22, color: accent),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.titleS.copyWith(color: p.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SpaceCard extends StatelessWidget {
   final Space space;
   final int? memberCount;
+  final List<String>? memberNames;
   final bool isDefault;
   final bool showDefaultToggle;
   final VoidCallback onTap;
@@ -482,6 +557,7 @@ class _SpaceCard extends StatelessWidget {
     super.key,
     required this.space,
     required this.memberCount,
+    this.memberNames,
     this.isDefault = false,
     this.showDefaultToggle = false,
     required this.onTap,
@@ -490,137 +566,136 @@ class _SpaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     final isSplit = space.mode == SpaceMode.split;
     final modeColor = isSplit ? AppColors.primary : AppColors.positive;
     final modeLabel = isSplit ? l10n.splitMode : l10n.personalMode;
     final modeIcon = isSplit ? Icons.groups_outlined : Icons.person_outline;
+    final names = memberNames;
 
-    return PressableScale(
+    return SurfaceCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: isDark
-                ? AppColors.borderDark
-                : (isDefault ? AppColors.primary : Colors.transparent),
-            width: isDefault ? 1.6 : 1,
-          ),
-          boxShadow: cardShadow(),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                gradient: isSplit
-                    ? AppColors.heroGradient
-                    : const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF34C07E), AppColors.positive],
-                      ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(modeIcon, size: 26, color: Colors.white),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      radius: BorderRadius.circular(AppRadius.xl),
+      color: p.surface,
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              gradient: AppGradients.tint(modeColor, alpha: 0.18),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    space.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: modeColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(modeIcon, size: 13, color: modeColor),
-                            const SizedBox(width: 5),
-                            Text(
-                              modeLabel,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: modeColor,
-                              ),
-                            ),
-                          ],
-                        ),
+            child: Icon(modeIcon, size: 23, color: modeColor),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  space.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.titleS.copyWith(color: p.textPrimary),
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 3,
                       ),
-                      if (memberCount != null) ...[
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            l10n.spaceMembersCount(memberCount!),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondary,
+                      decoration: BoxDecoration(
+                        color: modeColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(modeIcon, size: 12, color: modeColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            modeLabel,
+                            style: AppText.caption.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: modeColor,
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                    if (memberCount != null) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Flexible(
+                        child: Text(
+                          l10n.spaceMembersCount(memberCount!),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.caption.copyWith(
+                            color: p.textSecondary,
+                          ),
                         ),
-                      ],
+                      ),
                     ],
-                  ),
-                ],
-              ),
-            ),
-            if (showDefaultToggle) ...[
-              IconButton(
-                key: ValueKey('default_toggle_${space.id}'),
-                tooltip: l10n.openByDefault,
-                onPressed: onToggleDefault,
-                visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  isDefault ? Icons.star_rounded : Icons.star_border_rounded,
-                  size: 24,
-                  color: isDefault
-                      ? Colors.amber.shade600
-                      : (isDark
-                            ? AppColors.textMutedDark
-                            : AppColors.textMuted),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 4),
-            ],
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 26,
-              color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+              ],
             ),
+          ),
+          if (names != null && names.isNotEmpty) ...[
+            const SizedBox(width: AppSpacing.sm),
+            _MemberAvatarBadge(names: names),
           ],
-        ),
+          if (showDefaultToggle) ...[
+            const SizedBox(width: AppSpacing.xs),
+            IconButton(
+              key: ValueKey('default_toggle_${space.id}'),
+              tooltip: l10n.openByDefault,
+              onPressed: onToggleDefault,
+              visualDensity: VisualDensity.compact,
+              icon: Icon(
+                isDefault ? Icons.star_rounded : Icons.star_border_rounded,
+                size: 24,
+                color: isDefault ? Colors.amber.shade600 : p.textMuted,
+              ),
+            ),
+            const SizedBox(width: 2),
+          ],
+          const SizedBox(width: AppSpacing.xs),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 26,
+            color: p.textMuted,
+          ),
+        ],
       ),
+    );
+  }
+}
+
+/// Overlapping member avatars for a Space card. [AvatarStack] needs a bounded
+/// width, so the badge reserves exactly the space its overlap layout uses.
+class _MemberAvatarBadge extends StatelessWidget {
+  final List<String> names;
+
+  const _MemberAvatarBadge({required this.names});
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 20.0;
+    const max = 3;
+    final visible = names.length.clamp(0, max);
+    final overflow = names.length - visible;
+    final width =
+        (visible <= 0 ? 0.0 : (visible - 1) * (size * 0.62) + size) +
+        (overflow > 0 ? size * 0.62 : 0.0);
+    return SizedBox(
+      width: width,
+      child: AvatarStack(names: names, size: size, max: max),
     );
   }
 }
@@ -652,14 +727,10 @@ class _SpaceActionButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, color: Colors.white, size: 22),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppText.overline.copyWith(color: Colors.white),
               ),
             ],
           ),
@@ -680,13 +751,13 @@ class _PendingSpaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     return Container(
       key: ValueKey('pending_space_${space.id}'),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.06),
+        gradient: AppGradients.tint(AppColors.primary, alpha: 0.06),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
@@ -696,7 +767,7 @@ class _PendingSpaceCard extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
+              gradient: AppGradients.tint(AppColors.primary, alpha: 0.12),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
@@ -705,26 +776,19 @@ class _PendingSpaceCard extends StatelessWidget {
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.md + 2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   space.name,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimary,
-                  ),
+                  style: AppText.titleM.copyWith(color: p.textPrimary),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   l10n.pendingApproval,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: AppText.caption.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
@@ -732,11 +796,7 @@ class _PendingSpaceCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            Icons.lock_outline_rounded,
-            size: 20,
-            color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
-          ),
+          Icon(Icons.lock_outline_rounded, size: 20, color: p.textMuted),
         ],
       ),
     );
@@ -757,7 +817,7 @@ class _EmptySpaces extends StatelessWidget {
       title: l10n.noSpacesYet,
       message: l10n.noSpacesMessage,
       action: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         child: Column(
           children: [
             PrimaryButton(
@@ -765,7 +825,7 @@ class _EmptySpaces extends StatelessWidget {
               icon: Icons.add_rounded,
               onPressed: onCreate,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             SecondaryButton(
               label: l10n.joinSpace,
               icon: Icons.group_add_outlined,

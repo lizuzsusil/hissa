@@ -14,6 +14,7 @@ import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
 import '../widgets/misc.dart';
+import '../widgets/sheets.dart';
 import 'personal/personal_widgets.dart';
 
 class InsightsScreen extends StatelessWidget {
@@ -34,6 +35,21 @@ class InsightsScreen extends StatelessWidget {
 
     final cycles = state.cycles;
     final cycle = state.selectedCycle;
+
+    // Group spaces: before the first cycle exists the old layout rendered a
+    // blank page — surface an explicit empty state instead so there is
+    // always something on screen.
+    if (cycle == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.insights)),
+        body: EmptyState(
+          icon: Icons.donut_small_outlined,
+          title: l10n.cycle,
+          message: l10n.loadingSpace,
+        ),
+      );
+    }
+
     final cycleBalances = state.computeBalances();
     final categories = state.categories;
     final members = state.members;
@@ -55,103 +71,102 @@ class InsightsScreen extends StatelessWidget {
         onRefresh: () => context.read<AppState>().refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            100,
+          ),
           children: [
             if (cycles.length > 1) ...[
               SectionHeader(title: l10n.monthlySpending),
               _MonthlyBarChart(data: monthlyData.reversed.toList()),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
             ],
-            if (cycle != null) ...[
-              SectionHeader(
-                title: l10n.cycleNameByCategory(cycle.name),
-                actionLabel: l10n.cycle,
-                onAction: () => _showCyclePicker(context, state, cycles),
+            SectionHeader(
+              title: l10n.cycleNameByCategory(cycle.name),
+              actionLabel: l10n.cycle,
+              onAction: () => _showCyclePicker(context, state, cycles),
+            ),
+            _CategoryPie(categories: categories, categoryData: categoryData),
+            const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
+            SectionHeader(title: l10n.whoPaidThisCycle),
+            const SizedBox(height: AppSpacing.xs),
+            // Grouped members are represented by their Member Group.
+            for (final m in members.where(
+              (m) => !state.groupedUserIds.contains(m.userId),
+            ))
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: _MemberPaidRow(
+                  name: m.name,
+                  paid: memberPaid[m.userId] ?? Money.zero(),
+                  total: cycleBalances.fold<int>(
+                    0,
+                    (sum, b) => sum + b.paid.paisa,
+                  ),
+                ),
               ),
-              _CategoryPie(categories: categories, categoryData: categoryData),
-              const SizedBox(height: 24),
-              SectionHeader(title: l10n.whoPaidThisCycle),
-              const SizedBox(height: 4),
-              // Grouped members are represented by their Member Group.
-              for (final m in members.where(
-                (m) => !state.groupedUserIds.contains(m.userId),
-              ))
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _MemberPaidRow(
-                    name: m.name,
-                    paid: memberPaid[m.userId] ?? Money.zero(),
-                    total: cycleBalances.fold<int>(
-                      0,
-                      (sum, b) => sum + b.paid.paisa,
-                    ),
+            for (final g in state.activeMemberGroups)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: _MemberPaidRow(
+                  name: g.name,
+                  paid: memberPaid[g.id] ?? Money.zero(),
+                  total: cycleBalances.fold<int>(
+                    0,
+                    (sum, b) => sum + b.paid.paisa,
                   ),
                 ),
-              for (final g in state.activeMemberGroups)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _MemberPaidRow(
-                    name: g.name,
-                    paid: memberPaid[g.id] ?? Money.zero(),
-                    total: cycleBalances.fold<int>(
-                      0,
-                      (sum, b) => sum + b.paid.paisa,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 12),
-              _SummaryRow(cycles: cycles),
-            ],
+              ),
+            const SizedBox(height: AppSpacing.md),
+            _SummaryRow(cycles: cycles),
           ],
         ),
       ),
     );
   }
 
-  void _showCyclePicker(
+  Future<void> _showCyclePicker(
     BuildContext context,
     AppState state,
     List<Cycle> cycles,
   ) {
-    showModalBottomSheet(
+    final l10n = context.l10n;
+    final p = context.palette;
+    final selectedId = state.selectedCycle?.id;
+    return showAppSheet(
       context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
-          : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(16),
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                context.l10n.selectCycle,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-              ),
-            ),
-            for (final c in cycles)
-              ListTile(
-                leading: Icon(
-                  c.status == CycleStatus.closed
-                      ? Icons.history_rounded
-                      : Icons.radio_button_checked,
-                  color: c.id == state.selectedCycle?.id
-                      ? AppColors.primary
-                      : AppColors.textMuted,
-                ),
-                title: Text(c.name),
-                subtitle: Text(_cycleStatusLabel(context.l10n, c.status)),
-                onTap: () {
-                  state.selectCycle(c.id);
-                  Navigator.pop(context);
-                },
-              ),
-          ],
+      title: l10n.cycle,
+      builder: (sheetContext) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.lg,
         ),
+        children: [
+          for (final c in cycles)
+            ListTile(
+              leading: Icon(
+                c.status == CycleStatus.closed
+                    ? Icons.history_rounded
+                    : Icons.radio_button_checked,
+                color: c.id == selectedId ? AppColors.primary : p.textMuted,
+              ),
+              title: Text(c.name),
+              subtitle: Text(_cycleStatusLabel(l10n, c.status)),
+              trailing: c.id == selectedId
+                  ? const Icon(Icons.check_rounded,
+                      size: 20, color: AppColors.primary)
+                  : null,
+              onTap: () {
+                state.selectCycle(c.id);
+                Navigator.pop(sheetContext);
+              },
+            ),
+        ],
       ),
     );
   }
@@ -233,6 +248,7 @@ class _PersonalInsightsState extends State<_PersonalInsights> {
       Money.zero(),
       (sum, e) => sum + e.amount,
     );
+    final scopeCategoryData = _categoryTotals(scopeExpenses);
     final caption = _scopeCaption(l10n, _scope);
 
     final now = DateTime.now();
@@ -249,7 +265,12 @@ class _PersonalInsightsState extends State<_PersonalInsights> {
         onRefresh: () => context.read<AppState>().refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            100,
+          ),
           children: [
             ResponsiveContent(
               padding: EdgeInsets.zero,
@@ -278,7 +299,7 @@ class _PersonalInsightsState extends State<_PersonalInsights> {
                     ],
                     onChanged: (value) => setState(() => _scope = value),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   _SpendingChartCard(
                     title: l10n.spendingOverview,
                     points: chart.points,
@@ -286,15 +307,15 @@ class _PersonalInsightsState extends State<_PersonalInsights> {
                     total: scopeTotal,
                     periodLabel: caption,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
                   SectionHeader(title: l10n.categoryBreakdown),
                   _CategoryPie(
                     categories: state.categories,
-                    categoryData: _categoryTotals(scopeExpenses),
+                    categoryData: scopeCategoryData,
                   ),
                   if (currentMonthTotal.isPositive ||
                       previousMonthTotal.isPositive) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
                     SectionHeader(title: l10n.monthCompare),
                     _MonthCompareCard(
                       current: currentMonthTotal,
@@ -509,16 +530,22 @@ class _SpendingChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
+    final dark = context.isDark;
 
     if (total.isZero) {
       return SurfaceCard(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.xl,
+          AppSpacing.lg,
+          AppSpacing.sm,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _ChartHeader(title: title, total: total, periodLabel: periodLabel),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             EmptyState(
               icon: Icons.bar_chart_rounded,
               title: l10n.noSpendingChartTitle,
@@ -547,17 +574,22 @@ class _SpendingChartCard extends StatelessWidget {
             : 20.0;
     final labelStep = (points.length / 6).ceil().clamp(1, points.length);
     final hasPlanned = points.any((p) => p.planned.isPositive);
-    final plannedColor = isDark
-        ? Colors.white24
+    final plannedColor = dark
+        ? AppColors.primaryBright.withValues(alpha: 0.45)
         : AppColors.primary.withValues(alpha: 0.28);
 
     return SurfaceCard(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _ChartHeader(title: title, total: total, periodLabel: periodLabel),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           SizedBox(
             height: 190,
             child: BarChart(
@@ -569,10 +601,7 @@ class _SpendingChartCard extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: maxValue / 4,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: (isDark
-                            ? AppColors.borderDark
-                            : AppColors.border)
-                        .withValues(alpha: 0.6),
+                    color: p.border.withValues(alpha: 0.6),
                     strokeWidth: 1,
                   ),
                 ),
@@ -592,12 +621,7 @@ class _SpendingChartCard extends StatelessWidget {
                         value >= 1000
                             ? '${(value / 1000).toStringAsFixed(0)}k'
                             : value.toStringAsFixed(0),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isDark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMuted,
-                        ),
+                        style: TextStyle(fontSize: 10, color: p.textMuted),
                       ),
                     ),
                   ),
@@ -614,15 +638,13 @@ class _SpendingChartCard extends StatelessWidget {
                           return const SizedBox.shrink();
                         }
                         return Padding(
-                          padding: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.only(top: AppSpacing.sm),
                           child: Text(
                             points[index].label,
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondary,
+                              color: p.textSecondary,
                             ),
                           ),
                         );
@@ -634,9 +656,8 @@ class _SpendingChartCard extends StatelessWidget {
                   touchTooltipData: BarTouchTooltipData(
                     fitInsideHorizontally: true,
                     fitInsideVertically: true,
-                    getTooltipColor: (_) => isDark
-                        ? AppColors.surfaceAltDark
-                        : const Color(0xFF22313F),
+                    getTooltipColor: (_) =>
+                        dark ? const Color(0xFF272D38) : const Color(0xFF20242C),
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       if (groupIndex >= points.length) return null;
                       final point = points[groupIndex];
@@ -689,32 +710,30 @@ class _SpendingChartCard extends StatelessWidget {
             ),
           ),
           if (hasPlanned) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 _LegendDot(color: AppColors.primary, label: l10n.chartSpent),
-                const SizedBox(width: 18),
+                const SizedBox(width: AppSpacing.xl),
                 _LegendDot(color: plannedColor, label: l10n.chartPlanned),
               ],
             ),
           ],
           if (capped) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 Icon(
                   Icons.history_rounded,
                   size: 13,
-                  color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                  color: p.textMuted,
                 ),
-                const SizedBox(width: 5),
+                const SizedBox(width: AppSpacing.xs),
                 Text(
                   l10n.showingRecentWindow,
-                  style: TextStyle(
-                    fontSize: 11.5,
+                  style: AppText.caption.copyWith(
                     fontStyle: FontStyle.italic,
-                    color:
-                        isDark ? AppColors.textMutedDark : AppColors.textMuted,
+                    color: p.textMuted,
                   ),
                 ),
               ],
@@ -734,26 +753,19 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 10,
           height: 10,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppSpacing.sm),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-          ),
+          style: AppText.labelM.copyWith(color: p.textSecondary),
         ),
       ],
     );
@@ -770,15 +782,21 @@ class _MonthCompareCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
+    final dark = context.isDark;
     final maxValue = [current.major, previous.major, 1.0]
         .reduce((a, b) => a > b ? a : b);
-    final plannedColor = isDark
-        ? Colors.white24
+    final plannedColor = dark
+        ? AppColors.primaryBright.withValues(alpha: 0.45)
         : AppColors.primary.withValues(alpha: 0.28);
 
     return SurfaceCard(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -793,8 +811,7 @@ class _MonthCompareCard extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: maxValue / 2,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: (isDark ? AppColors.borderDark : AppColors.border)
-                        .withValues(alpha: 0.6),
+                    color: p.border.withValues(alpha: 0.6),
                     strokeWidth: 1,
                   ),
                 ),
@@ -814,12 +831,7 @@ class _MonthCompareCard extends StatelessWidget {
                         value >= 1000
                             ? '${(value / 1000).toStringAsFixed(0)}k'
                             : value.toStringAsFixed(0),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isDark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMuted,
-                        ),
+                        style: TextStyle(fontSize: 10, color: p.textMuted),
                       ),
                     ),
                   ),
@@ -833,15 +845,13 @@ class _MonthCompareCard extends StatelessWidget {
                           return const SizedBox.shrink();
                         }
                         return Padding(
-                          padding: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.only(top: AppSpacing.sm),
                           child: Text(
                             index == 0 ? l10n.lastMonth : l10n.thisMonth,
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondary,
+                              color: p.textSecondary,
                             ),
                           ),
                         );
@@ -853,9 +863,8 @@ class _MonthCompareCard extends StatelessWidget {
                   touchTooltipData: BarTouchTooltipData(
                     fitInsideHorizontally: true,
                     fitInsideVertically: true,
-                    getTooltipColor: (_) => isDark
-                        ? AppColors.surfaceAltDark
-                        : const Color(0xFF22313F),
+                    getTooltipColor: (_) =>
+                        dark ? const Color(0xFF272D38) : const Color(0xFF20242C),
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       if (groupIndex < 0 || groupIndex > 1) return null;
                       final value = groupIndex == 0 ? previous : current;
@@ -901,197 +910,16 @@ class _MonthCompareCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               _LegendDot(color: AppColors.primary, label: l10n.thisMonth),
-              const SizedBox(width: 18),
+              const SizedBox(width: AppSpacing.xl),
               _LegendDot(color: plannedColor, label: l10n.lastMonth),
             ],
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Ranked all-time category totals with proportional horizontal bars.
-class _CategoryLeaderboard extends StatelessWidget {
-  final List<Category> categories;
-  final Map<String, Money> categoryData;
-
-  const _CategoryLeaderboard({
-    required this.categories,
-    required this.categoryData,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final entries = categoryData.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    if (entries.isEmpty) {
-      return EmptyState(
-        icon: Icons.leaderboard_outlined,
-        title: l10n.nothingToChart,
-        message: l10n.nothingToChartMessage,
-      );
-    }
-
-    final totalPaisa = categoryData.values.fold<int>(
-      0,
-      (sum, m) => sum + m.paisa,
-    );
-    final top = entries.take(5).toList();
-    final topPaisa = top.fold<int>(0, (sum, e) => sum + e.value.paisa);
-    final restPaisa = totalPaisa - topPaisa;
-    final maxPaisa = entries.first.value.paisa;
-
-    final rows = <Widget>[];
-    for (var i = 0; i < top.length; i++) {
-      final e = top[i];
-      final category = categories.where((c) => c.id == e.key).firstOrNull;
-      rows.add(
-        _LeaderboardRow(
-          rank: i + 1,
-          name: category?.name ?? l10n.other,
-          color: category?.colorValue == null
-              ? AppColors.primary
-              : Color(category!.colorValue!),
-          amount: e.value,
-          fraction: maxPaisa == 0 ? 0 : e.value.paisa / maxPaisa,
-          share: totalPaisa == 0 ? 0 : e.value.paisa / totalPaisa,
-        ),
-      );
-    }
-    if (restPaisa > 0) {
-      rows.add(
-        _LeaderboardRow(
-          rank: top.length + 1,
-          name: l10n.other,
-          color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
-          amount: Money(restPaisa),
-          fraction: maxPaisa == 0 ? 0 : restPaisa / maxPaisa,
-          share: totalPaisa == 0 ? 0 : restPaisa / totalPaisa,
-        ),
-      );
-    }
-
-    return SurfaceCard(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            rows[i],
-            if (i < rows.length - 1) const SizedBox(height: 14),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _LeaderboardRow extends StatelessWidget {
-  final int rank;
-  final String name;
-  final Color color;
-  final Money amount;
-  final double fraction;
-  final double share;
-
-  const _LeaderboardRow({
-    required this.rank,
-    required this.name,
-    required this.color,
-    required this.amount,
-    required this.fraction,
-    required this.share,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final rankColor = switch (rank) {
-      1 => AppColors.accent,
-      2 => AppColors.secondary,
-      3 => AppColors.info,
-      _ => isDark ? AppColors.textMutedDark : AppColors.textMuted,
-    };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 22,
-              height: 22,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: rankColor.withValues(alpha: isDark ? 0.22 : 0.14),
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                '$rank',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: rankColor,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Text(
-              '${(share * 100).round()}%',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: isDark
-                    ? AppColors.textMutedDark
-                    : AppColors.textMuted,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              formatMoneyCompact(amount, showSymbol: false),
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Stack(
-            children: [
-              Container(
-                height: 8,
-                color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-              ),
-              FractionallySizedBox(
-                widthFactor: fraction,
-                child: Container(height: 8, color: color),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -1110,16 +938,13 @@ class _ChartHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Row(
       children: [
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 14.5,
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppText.titleM.copyWith(color: p.textPrimary),
           ),
         ),
         Column(
@@ -1127,20 +952,16 @@ class _ChartHeader extends StatelessWidget {
           children: [
             Text(
               formatMoney(total),
-              style: const TextStyle(
+              style: AppText.titleL.copyWith(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
+                color: p.textPrimary,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               l10n.spentInPeriod(formatMoneyCompact(total), periodLabel),
-              style: TextStyle(
-                fontSize: 11.5,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondary,
-              ),
+              style: AppText.caption.copyWith(color: p.textMuted),
             ),
           ],
         ),
@@ -1156,13 +977,18 @@ class _MonthlyBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final maxValue = data.isEmpty
         ? 1.0
         : data.fold<double>(0, (m, d) => d.total.major > m ? d.total.major : m);
 
     return SurfaceCard(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1176,8 +1002,7 @@ class _MonthlyBarChart extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: maxValue / 4,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: (isDark ? AppColors.borderDark : AppColors.border)
-                        .withValues(alpha: 0.6),
+                    color: p.border.withValues(alpha: 0.6),
                     strokeWidth: 1,
                   ),
                 ),
@@ -1197,12 +1022,7 @@ class _MonthlyBarChart extends StatelessWidget {
                         value >= 1000
                             ? '${(value / 1000).toStringAsFixed(0)}k'
                             : value.toStringAsFixed(0),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isDark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMuted,
-                        ),
+                        style: TextStyle(fontSize: 10, color: p.textMuted),
                       ),
                     ),
                   ),
@@ -1215,15 +1035,13 @@ class _MonthlyBarChart extends StatelessWidget {
                           return const SizedBox.shrink();
                         }
                         return Padding(
-                          padding: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.only(top: AppSpacing.sm),
                           child: Text(
                             data[index].label,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondary,
+                              color: p.textSecondary,
                             ),
                           ),
                         );
@@ -1251,10 +1069,10 @@ class _MonthlyBarChart extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           for (final entry in data.asMap().entries)
             Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Row(
                 children: [
                   Container(
@@ -1266,22 +1084,17 @@ class _MonthlyBarChart extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 7),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     entry.value.label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
-                    ),
+                    style: AppText.caption.copyWith(color: p.textSecondary),
                   ),
                   const Spacer(),
                   Text(
                     formatMoneyCompact(entry.value.total),
-                    style: const TextStyle(
-                      fontSize: 12.5,
+                    style: AppText.labelM.copyWith(
                       fontWeight: FontWeight.w700,
+                      color: p.textPrimary,
                     ),
                   ),
                 ],
@@ -1301,7 +1114,7 @@ class _CategoryPie extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     final total = categoryData.values.fold<Money>(
       Money.zero(),
@@ -1338,7 +1151,7 @@ class _CategoryPie extends StatelessWidget {
     }).toList();
 
     return SurfaceCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         children: [
           SizedBox(
@@ -1351,10 +1164,10 @@ class _CategoryPie extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           for (final e in entries)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Row(
                 children: [
                   Container(
@@ -1377,7 +1190,7 @@ class _CategoryPie extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       categories
@@ -1385,20 +1198,17 @@ class _CategoryPie extends StatelessWidget {
                               .firstOrNull
                               ?.name ??
                           l10n.other,
-                      style: const TextStyle(
-                        fontSize: 13.5,
+                      style: AppText.bodyM.copyWith(
                         fontWeight: FontWeight.w600,
+                        color: p.textPrimary,
                       ),
                     ),
                   ),
                   Text(
                     formatMoneyCompact(e.value, showSymbol: false),
-                    style: TextStyle(
-                      fontSize: 13.5,
+                    style: AppText.bodyM.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondary,
+                      color: p.textSecondary,
                     ),
                   ),
                 ],
@@ -1423,12 +1233,13 @@ class _MemberPaidRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final fraction = total <= 0 ? 0.0 : paid.paisa / total;
     final color = avatarColorFor(name);
     return Row(
       children: [
         MemberAvatar(name: name, size: 34),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1437,24 +1248,24 @@ class _MemberPaidRow extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
-                      fontSize: 13.5,
+                    style: AppText.bodyM.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: p.textPrimary,
                     ),
                   ),
                   const Spacer(),
                   Text(
                     formatMoneyCompact(paid),
-                    style: const TextStyle(
-                      fontSize: 13,
+                    style: AppText.bodyM.copyWith(
                       fontWeight: FontWeight.w800,
+                      color: p.textPrimary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.xs),
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: LinearProgressIndicator(
                   value: fraction,
                   minHeight: 8,
@@ -1470,6 +1281,8 @@ class _MemberPaidRow extends StatelessWidget {
   }
 }
 
+/// Lifetime totals strip for group spaces: violet-tinted surface with three
+/// labelled cells (total spent, expense count, average).
 class _SummaryRow extends StatelessWidget {
   final List<Cycle>? cycles;
 
@@ -1479,6 +1292,8 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final l10n = context.l10n;
+    final p = context.palette;
+    final dark = context.isDark;
     final allExpenses = state.repo.expenses;
     final totalAllTime = allExpenses.fold<Money>(
       Money.zero(),
@@ -1489,58 +1304,51 @@ class _SummaryRow extends StatelessWidget {
         ? Money.zero()
         : Money((totalAllTime.paisa / totalExpenses).round());
 
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.tertiary.withValues(alpha: 0.10),
-            AppColors.tertiary.withValues(alpha: 0.04),
+        gradient: AppGradients.tint(
+          AppColors.tertiary,
+          alpha: dark ? 0.16 : 0.08,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.22)),
+      ),
+      child: SurfaceCard(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        color: Colors.transparent,
+        border: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.lifetimeSummary,
+              style: AppText.titleM.copyWith(color: p.textPrimary),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: _SummaryCell(
+                    label: l10n.totalSpent,
+                    value: formatMoneyCompact(totalAllTime),
+                  ),
+                ),
+                Expanded(
+                  child: _SummaryCell(
+                    label: l10n.expenses,
+                    value: '$totalExpenses',
+                  ),
+                ),
+                Expanded(
+                  child: _SummaryCell(
+                    label: l10n.average,
+                    value: formatMoneyCompact(avg),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.25)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.tertiary.withValues(alpha: 0.10),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.lifetimeSummary,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _SummaryCell(
-                  label: l10n.totalSpent,
-                  value: formatMoneyCompact(totalAllTime),
-                ),
-              ),
-              Expanded(
-                child: _SummaryCell(
-                  label: l10n.expenses,
-                  value: '$totalExpenses',
-                ),
-              ),
-              Expanded(
-                child: _SummaryCell(
-                  label: l10n.average,
-                  value: formatMoneyCompact(avg),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -1554,25 +1362,24 @@ class _SummaryCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11.5,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondary,
-          ),
+          style: AppText.labelM.copyWith(color: p.textSecondary),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
             value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            style: AppText.titleS.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: p.textPrimary,
+            ),
           ),
         ),
       ],

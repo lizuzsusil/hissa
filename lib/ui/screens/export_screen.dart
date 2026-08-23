@@ -7,6 +7,7 @@ import '../../l10n/l10n.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/buttons.dart';
+import '../widgets/cards.dart';
 import '../widgets/toasts.dart';
 
 class ExportScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class ExportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final isPersonal = state.isPersonalMode;
     final expenses = isPersonal
         ? state.personalExpenses
@@ -34,21 +35,15 @@ class ExportScreen extends StatelessWidget {
         onRefresh: () => context.read<AppState>().refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            AppSpacing.xxxl,
+          ),
           children: [
-            Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                gradient: AppColors.heroGradient,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 22,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
+            HeroCard(
+              gradient: AppColors.heroGradient,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -59,69 +54,60 @@ class ExportScreen extends StatelessWidget {
                         color: Colors.white,
                         size: 22,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Text(
                         l10n.csvExport,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppText.labelM.copyWith(color: Colors.white70),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     cycle?.name ?? l10n.currentCycleFallback,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: AppText.displayM.copyWith(
                       fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     l10n.expensesAndTotal(
                       expenses.length,
                       formatMoney(state.totalSpent()),
                     ),
-                    style: TextStyle(
+                    style: AppText.bodyM.copyWith(
                       color: Colors.white.withValues(alpha: 0.85),
-                      fontSize: 13,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               l10n.preview,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: AppText.titleM.copyWith(color: p.textPrimary),
             ),
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.border,
+            const SizedBox(height: AppSpacing.sm),
+            SurfaceCard(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: p.surfaceAlt,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-              ),
-              child: SelectableText(
-                preview,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontFamily: 'monospace',
-                  height: 1.5,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondary,
+                child: SelectableText(
+                  preview,
+                  style: AppText.bodyM.copyWith(
+                    fontFamily: 'monospace',
+                    height: 1.5,
+                    color: p.textSecondary,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
             PrimaryButton(
               label: l10n.copyCsv,
               icon: Icons.copy_rounded,
@@ -138,7 +124,7 @@ class ExportScreen extends StatelessWidget {
                       }
                     },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.md),
             SecondaryButton(
               label: l10n.shareReport,
               icon: Icons.ios_share_rounded,

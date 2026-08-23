@@ -39,6 +39,9 @@ class AppLocalizationsNe extends AppLocalizations {
   String get cancel => 'रद्द गर्नुहोस्';
 
   @override
+  String get confirm => 'पक्का गर्नुहोस्';
+
+  @override
   String get delete => 'मेट्नुहोस्';
 
   @override

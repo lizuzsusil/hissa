@@ -3,20 +3,20 @@ import 'package:flutter/scheduler.dart';
 
 import '../theme/app_theme.dart';
 
-/// Resting card shadow used for raised surfaces. Scales with [AppElevation];
-/// level 0 yields no shadow at all.
+/// Resting card shadow used for raised surfaces. Delegates to the
+/// [AppShadows] token system; level 0 yields no shadow at all.
 List<BoxShadow> cardShadow({Color? color, double opacity = 0.10}) => [
-  BoxShadow(
-    color: (color ?? Colors.black).withValues(alpha: opacity),
-    blurRadius: 18,
-    offset: const Offset(0, 8),
-  ),
-  BoxShadow(
-    color: (color ?? Colors.black).withValues(alpha: opacity * 0.5),
-    blurRadius: 6,
-    offset: const Offset(0, 2),
-  ),
-];
+      BoxShadow(
+        color: (color ?? Colors.black).withValues(alpha: opacity),
+        blurRadius: 18,
+        offset: const Offset(0, 8),
+      ),
+      BoxShadow(
+        color: (color ?? Colors.black).withValues(alpha: opacity * 0.5),
+        blurRadius: 6,
+        offset: const Offset(0, 2),
+      ),
+    ];
 
 /// Wraps a child with press feedback: a subtle scale-down plus darkened tint
 /// while the user holds, easing back on release. Use for tappable cards,

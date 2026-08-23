@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
 import '../widgets/buttons.dart';
+import '../widgets/dialogs.dart';
 import '../widgets/misc.dart';
 import '../widgets/motion.dart';
 import 'expense_form_screen.dart';
@@ -22,7 +23,7 @@ class ExpenseDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
     final l10n = context.l10n;
     final isPersonal = expense.cycleId == null;
     final cycle = state.selectedCycle;
@@ -48,14 +49,14 @@ class ExpenseDetailScreen extends StatelessWidget {
               },
             ),
           if (canEdit) ...[
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             IconAction(
               icon: Icons.delete_outline_rounded,
               foreground: AppColors.negative,
               background: AppColors.negativeSoft,
               onPressed: () => _confirmDelete(context, state),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
           ],
         ],
       ),
@@ -63,13 +64,16 @@ class ExpenseDetailScreen extends StatelessWidget {
         onRefresh: () => context.read<AppState>().refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.sm,
+            AppSpacing.xl,
+            AppSpacing.xxl + AppSpacing.xs,
+          ),
           children: [
-            Container(
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                gradient: AppColors.heroGradient,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
+            HeroCard(
+              radius: BorderRadius.vertical(
+                bottom: Radius.circular(AppRadius.xl),
               ),
               child: Stack(
                 clipBehavior: Clip.none,
@@ -83,30 +87,24 @@ class ExpenseDetailScreen extends StatelessWidget {
                         Text(
                           expense.description ?? l10n.expense,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: AppText.titleL.copyWith(color: Colors.white),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: AppSpacing.md),
                         AnimatedMoney(
                           paisa: expense.amount.paisa,
-                          formatter: (p) => formatMoney(Money(p)),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          formatter: (value) => formatMoney(Money(value)),
+                          style: AppText.displayL.copyWith(
                             fontSize: 34,
-                            fontWeight: FontWeight.w800,
                             letterSpacing: -0.8,
+                            color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppSpacing.sm),
                         Text(
                           formatFullDate(expense.date),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: AppText.bodyM.copyWith(
                             color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 13,
                           ),
                         ),
                       ],
@@ -124,27 +122,22 @@ class ExpenseDetailScreen extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
                           color: Colors.white.withValues(alpha: 0.22),
                         ),
                       ),
                       child: Text(
                         category?.name ?? l10n.general,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppText.labelM.copyWith(color: Colors.white),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
             SurfaceCard(
-              padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   _InfoRow(
@@ -153,7 +146,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                     value: payer,
                   ),
                   if (!isPersonal) ...[
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppSpacing.md),
                     _InfoRow(
                       icon: Icons.receipt_long_outlined,
                       label: l10n.split,
@@ -161,7 +154,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                     ),
                   ],
                   if (expense.note != null) ...[
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppSpacing.md),
                     _InfoRow(
                       icon: Icons.sticky_note_2_outlined,
                       label: l10n.note,
@@ -169,7 +162,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                     ),
                   ],
                   if (expense.receiptUrl != null) ...[
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppSpacing.md),
                     _InfoRow(
                       icon: Icons.receipt_outlined,
                       label: l10n.receipt,
@@ -180,11 +173,10 @@ class ExpenseDetailScreen extends StatelessWidget {
               ),
             ),
             if (!isPersonal) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
               SectionHeader(title: l10n.whoPaysWhat),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               SurfaceCard(
-                padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
                     // New model: GROUP participant (single share with memberGroupId + snapshot)
@@ -211,30 +203,32 @@ class ExpenseDetailScreen extends StatelessWidget {
                     for (final share in shares)
                       if (!share.isGroup && share.userId != null)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          padding:
+                              const EdgeInsets.only(bottom: AppSpacing.md),
                           child: Row(
                             children: [
                               MemberAvatar(
                                 name: state.memberName(share.userId!) ?? '?',
                                 size: 36,
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: AppSpacing.md),
                               Expanded(
                                 child: Text(
                                   state.memberName(share.userId!) ?? '?',
-                                  style: const TextStyle(
-                                    fontSize: 14.5,
-                                    fontWeight: FontWeight.w600,
+                                  style: AppText.titleS.copyWith(
+                                    color: p.textPrimary,
                                   ),
                                 ),
                               ),
                               if (share.userId == expense.paidByUserId)
                                 Padding(
-                                  padding: const EdgeInsets.only(right: 10),
+                                  padding: const EdgeInsets.only(
+                                    right: AppSpacing.sm,
+                                  ),
                                   child: Text(
                                     l10n.paid,
-                                    style: TextStyle(
-                                      fontSize: 12,
+                                    style: AppText.caption.copyWith(
+                                      fontSize: 11.5,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.positive,
                                     ),
@@ -242,8 +236,7 @@ class ExpenseDetailScreen extends StatelessWidget {
                                 ),
                               Text(
                                 formatMoney(share.amount),
-                                style: const TextStyle(
-                                  fontSize: 14.5,
+                                style: AppText.titleS.copyWith(
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -255,18 +248,16 @@ class ExpenseDetailScreen extends StatelessWidget {
               ),
             ],
             if (!canEdit) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
               Center(
                 child: Text(
                   expense.createdBy == null
                       ? l10n.legacyExpenseHint
                       : l10n.cycleClosedHint,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: AppText.bodyM.copyWith(
                     fontSize: 13,
-                    color: isDark
-                        ? AppColors.textMutedDark
-                        : AppColors.textMuted,
+                    color: p.textMuted,
                   ),
                 ),
               ),
@@ -279,26 +270,16 @@ class ExpenseDetailScreen extends StatelessWidget {
 
   Future<void> _confirmDelete(BuildContext context, AppState state) async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.deleteExpenseTitle),
-        content: Text(l10n.deleteExpenseMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.negative),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
+      title: l10n.deleteExpenseTitle,
+      message: l10n.deleteExpenseMessage,
+      confirmLabel: l10n.delete,
+      destructive: true,
+      icon: Icons.delete_outline_rounded,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       await state.deleteExpense(expense.id);
       if (context.mounted) Navigator.of(context).pop();
     }
@@ -320,9 +301,10 @@ class _GroupPartyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final totalPaisa = shares.fold<int>(0, (sum, s) => sum + s.amount.paisa);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -332,8 +314,8 @@ class _GroupPartyRow extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
+                  gradient: AppGradients.tint(AppColors.primary),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: const Icon(
                   Icons.group_outlined,
@@ -341,50 +323,52 @@ class _GroupPartyRow extends StatelessWidget {
                   color: AppColors.primary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   group.name,
-                  style: const TextStyle(
-                    fontSize: 14.5,
+                  style: AppText.titleS.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: p.textPrimary,
                   ),
                 ),
               ),
               Text(
                 formatMoney(Money(totalPaisa)),
-                style: const TextStyle(
-                  fontSize: 14.5,
+                style: AppText.titleS.copyWith(
                   fontWeight: FontWeight.w800,
+                  color: p.textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.xs),
           for (final share in shares)
             if (share.userId != null)
               Padding(
-                padding: const EdgeInsets.only(left: 48, bottom: 4),
+                padding: const EdgeInsets.only(
+                  left: 36 + AppSpacing.md,
+                  bottom: AppSpacing.xs,
+                ),
                 child: Row(
                   children: [
                     MemberAvatar(name: memberName(share.userId!), size: 22),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         memberName(share.userId!),
-                        style: const TextStyle(
-                          fontSize: 13,
+                        style: AppText.bodyM.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          color: p.textSecondary,
                         ),
                       ),
                     ),
                     if (share.userId == paidByUserId)
                       Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.only(right: AppSpacing.sm),
                         child: Text(
                           context.l10n.paid,
-                          style: const TextStyle(
+                          style: AppText.caption.copyWith(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
                             color: AppColors.positive,
@@ -393,10 +377,9 @@ class _GroupPartyRow extends StatelessWidget {
                       ),
                     Text(
                       formatMoney(share.amount),
-                      style: const TextStyle(
-                        fontSize: 13,
+                      style: AppText.bodyM.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
+                        color: p.textSecondary,
                       ),
                     ),
                   ],
@@ -421,13 +404,13 @@ class _GroupSnapshotRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final snapshot = share.groupSnapshot;
     final members = snapshot?.allUserIds ?? [];
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final totalPaisa = share.amount.paisa;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -437,8 +420,8 @@ class _GroupSnapshotRow extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
+                  gradient: AppGradients.tint(AppColors.primary),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: const Icon(
                   Icons.group_outlined,
@@ -446,54 +429,54 @@ class _GroupSnapshotRow extends StatelessWidget {
                   color: AppColors.primary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   snapshot?.ownerUserId != null
                       ? '${memberName(snapshot!.ownerUserId)}\'s Group'
                       : 'Member Group',
-                  style: const TextStyle(
-                    fontSize: 14.5,
+                  style: AppText.titleS.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: p.textPrimary,
                   ),
                 ),
               ),
               Text(
                 formatMoney(Money(totalPaisa)),
-                style: const TextStyle(
-                  fontSize: 14.5,
+                style: AppText.titleS.copyWith(
                   fontWeight: FontWeight.w800,
+                  color: p.textPrimary,
                 ),
               ),
             ],
           ),
           if (members.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.xs),
             for (final uid in members)
               Padding(
-                padding: const EdgeInsets.only(left: 48, bottom: 4),
+                padding: const EdgeInsets.only(
+                  left: 36 + AppSpacing.md,
+                  bottom: AppSpacing.xs,
+                ),
                 child: Row(
                   children: [
                     MemberAvatar(name: memberName(uid), size: 22),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         memberName(uid),
-                        style: TextStyle(
-                          fontSize: 13,
+                        style: AppText.bodyM.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondary,
+                          color: p.textSecondary,
                         ),
                       ),
                     ),
                     if (uid == paidByUserId)
                       Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.only(right: AppSpacing.sm),
                         child: Text(
                           context.l10n.paid,
-                          style: const TextStyle(
+                          style: AppText.caption.copyWith(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
                             color: AppColors.positive,
@@ -523,30 +506,25 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final p = context.palette;
 
     return Row(
       children: [
         Icon(icon, size: 20, color: AppColors.primary),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         SizedBox(
           width: 70,
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondary,
-            ),
+            style: AppText.labelL.copyWith(color: p.textSecondary),
           ),
         ),
-        const SizedBox(width: 50),
+        const SizedBox(width: AppSpacing.xxxl + AppSpacing.sm),
         Expanded(
           child: Text(
             value,
             textAlign: TextAlign.start,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            style: AppText.labelL.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ],
