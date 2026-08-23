@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/formatters.dart';
 import '../../core/validators.dart';
@@ -139,6 +140,14 @@ class _SpaceScreenState extends State<SpaceScreen> {
                       );
                     },
                   ),
+                  const SizedBox(width: AppSpacing.sm),
+                  IconAction(
+                    icon: Icons.share_rounded,
+                    background: AppColors.secondary,
+                    foreground: Colors.white,
+                    tooltip: l10n.shareInviteCode,
+                    onPressed: () => _shareInvite(context, space),
+                  ),
                 ],
               ),
             ),
@@ -228,6 +237,17 @@ class _SpaceScreenState extends State<SpaceScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _shareInvite(BuildContext context, Space space) async {
+    final l10n = context.l10n;
+    final message = l10n.shareInviteMessage(space.name, space.inviteCode);
+    try {
+      await Share.share(message, subject: l10n.shareInviteSubject);
+    } catch (_) {
+      if (!context.mounted) return;
+      showToast(context, l10n.inviteCodeCopied, type: ToastType.success);
+    }
   }
 
   Future<void> _inviteMember(AppState state) async {

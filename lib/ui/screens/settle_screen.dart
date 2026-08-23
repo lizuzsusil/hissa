@@ -131,12 +131,13 @@ class SettleScreen extends StatelessWidget {
     showAppSheet<void>(
       context: context,
       isScrollControlled: true,
+      maxHeightFactor: 0.92,
       builder: (_) => Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xxl,
-          AppSpacing.xxl,
-          AppSpacing.xxl,
-          AppSpacing.xxl,
+          AppSpacing.xl,
+          AppSpacing.md,
+          AppSpacing.xl,
+          AppSpacing.xl,
         ),
         child: SettlementForm(
           fromUserId: fromUserId,

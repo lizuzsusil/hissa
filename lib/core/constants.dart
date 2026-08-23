@@ -125,10 +125,6 @@ const List<CategoryPreset> kDefaultCategories = [
 const List<String> kPaymentMethods = [
   'Cash',
   'Bank Transfer',
-  'eSewa',
-  'Khalti',
-  'IME Pay',
-  'Card',
   'Other',
 ];
 

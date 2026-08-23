@@ -116,10 +116,11 @@ class _SettlementFormState extends State<SettlementForm> {
     final fromName = state.memberName(widget.fromUserId) ?? '?';
     final toName = state.memberName(widget.toUserId) ?? '?';
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         Text(
           l10n.requestSettlementTitle,
           style: AppText.titleL.copyWith(
@@ -252,7 +253,10 @@ class _SettlementFormState extends State<SettlementForm> {
           loading: _saving,
           onPressed: _saving ? null : _save,
         ),
+        // Bottom inset so the button never hides behind the keyboard / gesture bar.
+        SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? AppSpacing.md : 0),
       ],
+    ),
     );
   }
 }

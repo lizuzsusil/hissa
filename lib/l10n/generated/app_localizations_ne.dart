@@ -579,7 +579,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get introSubtitle3 =>
-      'कसले कसलाई तिर्न बाँकी छ एकै नजरमा हेर्नुहोस् र नगद, बैंक ट्रान्सफर, ई-सेवा वा खल्तीबाट एक ट्यापमा भुक्तानी रेकर्ड गर्नुहोस्।';
+      'कसले कसलाई तिर्न बाँकी छ एकै नजरमा हेर्नुहोस् र नगद वा बैंक ट्रान्सफरबाट एक ट्यापमा भुक्तानी रेकर्ड गर्नुहोस्।';
 
   @override
   String get introTitle4 => 'आफ्नो खर्च बुझ्नुहोस्';
@@ -1760,4 +1760,15 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get cycleStatusClosed => 'बन्द';
+
+  @override
+  String get shareInviteCode => 'इन्भाइट कोड साझा गर्नुहोस्';
+
+  @override
+  String get shareInviteSubject => 'मेरो हिस्सा स्पेसमा सामेल हुनुहोस्';
+
+  @override
+  String shareInviteMessage(String space, String code) {
+    return '\"$space\" मा हिस्सा मा सामेल हुनुहोस्! इन्भाइट कोड $code प्रयोग गरेर स्पेसमा सामेल हुनुहोस् र सँगै खर्च ट्र्याक गर्न सुरु गर्नुहोस्। हिस्सा खोल्नुहोस् → स्पेसमा सामेल हुनुहोस् र कोड प्रविष्ट गर्नुहोस्।';
+  }
 }

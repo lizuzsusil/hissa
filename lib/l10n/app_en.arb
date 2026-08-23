@@ -324,7 +324,7 @@
   "introTitle2": "Track every expense",
   "introSubtitle2": "Add expenses in seconds. Split bills equally, by percentage or by custom amounts — Hissa keeps the math exact.",
   "introTitle3": "Settle up fairly",
-  "introSubtitle3": "See who owes whom at a glance and record payments with cash, bank transfer, eSewa or Khalti in one tap.",
+  "introSubtitle3": "See who owes whom at a glance and record payments with cash or bank transfer in one tap.",
   "introTitle4": "Understand your spending",
   "introSubtitle4": "Monthly insights, category breakdowns and one-tap CSV export keep you on top of where the money goes.",
   "onboardingTitle": "How are you\nsharing expenses?",
@@ -802,5 +802,18 @@
   "cycleStatusActive": "Active",
   "cycleStatusReadyToSettle": "Ready to settle",
   "cycleStatusSettled": "Settled",
-  "cycleStatusClosed": "Closed"
+  "cycleStatusClosed": "Closed",
+  "shareInviteCode": "Share invite code",
+  "shareInviteSubject": "Join my Hissa space",
+  "shareInviteMessage": "Join \"{space}\" on Hissa! Use invite code {code} to join and start tracking shared expenses together. Open Hissa → Join Space and enter the code.",
+  "@shareInviteMessage": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  }
 }

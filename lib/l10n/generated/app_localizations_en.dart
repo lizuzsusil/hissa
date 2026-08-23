@@ -580,7 +580,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get introSubtitle3 =>
-      'See who owes whom at a glance and record payments with cash, bank transfer, eSewa or Khalti in one tap.';
+      'See who owes whom at a glance and record payments with cash or bank transfer in one tap.';
 
   @override
   String get introTitle4 => 'Understand your spending';
@@ -1758,4 +1758,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cycleStatusClosed => 'Closed';
+
+  @override
+  String get shareInviteCode => 'Share invite code';
+
+  @override
+  String get shareInviteSubject => 'Join my Hissa space';
+
+  @override
+  String shareInviteMessage(String space, String code) {
+    return 'Join \"$space\" on Hissa! Use invite code $code to join and start tracking shared expenses together. Open Hissa → Join Space and enter the code.';
+  }
 }

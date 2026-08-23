@@ -1091,7 +1091,7 @@ abstract class AppLocalizations {
   /// No description provided for @introSubtitle3.
   ///
   /// In en, this message translates to:
-  /// **'See who owes whom at a glance and record payments with cash, bank transfer, eSewa or Khalti in one tap.'**
+  /// **'See who owes whom at a glance and record payments with cash or bank transfer in one tap.'**
   String get introSubtitle3;
 
   /// No description provided for @introTitle4.
@@ -3247,6 +3247,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Closed'**
   String get cycleStatusClosed;
+
+  /// No description provided for @shareInviteCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Share invite code'**
+  String get shareInviteCode;
+
+  /// No description provided for @shareInviteSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Join my Hissa space'**
+  String get shareInviteSubject;
+
+  /// No description provided for @shareInviteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Join \"{space}\" on Hissa! Use invite code {code} to join and start tracking shared expenses together. Open Hissa → Join Space and enter the code.'**
+  String shareInviteMessage(String space, String code);
 }
 
 class _AppLocalizationsDelegate
