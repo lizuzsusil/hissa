@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 
@@ -25,7 +26,7 @@ class SwipeRevealAction extends StatefulWidget {
     super.key,
     required this.child,
     required this.action,
-    this.actionWidth = 88,
+    this.actionWidth = 52,
     this.onOpenChanged,
   });
 
@@ -66,10 +67,20 @@ class _SwipeRevealActionState extends State<SwipeRevealAction>
   }
 
   void _onDragEnd(DragEndDetails details) {
+    final wasOpen = isOpen;
     if (_ctrl.value > 0.4) {
-      _ctrl.animateTo(1);
+      _ctrl.animateTo(
+        1,
+        curve: Curves.easeOutBack,
+        duration: const Duration(milliseconds: 280),
+      );
+      if (!wasOpen) HapticFeedback.lightImpact();
     } else {
-      _ctrl.animateTo(0);
+      _ctrl.animateTo(
+        0,
+        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 220),
+      );
     }
     _report();
   }
@@ -95,7 +106,17 @@ class _SwipeRevealActionState extends State<SwipeRevealAction>
                 alignment: Alignment.centerRight,
                 child: SizedBox(
                   width: widget.actionWidth,
-                  child: widget.action(dismiss),
+                  child: AnimatedBuilder(
+                    animation: _ctrl,
+                    builder: (context, child) => Transform.scale(
+                      scale: 0.85 + 0.15 * _ctrl.value,
+                      child: Opacity(
+                        opacity: _ctrl.value.clamp(0.0, 1.0),
+                        child: child,
+                      ),
+                    ),
+                    child: widget.action(dismiss),
+                  ),
                 ),
               ),
             ),

@@ -89,9 +89,7 @@ class SettleScreen extends StatelessWidget {
               for (final request in pendingRequests)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: Reveal(
-                    child: _PendingRequestRow(settlement: request),
-                  ),
+                  child: Reveal(child: _PendingRequestRow(settlement: request)),
                 ),
             ],
             if (proposals.isNotEmpty && pendingRequests.isEmpty) ...[
@@ -112,9 +110,7 @@ class SettleScreen extends StatelessWidget {
                   child: _HistoryRow(settlement: settlement),
                 ),
             ],
-            if (proposals.isEmpty &&
-                pendingRequests.isEmpty &&
-                history.isEmpty)
+            if (proposals.isEmpty && pendingRequests.isEmpty && history.isEmpty)
               const SizedBox(height: AppSpacing.xxl),
           ],
         ),
@@ -392,7 +388,8 @@ class _AvatarPair extends StatelessWidget {
 
 /// A settlement request that still awaits the creditor's decision. The
 /// creditor gets Approve / Reject actions; everyone else (including the
-/// debtor) sees a waiting state.
+/// debtor) sees a waiting state. Layout is multi-row so the approve/reject
+/// actions never cramp the text.
 class _PendingRequestRow extends StatelessWidget {
   final Settlement settlement;
 
@@ -436,6 +433,14 @@ class _PendingRequestRow extends StatelessWidget {
     );
   }
 
+  void _showDetail(BuildContext context) {
+    showAppSheet<void>(
+      context: context,
+      title: context.l10n.requestSettlementTitle,
+      builder: (_) => _SettlementDetailSheet(settlement: settlement),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -447,60 +452,155 @@ class _PendingRequestRow extends StatelessWidget {
     final dark = context.isDark;
     final iAmCreditor = settlement.isCreditor(myEntity);
 
-    return SurfaceCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              gradient: AppGradients.tint(AppColors.warning, alpha: 0.14),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: const Icon(
-              Icons.hourglass_top_rounded,
-              color: AppColors.warning,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return PressableScale(
+      onTap: () => _showDetail(context),
+      child: SurfaceCard(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  l10n.fromTo(fromName, toName),
-                  style: AppText.titleS.copyWith(color: p.textPrimary),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.tint(AppColors.warning, alpha: 0.14),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: const Icon(
+                    Icons.hourglass_top_rounded,
+                    color: AppColors.warning,
+                    size: 22,
+                  ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  iAmCreditor
-                      ? '${l10n.requestedBy} $fromName'
-                      : l10n.waitingApprovalFrom(toName),
-                  style: AppText.caption.copyWith(color: p.textSecondary),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.fromTo(fromName, toName),
+                        style: AppText.titleS.copyWith(color: p.textPrimary),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        iAmCreditor
+                            ? '${l10n.requestedBy} $fromName'
+                            : l10n.waitingApprovalFrom(toName),
+                        style: AppText.caption.copyWith(color: p.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                _statusBadge(settlement.status, context),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                _MetaPill(
+                  icon: Icons.payments_outlined,
+                  label: formatMoney(settlement.amount),
+                ),
+                _MetaPill(
+                  icon: Icons.account_balance_wallet_outlined,
+                  label: settlement.paymentMethod,
+                ),
+                _MetaPill(
+                  icon: Icons.calendar_today_outlined,
+                  label: formatShortDate(settlement.date),
                 ),
               ],
             ),
+            if (settlement.note != null &&
+                settlement.note!.trim().isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                settlement.note!,
+                style: AppText.bodyM.copyWith(
+                  color: p.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.md),
+            if (iAmCreditor)
+              Row(
+                children: [
+                  Expanded(
+                    child: _MiniPillButton(
+                      label: l10n.approve,
+                      background: AppColors.positive,
+                      foreground: Colors.white,
+                      onTap: () => _approve(context),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: _MiniPillButton(
+                      label: l10n.reject,
+                      background: dark
+                          ? AppColors.negative.withValues(alpha: 0.16)
+                          : AppColors.negativeSoft,
+                      foreground: AppColors.negative,
+                      onTap: () => _reject(context),
+                    ),
+                  ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: AppColors.warning,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      l10n.creditorApprovalNote(toName),
+                      style: AppText.caption.copyWith(color: p.textMuted),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _MetaPill({required this.icon, required this.label});
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: p.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: p.textMuted),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppText.caption.copyWith(
+              fontWeight: FontWeight.w600,
+              color: p.textSecondary,
+            ),
           ),
-          if (iAmCreditor) ...[
-            _MiniPillButton(
-              label: l10n.approve,
-              background: AppColors.positive,
-              foreground: Colors.white,
-              onTap: () => _approve(context),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            _MiniPillButton(
-              label: l10n.reject,
-              background: dark
-                  ? AppColors.negative.withValues(alpha: 0.16)
-                  : AppColors.negativeSoft,
-              foreground: AppColors.negative,
-              onTap: () => _reject(context),
-            ),
-          ] else
-            _statusBadge(settlement.status, context),
         ],
       ),
     );
@@ -514,6 +614,14 @@ class _HistoryRow extends StatelessWidget {
 
   const _HistoryRow({required this.settlement});
 
+  void _showDetail(BuildContext context) {
+    showAppSheet<void>(
+      context: context,
+      title: context.l10n.settlementHistory,
+      builder: (_) => _SettlementDetailSheet(settlement: settlement),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -523,64 +631,78 @@ class _HistoryRow extends StatelessWidget {
     final l10n = context.l10n;
     final p = context.palette;
     final rejected = settlement.status == SettlementStatus.rejected;
-    final iAmDebtor =
-        settlement.isDebtor(myEntity) && rejected;
+    final iAmDebtor = settlement.isDebtor(myEntity) && rejected;
 
-    return SurfaceCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              gradient: AppGradients.tint(
-                rejected ? AppColors.negative : AppColors.positive,
-                alpha: 0.12,
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Icon(
-              rejected
-                  ? Icons.close_rounded
-                  : Icons.check_circle_outline_rounded,
-              color: rejected ? AppColors.negative : AppColors.positive,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return PressableScale(
+      onTap: () => _showDetail(context),
+      child: SurfaceCard(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  l10n.fromTo(fromName, toName),
-                  style: AppText.titleS.copyWith(color: p.textPrimary),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  l10n.settlementMethodDay(
-                    settlement.paymentMethod,
-                    formatRelativeDay(settlement.date, l10n: l10n),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.tint(
+                      rejected ? AppColors.negative : AppColors.positive,
+                      alpha: 0.12,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  style: AppText.caption.copyWith(color: p.textSecondary),
+                  child: Icon(
+                    rejected
+                        ? Icons.close_rounded
+                        : Icons.check_circle_outline_rounded,
+                    color: rejected ? AppColors.negative : AppColors.positive,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.fromTo(fromName, toName),
+                        style: AppText.titleS.copyWith(color: p.textPrimary),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.settlementMethodDay(
+                          settlement.paymentMethod,
+                          formatRelativeDay(settlement.date, l10n: l10n),
+                        ),
+                        style: AppText.caption.copyWith(color: p.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      formatMoney(settlement.amount),
+                      style: AppText.titleS.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: rejected
+                            ? AppColors.negative
+                            : AppColors.positive,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    _statusBadge(settlement.status, context),
+                  ],
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                formatMoney(settlement.amount),
-                style: AppText.titleS.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: rejected ? AppColors.negative : AppColors.positive,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              if (iAmDebtor)
-                _MiniPillButton(
+            if (iAmDebtor) ...[
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: _MiniPillButton(
                   label: l10n.requestAgain,
                   background: p.surfaceAlt,
                   foreground: p.textSecondary,
@@ -590,9 +712,277 @@ class _HistoryRow extends StatelessWidget {
                     toUserId: settlement.toUserId,
                     amount: settlement.amount,
                   ),
-                )
-              else
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-screen detail for any settlement — pending, approved or rejected.
+/// Tapped from the dashboard rows so the user can see method, dates, note
+/// and status without cramping the list row.
+class _SettlementDetailSheet extends StatelessWidget {
+  final Settlement settlement;
+  const _SettlementDetailSheet({required this.settlement});
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final p = context.palette;
+    final l10n = context.l10n;
+    final fromName = state.memberName(settlement.fromUserId) ?? '?';
+    final toName = state.memberName(settlement.toUserId) ?? '?';
+    final fromAvatar = state.memberAvatarUrl(settlement.fromUserId);
+    final toAvatar = state.memberAvatarUrl(settlement.toUserId);
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          0,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SurfaceCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        MemberAvatar(
+                          name: fromName,
+                          avatarUrl: fromAvatar,
+                          size: 48,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          fromName,
+                          textAlign: TextAlign.center,
+                          style: AppText.labelL.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: p.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          l10n.pays,
+                          style: AppText.caption.copyWith(
+                            color: p.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        MemberAvatar(
+                          name: toName,
+                          avatarUrl: toAvatar,
+                          size: 48,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          toName,
+                          textAlign: TextAlign.center,
+                          style: AppText.labelL.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: p.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          l10n.receives,
+                          style: AppText.caption.copyWith(
+                            color: p.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: _AmountWithPillTile(
+                    amount: formatMoney(settlement.amount),
+                    method: settlement.paymentMethod,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Text(
+                  'Status: ',
+                  style: AppText.labelM.copyWith(color: p.textMuted),
+                ),
                 _statusBadge(settlement.status, context),
+              ],
+            ),
+            if (settlement.note != null &&
+                settlement.note!.trim().isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                l10n.note,
+                style: AppText.labelM.copyWith(color: p.textPrimary),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: p.surfaceAlt,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Text(
+                  settlement.note!,
+                  style: AppText.bodyM.copyWith(color: p.textSecondary),
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Icon(Icons.event_outlined, size: 14, color: p.textMuted),
+                const SizedBox(width: 6),
+                Text(
+                  'Paid: ${formatShortDate(settlement.date)}',
+                  style: AppText.caption.copyWith(color: p.textMuted),
+                ),
+              ],
+            ),
+            if (settlement.respondedAt != null) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 14,
+                    color: p.textMuted,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Responded: ${formatShortDate(settlement.respondedAt!)}',
+                    style: AppText.caption.copyWith(color: p.textMuted),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailTile extends StatelessWidget {
+  final String label;
+  final String value;
+  const _DetailTile({required this.label, required this.value});
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppText.caption.copyWith(color: p.textMuted)),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: AppText.labelL.copyWith(
+              fontWeight: FontWeight.w700,
+              color: p.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmountWithPillTile extends StatelessWidget {
+  final String amount;
+  final String method;
+  const _AmountWithPillTile({required this.amount, required this.method});
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.amount,
+            style: AppText.caption.copyWith(color: p.textMuted),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  amount,
+                  style: AppText.titleM.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: p.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: AppColors.secondary.withValues(alpha: 0.20),
+                    ),
+                  ),
+                  child: Text(
+                    method,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
