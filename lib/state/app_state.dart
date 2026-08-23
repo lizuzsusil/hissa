@@ -348,7 +348,12 @@ class AppState extends ChangeNotifier {
     } else {
       final google = GoogleSignIn.instance;
       if (!_googleInitialized) {
-        await google.initialize();
+        // `serverClientId` is the Web (type 3) OAuth client from google-services.json / Firebase console.
+        // Without it Android returns `idToken == null` → [28404] Failed to retrieve an ID token.
+        await google.initialize(
+          serverClientId:
+              '398063641965-4vmkv5n0a04l6cdofn7ccgbg0g4rcboo.apps.googleusercontent.com',
+        );
         _googleInitialized = true;
       }
 

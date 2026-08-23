@@ -79,26 +79,43 @@ class _CategoryGrid extends StatelessWidget {
         crossAxisCount: 4,
         mainAxisSpacing: AppSpacing.md,
         crossAxisSpacing: AppSpacing.md,
-        childAspectRatio: 0.82,
+        // Taller cell reserves space for 2-line labels so no RenderFlex overflow,
+        // and keeps every tile the same height regardless of label length.
+        childAspectRatio: 0.76,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
         final category = categories[index];
         return SurfaceCard(
-          padding: const EdgeInsets.all(AppSpacing.xs),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.sm,
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.sm,
+          ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Center(child: CategoryIcon(category: category, size: 48)),
+              // Icon area expands equally for every tile so the space above
+              // the icon stays identical even when the label wraps.
+              Expanded(
+                child: Center(child: CategoryIcon(category: category, size: 44)),
+              ),
               const SizedBox(height: AppSpacing.sm),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                child: Text(
-                  category.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: AppText.caption.copyWith(fontWeight: FontWeight.w600),
+              // Fixed 2-line slot — single-line names stay vertically centered
+              // in this slot, so card height never varies.
+              SizedBox(
+                height: 34,
+                child: Center(
+                  child: Text(
+                    category.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: AppText.caption.copyWith(
+                      fontWeight: FontWeight.w600,
+                      height: 1.25,
+                    ),
+                  ),
                 ),
               ),
             ],
