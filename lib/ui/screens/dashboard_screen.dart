@@ -351,9 +351,9 @@ class _YourBalanceCard extends StatelessWidget {
     final mine = balances.where((b) => b.userId == mineId).firstOrNull;
     if (mine == null) return const SizedBox.shrink();
 
+    // Plain surface keeps hierarchy clean below the hero gradient; tint was washing out the card against the light bg.
     return SurfaceCard(
-      tint: AppColors.primary,
-      elevation: 1,
+      elevation: 0,
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -476,11 +476,13 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDark;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        gradient: AppGradients.tint(color, alpha: context.isDark ? 0.16 : 0.10),
+        gradient: AppGradients.tint(color, alpha: isDark ? 0.18 : 0.12),
         borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.28 : 0.18)),
       ),
       child: Row(
         children: [
@@ -581,19 +583,21 @@ class _QuickActions extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 gradient: AppGradients.tint(
-                  AppColors.primary,
-                  alpha: context.isDark ? 0.22 : 0.12,
+                  AppColors.warning,
+                  alpha: context.isDark ? 0.22 : 0.14,
                 ),
                 borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.25),
+                  color: AppColors.warning.withValues(alpha: 0.30),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.trending_flat_rounded,
-                    color: AppColors.primary,
+                  Icon(
+                    Icons.pending_actions_rounded,
+                    color: context.isDark
+                        ? const Color(0xFFF7C56B)
+                        : const Color(0xFFA96B04),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -601,8 +605,8 @@ class _QuickActions extends StatelessWidget {
                       l10n.settlementsWaiting(proposals.length),
                       style: AppText.labelL.copyWith(
                         color: context.isDark
-                            ? AppColors.primaryBright
-                            : AppColors.primaryDeep,
+                            ? const Color(0xFFF7C56B)
+                            : const Color(0xFF8A5A00),
                       ),
                     ),
                   ),
@@ -610,8 +614,8 @@ class _QuickActions extends StatelessWidget {
                     l10n.review,
                     style: TextStyle(
                       color: context.isDark
-                          ? AppColors.primaryBright
-                          : AppColors.primary,
+                          ? const Color(0xFFF7C56B)
+                          : const Color(0xFFA96B04),
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -620,8 +624,8 @@ class _QuickActions extends StatelessWidget {
                     Icons.chevron_right_rounded,
                     size: 18,
                     color: context.isDark
-                        ? AppColors.primaryBright
-                        : AppColors.primary,
+                        ? const Color(0xFFF7C56B)
+                        : const Color(0xFFA96B04),
                   ),
                 ],
               ),
