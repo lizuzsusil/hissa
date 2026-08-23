@@ -433,6 +433,7 @@ class FirestoreRepository implements ExpenseRepository {
               ..addAll(
                 snap.docs.map((d) => MemberGroupMember.fromJson(d.data())),
               );
+            _syncGroupMemberIds();
             _notify();
           }, onError: (_) {}),
     );
@@ -756,6 +757,8 @@ class FirestoreRepository implements ExpenseRepository {
       createdAt: DateTime.now(),
     );
     _upsert(_memberGroupMembers, member, (m) => m.id);
+    _syncGroupMemberIds();
+    _notify();
     await _db.collection('memberGroups').doc(groupId).update({
       'updatedAt': DateTime.now().toIso8601String(),
     });
@@ -770,6 +773,8 @@ class FirestoreRepository implements ExpenseRepository {
     _memberGroupMembers.removeWhere(
       (m) => m.groupId == groupId && m.userId == userId,
     );
+    _syncGroupMemberIds();
+    _notify();
     await _db.collection('memberGroups').doc(groupId).update({
       'updatedAt': DateTime.now().toIso8601String(),
     });
@@ -777,6 +782,17 @@ class FirestoreRepository implements ExpenseRepository {
         .collection('memberGroupMembers')
         .doc('${groupId}_$userId')
         .delete();
+  }
+
+  void _syncGroupMemberIds() {
+    final byGroup = <String, List<String>>{};
+    for (final m in _memberGroupMembers) {
+      byGroup.putIfAbsent(m.groupId, () => []).add(m.userId);
+    }
+    for (var i = 0; i < _memberGroups.length; i++) {
+      final g = _memberGroups[i];
+      _memberGroups[i] = g.copyWith(memberIds: byGroup[g.id] ?? const []);
+    }
   }
 
   @override

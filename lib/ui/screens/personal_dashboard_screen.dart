@@ -223,11 +223,12 @@ class _Header extends StatelessWidget {
     final firstName = user == null || user.name.trim().isEmpty
         ? null
         : user.name.trim().split(RegExp(r'\s+')).first;
+    // Softer bottom radius borrowed from planner's TopContainer (40) — keep Hissa gradient, just friendlier curve.
     return Container(
       decoration: const BoxDecoration(
         gradient: AppColors.heroGradient,
         borderRadius:
-            BorderRadius.vertical(bottom: Radius.circular(AppRadius.xl)),
+            BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
       child: SafeArea(
         bottom: false,
@@ -388,6 +389,7 @@ class _MonthSwitcher extends StatelessWidget {
 }
 
 /// The dominant quick action: solid brand gradient fill with a soft shadow.
+/// PressableScale avoids InkWell ripple clipping — softer 20dp radius inspired by planner's 30dp containers.
 class _PrimaryAction extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -401,43 +403,39 @@ class _PrimaryAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Ink(
-          height: 76,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          decoration: BoxDecoration(
-            gradient: AppColors.heroGradient,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryDeep.withValues(alpha: 0.24),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 22, color: Colors.white),
-              const SizedBox(width: 7),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.titleS.copyWith(
-                    letterSpacing: -0.1,
-                    color: Colors.white,
-                  ),
+    return PressableScale(
+      onTap: onTap,
+      child: Container(
+        height: 76,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: AppColors.heroGradient,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryDeep.withValues(alpha: 0.24),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 22, color: Colors.white),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.titleS.copyWith(
+                  letterSpacing: -0.1,
+                  color: Colors.white,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -445,6 +443,7 @@ class _PrimaryAction extends StatelessWidget {
 }
 
 /// Quiet secondary quick action with a colour-coded icon.
+/// PressableScale keeps border intact — matches split home.
 class _TonalAction extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -459,41 +458,38 @@ class _TonalAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Ink(
-          height: 76,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.md,
-          ),
-          decoration: BoxDecoration(
-            color: p.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: p.border),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 21, color: AppColors.tertiary),
-              const SizedBox(height: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: p.textSecondary,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                  ),
+    return PressableScale(
+      onTap: onTap,
+      child: Container(
+        height: 76,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          color: p.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: p.border),
+          boxShadow: AppShadows.card(dark: context.isDark),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 21, color: AppColors.tertiary),
+            const SizedBox(height: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: p.textSecondary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

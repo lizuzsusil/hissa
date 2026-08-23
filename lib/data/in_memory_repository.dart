@@ -214,6 +214,7 @@ class InMemoryRepository implements ExpenseRepository {
         createdAt: DateTime.now(),
       ),
     );
+    _syncGroupMemberIds();
   }
 
   @override
@@ -221,6 +222,18 @@ class InMemoryRepository implements ExpenseRepository {
     _memberGroupMembers.removeWhere(
       (m) => m.groupId == groupId && m.userId == userId,
     );
+    _syncGroupMemberIds();
+  }
+
+  void _syncGroupMemberIds() {
+    final byGroup = <String, List<String>>{};
+    for (final m in _memberGroupMembers) {
+      byGroup.putIfAbsent(m.groupId, () => []).add(m.userId);
+    }
+    for (var i = 0; i < _memberGroups.length; i++) {
+      final g = _memberGroups[i];
+      _memberGroups[i] = g.copyWith(memberIds: byGroup[g.id] ?? const []);
+    }
   }
 
   @override
