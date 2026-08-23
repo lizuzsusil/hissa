@@ -366,7 +366,7 @@ class _YourBalanceCard extends StatelessWidget {
                   style: AppText.titleS.copyWith(fontSize: 15),
                 ),
               ),
-              _BalanceChip(balance: mine.balance),
+              _BalanceChip(balance: mine.remaining),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -759,9 +759,10 @@ class _GroupBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = balance;
-    final statusColor = b.balance.isZero
+    final remaining = b.remaining;
+    final statusColor = remaining.isZero
         ? context.palette.textMuted
-        : b.balance.isPositive
+        : remaining.isPositive
             ? AppColors.positive
             : AppColors.negative;
     return SurfaceCard(
@@ -803,7 +804,7 @@ class _GroupBalanceCard extends StatelessWidget {
               ],
             ),
           ),
-          _AmountTag(value: b.balance, color: statusColor),
+          _AmountTag(value: remaining, color: statusColor),
         ],
       ),
     );
@@ -827,7 +828,7 @@ class _MemberBalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final b = balance;
-    final balanceValue = b?.balance ?? Money.zero();
+    final balanceValue = b?.remaining ?? Money.zero();
     final statusColor = balanceValue.isZero
         ? context.palette.textMuted
         : balanceValue.isPositive

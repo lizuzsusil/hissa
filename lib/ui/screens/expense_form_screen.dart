@@ -841,7 +841,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       return l10n.expenseDescriptionError;
     }
     if (state.isPersonalMode) return null;
-    if (_participants.isEmpty) return l10n.expenseParticipantError;
+    if (_parties.isEmpty) return l10n.expenseParticipantError;
     switch (_splitType) {
       case SplitType.percentage:
         final sum = _percentages.values.fold<double>(0, (a, b) => a + b);
