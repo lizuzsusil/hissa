@@ -121,142 +121,140 @@ class _SettlementFormState extends State<SettlementForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        Text(
-          l10n.requestSettlementTitle,
-          style: AppText.titleL.copyWith(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: p.textPrimary,
+          Text(
+            l10n.requestSettlementTitle,
+            style: AppText.titleL.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: p.textPrimary,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        SurfaceCard(
-          child: Row(
+          const SizedBox(height: AppSpacing.lg),
+          SurfaceCard(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      MemberAvatar(name: fromName, size: 40),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        fromName,
+                        textAlign: TextAlign.center,
+                        style: AppText.labelL.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: p.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        l10n.pays,
+                        textAlign: TextAlign.center,
+                        style: AppText.caption.copyWith(color: p.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      MemberAvatar(name: toName, size: 40),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        toName,
+                        textAlign: TextAlign.center,
+                        style: AppText.labelL.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: p.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        l10n.receives,
+                        textAlign: TextAlign.center,
+                        style: AppText.caption.copyWith(color: p.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AmountField(
+            value: _amount,
+            label: l10n.amount,
+            errorText: _amountError,
+            onChanged: (m) => setState(() => _amount = m),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          InfoBanner(
+            icon: Icons.hourglass_top_rounded,
+            message: l10n.creditorApprovalNote(toName),
+            tone: InfoTone.warning,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          FormLabel(l10n.paymentMethod),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    MemberAvatar(name: fromName, size: 40),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      fromName,
-                      textAlign: TextAlign.center,
-                      style: AppText.labelL.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: p.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      l10n.pays,
-                      textAlign: TextAlign.center,
-                      style: AppText.caption.copyWith(color: p.textSecondary),
-                    ),
-                  ],
+              for (final method in kPaymentMethods)
+                ChoiceChip(
+                  label: Text(method),
+                  selected: _method == method,
+                  onSelected: _saving
+                      ? null
+                      : (_) => setState(() => _method = method),
                 ),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: AppColors.primary,
-                  size: 22,
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    MemberAvatar(name: toName, size: 40),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      toName,
-                      textAlign: TextAlign.center,
-                      style: AppText.labelL.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: p.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      l10n.receives,
-                      textAlign: TextAlign.center,
-                      style: AppText.caption.copyWith(color: p.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        AmountField(
-          value: _amount,
-          label: l10n.amount,
-          errorText: _amountError,
-          onChanged: (m) => setState(() => _amount = m),
-        ),
-        Center(
-          child: Text(
-            l10n.maxOutstanding(formatMoney(_maxOutstanding(state))),
-            style: AppText.labelM.copyWith(color: p.textSecondary),
+          const SizedBox(height: AppSpacing.lg),
+          DatePickerField(
+            value: _date,
+            format: formatShortDate,
+            onTap: _saving
+                ? null
+                : () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _date,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                    );
+                    if (picked != null) setState(() => _date = picked);
+                  },
           ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        InfoBanner(
-          icon: Icons.hourglass_top_rounded,
-          message: l10n.creditorApprovalNote(toName),
-          tone: InfoTone.warning,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        FormLabel(l10n.paymentMethod),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final method in kPaymentMethods)
-              ChoiceChip(
-                label: Text(method),
-                selected: _method == method,
-                onSelected: _saving
-                    ? null
-                    : (_) => setState(() => _method = method),
-              ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        DatePickerField(
-          value: _date,
-          format: formatShortDate,
-          onTap: _saving
-              ? null
-              : () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _date,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                  );
-                  if (picked != null) setState(() => _date = picked);
-                },
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        TextField(
-          controller: _noteController,
-          enabled: !_saving,
-          decoration: InputDecoration(
-            hintText: l10n.noteOptionalHint,
-            prefixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),
+          const SizedBox(height: AppSpacing.lg),
+          TextField(
+            controller: _noteController,
+            enabled: !_saving,
+            decoration: InputDecoration(
+              hintText: l10n.noteOptionalHint,
+              prefixIcon: const Icon(Icons.sticky_note_2_outlined, size: 18),
+            ),
           ),
-        ),
-        const SizedBox(height: 20),
-        PrimaryButton(
-          label: l10n.requestSettlementAction,
-          icon: Icons.send_rounded,
-          loading: _saving,
-          onPressed: _saving ? null : _save,
-        ),
-        // Bottom inset so the button never hides behind the keyboard / gesture bar.
-        SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? AppSpacing.md : 0),
-      ],
-    ),
+          const SizedBox(height: 20),
+          PrimaryButton(
+            label: l10n.requestSettlementAction,
+            icon: Icons.send_rounded,
+            loading: _saving,
+            onPressed: _saving ? null : _save,
+          ),
+          // Bottom inset so the button never hides behind the keyboard / gesture bar.
+          SizedBox(
+            height: MediaQuery.of(context).viewInsets.bottom > 0
+                ? AppSpacing.md
+                : 0,
+          ),
+        ],
+      ),
     );
   }
 }

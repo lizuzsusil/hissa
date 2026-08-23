@@ -894,37 +894,6 @@ class _SettlementDetailSheet extends StatelessWidget {
   }
 }
 
-class _DetailTile extends StatelessWidget {
-  final String label;
-  final String value;
-  const _DetailTile({required this.label, required this.value});
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: p.surfaceAlt,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: AppText.caption.copyWith(color: p.textMuted)),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: AppText.labelL.copyWith(
-              fontWeight: FontWeight.w700,
-              color: p.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _AmountWithPillTile extends StatelessWidget {
   final String amount;
   final String method;
