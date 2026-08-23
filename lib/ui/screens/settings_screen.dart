@@ -20,6 +20,7 @@ import 'cycle_detail_screen.dart';
 import 'export_screen.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
+import 'settings_spaces_screen.dart';
 import 'space_screen.dart';
 
 /// Settings — grouped for scanability.
@@ -34,10 +35,7 @@ import 'space_screen.dart';
 ///  5. Security — biometrics (only when hardware available)
 ///  6. Account actions — sign out (destructive, isolated)
 class SettingsScreen extends StatelessWidget {
-  /// Invoked to return to the Spaces dashboard so the user can switch Spaces.
-  final VoidCallback? onOpenSpaces;
-
-  const SettingsScreen({super.key, this.onOpenSpaces});
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -77,13 +75,12 @@ class SettingsScreen extends StatelessWidget {
             _SectionHeader(icon: Icons.home_work_outlined, title: l10n.space),
             _SettingsGroup(
               children: [
-                if (onOpenSpaces != null)
-                  _SettingTile(
-                    icon: Icons.workspaces_outline,
-                    title: l10n.switchSpace,
-                    subtitle: l10n.switchSpaceSubtitle,
-                    onTap: onOpenSpaces,
-                  ),
+                _SettingTile(
+                  icon: Icons.workspaces_outline,
+                  title: l10n.switchSpace,
+                  subtitle: l10n.switchSpaceSubtitle,
+                  onTap: () => _push(context, const SettingsSpacesScreen()),
+                ),
                 _SettingTile(
                   icon: Icons.group_outlined,
                   title: l10n.spaceAndMembers,

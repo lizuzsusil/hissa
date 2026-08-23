@@ -38,7 +38,7 @@ class _ShellScreenState extends State<ShellScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final isPersonal = state.isPersonalMode;
-    final settings = SettingsScreen(onOpenSpaces: widget.onBackToSpaces);
+    const settings = SettingsScreen();
     final screens = isPersonal
         ? <Widget>[
             const PersonalDashboardScreen(),
