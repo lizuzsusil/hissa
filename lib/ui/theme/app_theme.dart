@@ -243,7 +243,7 @@ class AppTheme {
       ),
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: p.surfaceAlt,
-        selectedColor: AppColors.primary.withValues(alpha: 0.13),
+        selectedColor: AppColors.primary.withValues(alpha: 0.18),
         checkmarkColor: AppColors.primary,
         labelStyle: TextStyle(
           color: p.textPrimary,
@@ -257,8 +257,8 @@ class AppTheme {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
+          side: BorderSide(color: Colors.transparent),
         ),
-        side: BorderSide.none,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(

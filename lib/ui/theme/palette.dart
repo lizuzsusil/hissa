@@ -45,6 +45,22 @@ abstract final class AppColors {
     colors: [gradientTop, primary, gradientBottom],
   );
 
+  /// Calm depth gradient for primary controls (buttons, FAB, active nav
+  /// pill). Both stops keep ≥4.5:1 contrast with white labels so text stays
+  /// readable across the entire fill.
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primary, Color(0xFF0D547F)],
+  );
+
+  /// Depth gradient for destructive controls, mirroring [primaryGradient].
+  static const LinearGradient dangerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFE14B51), Color(0xFFC22E34)],
+  );
+
   /// Subtle sheen for loading placeholders.
   static const LinearGradient shimmerGradient = LinearGradient(
     begin: Alignment.topLeft,

@@ -718,6 +718,7 @@ class _LifetimeCard extends StatelessWidget {
     final l10n = context.l10n;
     final p = context.palette;
     return SurfaceCard(
+      tint: AppColors.primary,
       padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),

@@ -277,11 +277,18 @@ class EmptyState extends StatelessWidget {
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
-                  gradient: AppGradients.tint(AppColors.primary, alpha: 0.12),
+                  gradient: AppGradients.tint(AppColors.primary, alpha: 0.14),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.14),
+                    color: AppColors.primary.withValues(alpha: 0.20),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryDeep.withValues(alpha: 0.10),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: Icon(icon, size: 34, color: AppColors.primary),
               ),

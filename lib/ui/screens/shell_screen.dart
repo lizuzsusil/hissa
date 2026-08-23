@@ -124,7 +124,13 @@ class _FloatingAddButton extends StatelessWidget {
       height: 58,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: AppShadows.raised(dark: context.isDark),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDeep.withValues(alpha: 0.38),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: FloatingActionButton(
         onPressed: () {
@@ -133,7 +139,15 @@ class _FloatingAddButton extends StatelessWidget {
           );
         },
         tooltip: context.l10n.add,
-        child: const Icon(Icons.add_rounded, size: 30),
+        child: Ink(
+          width: 58,
+          height: 58,
+          decoration: const BoxDecoration(
+            gradient: AppColors.primaryGradient,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.add_rounded, size: 30, color: Colors.white),
+        ),
       ),
     );
   }
@@ -252,12 +266,23 @@ class _NavItem extends StatelessWidget {
               width: 46,
               height: 30,
               decoration: BoxDecoration(
-                color: selected
-                    ? AppColors.primary.withValues(alpha: 0.12)
-                    : Colors.transparent,
+                gradient: selected ? AppColors.primaryGradient : null,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primaryDeep.withValues(alpha: 0.30),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
               ),
-              child: Icon(icon, size: 22, color: color),
+              child: Icon(
+                icon,
+                size: 22,
+                color: selected ? Colors.white : color,
+              ),
             ),
             const SizedBox(height: 2),
             AnimatedDefaultTextStyle(

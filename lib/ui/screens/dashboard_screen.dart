@@ -351,8 +351,9 @@ class _YourBalanceCard extends StatelessWidget {
     if (mine == null) return const SizedBox.shrink();
 
     return SurfaceCard(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      tint: AppColors.primary,
       elevation: 1,
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

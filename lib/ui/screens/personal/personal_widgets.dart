@@ -104,7 +104,17 @@ class SegmentedControl<T> extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: p.surface,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    boxShadow: AppShadows.card(dark: context.isDark),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.26),
+                    ),
+                    boxShadow: [
+                      ...AppShadows.card(dark: context.isDark),
+                      BoxShadow(
+                        color: AppColors.primaryDeep.withValues(alpha: 0.12),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                 ),
               ),

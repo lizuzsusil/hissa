@@ -14,6 +14,12 @@ class SurfaceCard extends StatelessWidget {
   final EdgeInsetsGeometry margin;
   final Color? color;
 
+  /// Optional accent hue. When set, the card gains a faint tonal wash of
+  /// [tint], a matching hairline border and — at elevation ≥ 1 — a
+  /// color-tinted shadow, giving focal cards gentle chromatic depth while
+  /// staying far quieter than a filled surface.
+  final Color? tint;
+
   /// Overrides [borderRadius] with a full BorderRadius (e.g. asymmetric).
   final BorderRadius? radius;
   final double borderRadius;
@@ -30,6 +36,7 @@ class SurfaceCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(AppSpacing.xl),
     this.margin = EdgeInsets.zero,
     this.color,
+    this.tint,
     this.radius,
     this.borderRadius = AppRadius.lg,
     this.border = true,
@@ -41,30 +48,45 @@ class SurfaceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final dark = context.isDark;
+    final radiusValue = radius ?? BorderRadius.circular(borderRadius);
+    final borderColor =
+        tint != null ? tint!.withValues(alpha: dark ? 0.38 : 0.28) : p.border;
     final shape = RoundedRectangleBorder(
-      borderRadius: radius ?? BorderRadius.circular(borderRadius),
-      side: BorderSide(
-        color: border ? p.border : Colors.transparent,
-        width: 1,
-      ),
+      borderRadius: radiusValue,
+      side: BorderSide(color: border ? borderColor : Colors.transparent, width: 1),
     );
+    final shadows = switch (elevation) {
+      <= 0 => const <BoxShadow>[],
+      >= 2 => AppShadows.raised(dark: dark),
+      _ => [
+          BoxShadow(
+            color: (tint ?? Colors.black)
+                .withValues(alpha: dark ? (tint != null ? 0.30 : 0.32) : (tint != null ? 0.16 : 0.05)),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+    };
     return Container(
       margin: margin,
-      decoration: BoxDecoration(
-        borderRadius: radius ?? BorderRadius.circular(borderRadius),
-        boxShadow: switch (elevation) {
-          <= 0 => const <BoxShadow>[],
-          >= 2 => AppShadows.raised(dark: dark),
-          _ => AppShadows.card(dark: dark),
-        },
-      ),
+      decoration:
+          BoxDecoration(borderRadius: radiusValue, boxShadow: shadows),
       child: Material(
-        color: color ?? p.surface,
+        color: Colors.transparent,
         shape: shape,
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(padding: padding, child: child),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: color ?? p.surface,
+            gradient: tint == null
+                ? null
+                : AppGradients.tint(tint!, alpha: dark ? 0.12 : 0.07),
+            borderRadius: radiusValue,
+          ),
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(padding: padding, child: child),
+          ),
         ),
       ),
     );
@@ -182,6 +204,8 @@ class MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return SurfaceCard(
+      tint: color,
+      elevation: 1,
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,8 +214,9 @@ class MetricCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              gradient: AppGradients.tint(color),
+              gradient: AppGradients.tint(color, alpha: 0.22),
               borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: color.withValues(alpha: 0.22)),
             ),
             child: Icon(icon, size: 20, color: color),
           ),

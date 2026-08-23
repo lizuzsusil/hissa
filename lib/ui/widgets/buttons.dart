@@ -142,16 +142,17 @@ class PrimaryButton extends StatelessWidget {
       height: height,
       textColor: Colors.white,
       decoration: (_, focused) => BoxDecoration(
+        gradient: onPressed == null ? null : AppColors.primaryGradient,
         color: onPressed == null
             ? context.palette.textPrimary.withValues(alpha: 0.08)
-            : AppColors.primary,
+            : null,
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [
           if (onPressed != null)
             BoxShadow(
-              color: AppColors.primaryDeep.withValues(alpha: 0.28),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
+              color: AppColors.primaryDeep.withValues(alpha: 0.30),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
         ],
         border: Border.all(
@@ -287,16 +288,17 @@ class DangerButton extends StatelessWidget {
       height: height,
       textColor: Colors.white,
       decoration: (_, focused) => BoxDecoration(
+        gradient: onPressed == null ? null : AppColors.dangerGradient,
         color: onPressed == null
             ? context.palette.textPrimary.withValues(alpha: 0.08)
-            : AppColors.negative,
+            : null,
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [
           if (onPressed != null)
             BoxShadow(
-              color: AppColors.negative.withValues(alpha: 0.25),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: AppColors.negative.withValues(alpha: 0.28),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
             ),
         ],
         border: Border.all(
