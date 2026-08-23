@@ -12,7 +12,6 @@ import '../theme/app_theme.dart';
 import '../widgets/avatars.dart';
 import '../widgets/cards.dart';
 import '../widgets/dialogs.dart';
-import '../widgets/misc.dart';
 import '../widgets/motion.dart';
 import '../widgets/sheets.dart';
 import '../widgets/toasts.dart';
@@ -20,9 +19,20 @@ import 'categories_screen.dart';
 import 'cycle_detail_screen.dart';
 import 'export_screen.dart';
 import 'notifications_screen.dart';
-import 'space_screen.dart';
 import 'profile_screen.dart';
+import 'space_screen.dart';
 
+/// Settings — grouped for scanability.
+///
+/// Information architecture (top → bottom):
+///  1. Account hero — profile card (tappable to edit)
+///  2. Workspace — space membership, categories & switch space (switch row
+///     only when multiple spaces exist)
+///  3. Cycles & data — lifecycle of spending cycles + export (split mode only;
+///     personal mode collapses to a single Data/Export card)
+///  4. Preferences — notifications, appearance, language
+///  5. Security — biometrics (only when hardware available)
+///  6. Account actions — sign out (destructive, isolated)
 class SettingsScreen extends StatelessWidget {
   /// Invoked to return to the Spaces dashboard so the user can switch Spaces.
   final VoidCallback? onOpenSpaces;
@@ -39,6 +49,8 @@ class SettingsScreen extends StatelessWidget {
     final isDark = context.isDark;
     final l10n = context.l10n;
 
+    final hasBiometricRow = biometrics.supported;
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
       body: RefreshIndicator(
@@ -52,47 +64,48 @@ class SettingsScreen extends StatelessWidget {
             AppSpacing.xl,
           ),
           children: [
+            // ── Account hero ────────────────────────────────────────────
             _ProfileCard(
               name: user?.name ?? 'User',
               email: user?.email ?? '',
               avatarUrl: user?.avatarUrl,
-              onTap: () => _push(context, ProfileScreen()),
+              onTap: () => _push(context, const ProfileScreen()),
             ),
+
+            // ── Workspace ───────────────────────────────────────────────
             const SizedBox(height: AppSpacing.xl),
-            if (onOpenSpaces != null) ...[
-              SectionHeader(title: l10n.mySpaces),
-              _SettingsGroup(
-                children: [
+            _SectionHeader(icon: Icons.home_work_outlined, title: l10n.space),
+            _SettingsGroup(
+              children: [
+                if (onOpenSpaces != null)
                   _SettingTile(
                     icon: Icons.workspaces_outline,
                     title: l10n.switchSpace,
                     subtitle: l10n.switchSpaceSubtitle,
                     onTap: onOpenSpaces,
                   ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xl),
-            ],
-            SectionHeader(title: l10n.space),
-            _SettingsGroup(
-              children: [
                 _SettingTile(
-                  icon: Icons.home_work_outlined,
+                  icon: Icons.group_outlined,
                   title: l10n.spaceAndMembers,
                   subtitle: space?.name ?? l10n.noSpace,
-                  onTap: () => _push(context, SpaceScreen()),
+                  onTap: () => _push(context, const SpaceScreen()),
                 ),
                 _SettingTile(
                   icon: Icons.category_outlined,
                   title: l10n.categories,
                   subtitle: '${state.categories.length} categories',
-                  onTap: () => _push(context, CategoriesScreen()),
+                  onTap: () => _push(context, const CategoriesScreen()),
                 ),
               ],
             ),
+
+            // ── Cycles & data ───────────────────────────────────────────
             if (!state.isPersonalMode) ...[
               const SizedBox(height: AppSpacing.xl),
-              SectionHeader(title: l10n.spendingCycle),
+              _SectionHeader(
+                icon: Icons.calendar_month_outlined,
+                title: l10n.spendingCycle,
+              ),
               _SettingsGroup(
                 children: [
                   _SettingTile(
@@ -107,9 +120,8 @@ class SettingsScreen extends StatelessWidget {
                     _SettingTile(
                       icon: Icons.history_rounded,
                       title: l10n.previousCycles,
-                      subtitle:
-                          l10n.previousCyclesCount(state.closedCycles.length),
-                      onTap: () => _push(context, PreviousCyclesScreen()),
+                      subtitle: l10n.previousCyclesCount(state.closedCycles.length),
+                      onTap: () => _push(context, const PreviousCyclesScreen()),
                     ),
                   if (state.isOwner)
                     _SettingTile(
@@ -120,19 +132,35 @@ class SettingsScreen extends StatelessWidget {
                       subtitle: l10n.ownersCanManage,
                       onTap: () => _handleCycleAction(context, state),
                     ),
+                  _SettingTile(
+                    icon: Icons.download_outlined,
+                    title: l10n.export,
+                    subtitle: l10n.csvOfCurrentCycle,
+                    onTap: () => _push(context, const ExportScreen()),
+                  ),
+                ],
+              ),
+            ] else ...[
+              // Personal mode has no cycles — keep export discoverable.
+              const SizedBox(height: AppSpacing.xl),
+              _SectionHeader(icon: Icons.folder_outlined, title: l10n.data),
+              _SettingsGroup(
+                children: [
+                  _SettingTile(
+                    icon: Icons.download_outlined,
+                    title: l10n.export,
+                    subtitle: l10n.csvOfCurrentCycle,
+                    onTap: () => _push(context, const ExportScreen()),
+                  ),
                 ],
               ),
             ],
+
+            // ── Preferences (notifications + appearance) ────────────────
             const SizedBox(height: AppSpacing.xl),
-            SectionHeader(title: l10n.data),
+            _SectionHeader(icon: Icons.tune_rounded, title: l10n.appearance),
             _SettingsGroup(
               children: [
-                _SettingTile(
-                  icon: Icons.download_outlined,
-                  title: l10n.export,
-                  subtitle: l10n.csvOfCurrentCycle,
-                  onTap: () => _push(context, ExportScreen()),
-                ),
                 _SettingTile(
                   icon: Icons.notifications_outlined,
                   title: l10n.notifications,
@@ -145,8 +173,7 @@ class SettingsScreen extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.primary,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.pill),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                           child: Text(
                             '${state.unreadNotificationCount}',
@@ -159,16 +186,8 @@ class SettingsScreen extends StatelessWidget {
                       : null,
                   onTap: () => _showNotifications(context),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            SectionHeader(title: l10n.appearance),
-            _SettingsGroup(
-              children: [
                 _SettingTile(
-                  icon: isDark
-                      ? Icons.dark_mode_rounded
-                      : Icons.light_mode_rounded,
+                  icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
                   title: l10n.darkMode,
                   subtitle: isDark ? l10n.onValue : l10n.offValue,
                   trailing: Switch(
@@ -192,24 +211,28 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.xl),
-            SectionHeader(title: l10n.security),
-            _SettingsGroup(
-              children: [
-                if (biometrics.supported)
+
+            // ── Security ────────────────────────────────────────────────
+            if (hasBiometricRow) ...[
+              const SizedBox(height: AppSpacing.xl),
+              _SectionHeader(icon: Icons.shield_outlined, title: l10n.security),
+              _SettingsGroup(
+                children: [
                   _SettingTile(
                     icon: Icons.fingerprint_rounded,
                     title: l10n.biometricLogin,
                     subtitle: biometrics.enabled ? l10n.onValue : l10n.offValue,
                     trailing: Switch(
                       value: biometrics.enabled,
-                      onChanged: (v) =>
-                          _toggleBiometric(context, biometrics, v),
+                      onChanged: (v) => _toggleBiometric(context, biometrics, v),
                     ),
                     onTap: null,
                   ),
-              ],
-            ),
+                ],
+              ),
+            ],
+
+            // ── Account action ──────────────────────────────────────────
             const SizedBox(height: AppSpacing.xl),
             _SettingsGroup(
               children: [
@@ -222,6 +245,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: AppSpacing.xxxl - AppSpacing.sm),
             Center(
               child: Text(
@@ -233,8 +257,7 @@ class SettingsScreen extends StatelessWidget {
             Center(
               child: Text(
                 l10n.version,
-                style:
-                    AppText.caption.copyWith(color: context.palette.textMuted),
+                style: AppText.caption.copyWith(color: context.palette.textMuted),
               ),
             ),
           ],
@@ -255,14 +278,11 @@ class SettingsScreen extends StatelessWidget {
     final l10n = context.l10n;
     if (value) {
       final issue = await biometrics.availabilityIssue();
-
       if (!context.mounted) return;
       if (issue != null) {
         showToast(
           context,
-          issue == 'notEnrolled'
-              ? l10n.biometricNotEnrolled
-              : l10n.biometricUnavailable,
+          issue == 'notEnrolled' ? l10n.biometricNotEnrolled : l10n.biometricUnavailable,
           type: ToastType.warning,
         );
         return;
@@ -330,17 +350,14 @@ class SettingsScreen extends StatelessWidget {
                     c.status == CycleStatus.closed
                         ? Icons.history_rounded
                         : Icons.radio_button_checked,
-                    color: c.status == CycleStatus.closed
-                        ? p.textMuted
-                        : AppColors.positive,
+                    color: c.status == CycleStatus.closed ? p.textMuted : AppColors.positive,
                   ),
                   title: Text(c.name),
                   subtitle: Text(_cycleStatusLabel(sheetContext.l10n, c.status)),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (state.isOwner &&
-                          state.space?.cycleType == CycleType.custom) ...[
+                      if (state.isOwner && state.space?.cycleType == CycleType.custom) ...[
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, size: 20),
                           tooltip: sheetContext.l10n.renameCycle,
@@ -350,8 +367,7 @@ class SettingsScreen extends StatelessWidget {
                       ],
                       Text(
                         _cycleDateRange(c),
-                        style:
-                            AppText.caption.copyWith(color: p.textMuted),
+                        style: AppText.caption.copyWith(color: p.textMuted),
                       ),
                     ],
                   ),
@@ -372,9 +388,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  String _cycleDateRange(Cycle c) {
-    return '${c.startDate.month}/${c.startDate.year}';
-  }
+  String _cycleDateRange(Cycle c) => '${c.startDate.month}/${c.startDate.year}';
 
   Future<void> _renameCycle(
     BuildContext context,
@@ -412,9 +426,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showNotifications(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
   }
 
   Future<void> _confirmSignOut(BuildContext context, AppState state) async {
@@ -427,9 +439,7 @@ class SettingsScreen extends StatelessWidget {
       destructive: true,
       icon: Icons.logout_rounded,
     );
-    if (confirmed) {
-      await state.signOut();
-    }
+    if (confirmed) await state.signOut();
   }
 
   void _showLanguagePicker(BuildContext context, LocaleController controller) {
@@ -515,6 +525,29 @@ String _cycleStatusLabel(AppLocalizations l10n, CycleStatus status) {
   }
 }
 
+/// Section title with a leading icon for faster visual scanning.
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const _SectionHeader({required this.icon, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: p.textMuted),
+          const SizedBox(width: AppSpacing.sm),
+          Text(title, style: AppText.titleM.copyWith(color: p.textPrimary)),
+        ],
+      ),
+    );
+  }
+}
+
 /// Hairline-bordered surface grouping one settings section's rows, with
 /// dividers between them.
 class _SettingsGroup extends StatelessWidget {
@@ -524,14 +557,14 @@ class _SettingsGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (children.isEmpty) return const SizedBox.shrink();
     return SurfaceCard(
       padding: EdgeInsets.zero,
       borderRadius: AppRadius.lg,
       child: Column(
         children: [
           for (var i = 0; i < children.length; i++) ...[
-            if (i > 0)
-              const Divider(height: 1, indent: 68, endIndent: AppSpacing.lg),
+            if (i > 0) const Divider(height: 1, indent: 68, endIndent: AppSpacing.lg),
             children[i],
           ],
         ],
@@ -561,21 +594,13 @@ class _ProfileCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Row(
           children: [
-            MemberAvatar(
-              name: name,
-              avatarUrl: avatarUrl,
-              size: 58,
-              outline: true,
-            ),
+            MemberAvatar(name: name, avatarUrl: avatarUrl, size: 58, outline: true),
             const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    name,
-                    style: AppText.titleL.copyWith(color: Colors.white),
-                  ),
+                  Text(name, style: AppText.titleL.copyWith(color: Colors.white)),
                   const SizedBox(height: 2),
                   Text(
                     email,
@@ -586,6 +611,7 @@ class _ProfileCard extends StatelessWidget {
                 ],
               ),
             ),
+            const Icon(Icons.chevron_right_rounded, color: Colors.white70),
           ],
         ),
       ),
@@ -638,17 +664,10 @@ class _SettingTile extends StatelessWidget {
       ),
       subtitle: subtitle == null
           ? null
-          : Text(
-              subtitle!,
-              style: AppText.labelM.copyWith(color: p.textSecondary),
-            ),
+          : Text(subtitle!, style: AppText.labelM.copyWith(color: p.textSecondary)),
       trailing: trailing ??
           (onTap != null
-              ? Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: p.textMuted,
-                )
+              ? Icon(Icons.chevron_right_rounded, size: 20, color: p.textMuted)
               : null),
     );
   }
