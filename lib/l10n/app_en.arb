@@ -1,9 +1,7 @@
 {
   "@@locale": "en",
-
   "appTitle": "Hissa",
   "tagline": "All your expenses, in one place",
-
   "home": "Home",
   "expenses": "Expenses",
   "settle": "Settle",
@@ -35,118 +33,143 @@
   "attached": "Attached",
   "other": "Other",
   "expense": "Expense",
-
   "@settlementsWaiting": {
     "description": "Count of pending settlement proposals",
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "settlementsWaiting": "{count, plural, =1{1 settlement waiting} other{{count} settlements waiting}}",
-
   "@splitPersons": {
     "description": "Number of people in a split",
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "splitPersons": "{count, plural, =1{1 person} other{{count} people}}",
-
   "@expensesAndTotal": {
     "description": "Export header summary, e.g. '3 expenses · Rs. 1,000'",
     "placeholders": {
-      "count": { "type": "int" },
-      "total": { "type": "String" }
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "String"
+      }
     }
   },
   "expensesAndTotal": "{count, plural, =1{1 expense · {total}} other{{count} expenses · {total}}}",
-
   "@memberPaidShare": {
     "placeholders": {
-      "paid": { "type": "String" },
-      "share": { "type": "String" }
+      "paid": {
+        "type": "String"
+      },
+      "share": {
+        "type": "String"
+      }
     }
   },
   "memberPaidShare": "Paid {paid} · Share {share}",
-
   "@paidByMemberDay": {
     "placeholders": {
-      "name": { "type": "String" },
-      "day": { "type": "String" }
+      "name": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
     }
   },
   "paidByMemberDay": "{name} paid · {day}",
-
   "@owes": {
     "placeholders": {
-      "from": { "type": "String" },
-      "to": { "type": "String" }
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
     }
   },
   "owes": "{from} owes {to}",
-
   "@fromTo": {
     "placeholders": {
-      "from": { "type": "String" },
-      "to": { "type": "String" }
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
     }
   },
   "fromTo": "{from} → {to}",
-
   "@settlementMethodDay": {
     "placeholders": {
-      "method": { "type": "String" },
-      "day": { "type": "String" }
+      "method": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
     }
   },
   "settlementMethodDay": "{method} · {day}",
-
   "@memberJoinedDate": {
     "placeholders": {
-      "role": { "type": "String" },
-      "date": { "type": "String" }
+      "role": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
     }
   },
   "memberJoinedDate": "{role} · Joined {date}",
-
   "@cycleNameByCategory": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "cycleNameByCategory": "{name} by category",
-
   "@addedMember": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "addedMember": "{name} added to the space",
-
   "@removeMemberTitle": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "removeMemberTitle": "Remove {name}?",
-
   "@closeCycleTitle": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "closeCycleTitle": "Close {name}?",
-
   "@spaceMembersCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "spaceMembersCount": "{count, plural, =1{1 member} other{{count} members}}",
-
   "category": "Category",
-  "amount": "Amount",
-  "description": "Description",
   "descriptionHint": "What was this for?",
   "paidBy": "Paid by",
   "date": "Date",
@@ -164,7 +187,6 @@
   "totalShares": "Total shares",
   "createGroup": "Create group",
   "ungroup": "Remove group",
-  "selectGroupMembers": "Choose members to group together",
   "editExpense": "Edit expense",
   "addExpense": "Add expense",
   "yourBalance": "Your balance",
@@ -215,7 +237,6 @@
   "monthCompare": "This month vs last month",
   "totalSpent": "Total spent",
   "average": "Average",
-
   "spendingOverview": "Spending overview",
   "thisMonthTotal": "This month",
   "thisYearTotal": "This year",
@@ -238,15 +259,18 @@
   "noSpendingChartTitle": "Nothing to chart yet",
   "noSpendingChartMessage": "Add expenses to see your spending over time.",
   "showingRecentWindow": "Showing the most recent period",
-  "spentInPeriod": "{amount} in {period}",
   "@spentInPeriod": {
     "description": "Header line inside the spending chart, e.g. 'Rs. 12,000 in Monthly'",
     "placeholders": {
-      "amount": { "type": "String" },
-      "period": { "type": "String" }
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
     }
   },
-
+  "spentInPeriod": "{amount} in {period}",
   "addEstimate": "Add estimate",
   "estimatedExpenses": "Estimated expenses",
   "estimatedExpense": "Estimate",
@@ -257,13 +281,15 @@
   "removeEstimate": "Remove estimate",
   "removeEstimateTitle": "Remove this estimate?",
   "removeEstimateMessage": "The planned amount will be removed. No actual expenses are affected.",
-  "estimateForMonth": "Estimate for {month}",
   "@estimateForMonth": {
     "description": "Title of the estimate form, e.g. 'Estimate for July 2026'",
     "placeholders": {
-      "month": { "type": "String" }
+      "month": {
+        "type": "String"
+      }
     }
   },
+  "estimateForMonth": "Estimate for {month}",
   "estimateDescriptionHint": "What are you planning for?",
   "estimatedAmount": "Estimated spending amount",
   "saveEstimate": "Save estimate",
@@ -273,21 +299,26 @@
   "spentSoFar": "Spent so far",
   "estimatedTotalShort": "Estimated",
   "remainingFromEstimate": "Remaining",
-  "overEstimateBy": "Over by {amount}",
   "@overEstimateBy": {
     "placeholders": {
-      "amount": { "type": "String" }
+      "amount": {
+        "type": "String"
+      }
     }
   },
-  "spentOfEstimate": "{spent} of {estimate} estimated",
+  "overEstimateBy": "Over by {amount}",
   "@spentOfEstimate": {
     "description": "Progress line, e.g. 'Rs. 8,000 of Rs. 12,000 estimated'",
     "placeholders": {
-      "spent": { "type": "String" },
-      "estimate": { "type": "String" }
+      "spent": {
+        "type": "String"
+      },
+      "estimate": {
+        "type": "String"
+      }
     }
   },
-
+  "spentOfEstimate": "{spent} of {estimate} estimated",
   "introTitle1": "Welcome to Hissa",
   "introSubtitle1": "The simplest way for groups, roommates and families to track shared expenses together.",
   "introTitle2": "Track every expense",
@@ -296,7 +327,6 @@
   "introSubtitle3": "See who owes whom at a glance and record payments with cash, bank transfer, eSewa or Khalti in one tap.",
   "introTitle4": "Understand your spending",
   "introSubtitle4": "Monthly insights, category breakdowns and one-tap CSV export keep you on top of where the money goes.",
-
   "onboardingTitle": "How are you\nsharing expenses?",
   "onboardingSubtitle": "Pick the setup that matches your group. You can change it anytime.",
   "modeTwoPeople": "Two People",
@@ -307,26 +337,22 @@
   "modeRoommatesSubtitle": "Flatmates splitting rent and utilities",
   "modeOther": "Other",
   "modeOtherSubtitle": "Any small group sharing expenses",
-
   "setUpSubtitle": "Enter an invite code to join a space",
   "create": "Create",
   "join": "Join",
   "whoLivesHere": "Who lives here?",
-  "addMember": "Add a member",
-  "name": "Name",
   "currency": "Currency",
   "inviteLater": "You can invite more people later from Space → Members",
   "inviteCode": "Invite code",
   "inviteCodeHint": "ABCDE2",
-  "inviteCodeHelp": "Ask the space owner for their invite code. Codes are shown in Settings → Space.",
+  "inviteCodeHelp": "Ask the space owner for their invite code. Find it in Settings > Space.",
   "inviteNotFound": "Invite code not found. Check the code and try again.",
   "enterMemberNameError": "Enter a member name",
   "duplicateMemberError": "That name is already in the list",
   "enterInviteCodeError": "Enter the invite code",
   "inviteCodeFormatError": "Invite codes are 6 characters long",
-
   "mySpaces": "My Spaces",
-  "mySpacesSubtitle": "All your expense spaces in one place",
+  "mySpacesSubtitle": "All your spaces in one place",
   "yourSpaces": "Spaces you own",
   "joinedSpaces": "Spaces you've joined",
   "noSpacesYet": "No spaces yet",
@@ -334,7 +360,7 @@
   "noSpacesMessage": "Create a space to start tracking your expenses, or join an existing space.",
   "createSpace": "Create Space",
   "joinSpace": "Join Space",
-  "switchSpace": "My Spaces",
+  "switchSpace": "Switch space",
   "switchSpaceSubtitle": "Switch between your spaces",
   "splitMode": "Split Mode",
   "personalMode": "Personal Mode",
@@ -348,16 +374,16 @@
   "createSpaceSubtitle": "Name your space and pick how you'll use it.",
   "createdSpaceTitle": "Space created",
   "joinedSpaceTitle": "Space joined",
-
   "createAccount": "Create account",
   "logIn": "Log in",
   "createYourAccount": "Create your account",
   "welcomeBack": "Welcome back",
-
   "@welcomeUser": {
     "description": "Greeting shown in the dashboard header",
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "welcomeUser": "Welcome, {name}",
@@ -380,8 +406,7 @@
   "errNameRequired": "Your name is required",
   "errFieldRequired": "This field is required",
   "errTooLong": "Name must be 40 characters or fewer",
-  "errIncorrectCredentials": "Incorrect email or password. Try again or create an account.",
-
+  "errIncorrectCredentials": "Incorrect email or password. Please try again.",
   "authGoogleConflict": "That email already has a password account. Log in with your email and password instead.",
   "authEmailInUse": "An account already exists for that email. Log in instead.",
   "authWeakPassword": "That password is too weak. Use at least 6 characters.",
@@ -392,103 +417,113 @@
   "authNetwork": "No internet connection. Check your connection and retry.",
   "authOperationNotAllowed": "This sign-in method is not enabled yet. Enable it in the Firebase console.",
   "authConfigError": "Authentication is not configured correctly. Check the Firebase console app config and keys.",
-  "authFirestoreDenied": "The database is rejecting this action. Publish the firestore.rules file to Firebase.",
+  "authFirestoreDenied": "Database permission denied. Publish firestore.rules in Firebase.",
   "authFirestoreUnavailable": "The database is busy or not ready yet. Please try again.",
   "authGoogleConfig": "Google sign-in is not configured yet. Add your Android SHA-1 fingerprint in the Firebase console, then re-run `flutterfire configure`.",
   "authGooglePlayServices": "Google Play services is unavailable or misconfigured on this device.",
   "authGoogleUi": "The Google sign-in window could not be shown right now. Please try again.",
-  "authSomethingWentWrong": "Something went wrong. Check the debug logs for the exact error.",
+  "authSomethingWentWrong": "Something went wrong. Please try again.",
   "rememberMe": "Remember me",
   "biometricLogin": "Log in with biometrics",
   "biometricUnavailable": "Biometric authentication is not available on this device.",
   "biometricFailed": "Biometric authentication failed. Please try again.",
-  "biometricNotEnrolled": "No biometrics enrolled. Set up Face ID / Touch ID in Settings.",
+  "biometricNotEnrolled": "No biometrics enrolled. Set up Face ID or Touch ID in your device settings.",
   "security": "Security",
   "usePassword": "Use password",
-
-  "validationFieldRequired": "{label} is required",
   "@validationFieldRequired": {
     "placeholders": {
-      "label": { "type": "String" }
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "validationFieldRequired": "{label} is required",
+  "@validationTooLong": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "max": {
+        "type": "int"
+      }
     }
   },
   "validationTooLong": "{label} must be {max} characters or fewer",
-  "@validationTooLong": {
-    "placeholders": {
-      "label": { "type": "String" },
-      "max": { "type": "int" }
-    }
-  },
   "validationNameTooLong": "Name must be 40 characters or fewer",
   "validationDuplicateMember": "That name is already in the list",
   "validationEmailInvalid": "Enter a valid email address",
   "validationPasswordShort": "Password must be at least 6 characters",
   "validationPasswordLong": "Password must be 64 characters or fewer",
   "validationInviteFormat": "Invite codes are 6 characters long",
-
   "recordSettlement": "Record settlement",
   "pays": "pays",
   "receives": "receives",
   "paymentMethod": "Payment method",
   "confirmPayment": "Confirm payment",
   "settlementRecorded": "Settlement recorded",
-
   "toBeSettled": "To be settled",
   "whoOwesWhom": "Who owes whom",
-  "settleHint": "You pay, then request settlement. The member you owe approves it before the balance updates.",
+  "settleHint": "Pay first, then request settlement. The recipient must approve before balances update.",
   "settlementHistory": "Settlement history",
   "allSettled": "All settled up!",
   "allSettledMessage": "Everyone in this cycle is even. Nice teamwork.",
   "nothingToSettleTitle": "Nothing to settle yet",
   "noSettlementsMessage": "No expenses have been recorded in this cycle yet. Add your first expense and the who-owes-whom breakdown will appear here.",
   "settleAction": "Settle",
-
   "requestSettlementTitle": "Request settlement",
   "requestSettlementAction": "Send request",
-  "creditorApprovalNote": "{name} must approve this request before the amount is marked as settled.",
   "@creditorApprovalNote": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "creditorApprovalNote": "{name} must approve this request before the amount is marked as settled.",
+  "@maxOutstanding": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
     }
   },
   "maxOutstanding": "Up to {amount}",
-  "@maxOutstanding": {
-    "placeholders": {
-      "amount": { "type": "String" }
-    }
-  },
+  "amount": "Amount",
   "pendingRequestsSection": "Pending approvals",
-  "waitingApprovalFrom": "Waiting for {name} to approve",
   "@waitingApprovalFrom": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "waitingApprovalFrom": "Waiting for {name} to approve",
+  "@awaitingDebtorRequest": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
     }
   },
   "awaitingDebtorRequest": "{name} owes you — waiting for their settlement request",
-  "@awaitingDebtorRequest": {
-    "placeholders": {
-      "name": { "type": "String" }
-    }
-  },
   "statusApproved": "Approved · Settled",
   "statusRejected": "Rejected",
   "requestAgain": "Request again",
-  "settlementRequestedToast": "Settlement request sent to {name}",
   "@settlementRequestedToast": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
+  "settlementRequestedToast": "Settlement request sent to {name}",
   "settlementApprovedToast": "Settlement approved and recorded",
   "settlementRejectedToast": "Request rejected. You can send a new one.",
   "amountExceedsOutstanding": "The amount cannot exceed what you still owe.",
-
   "profile": "Profile",
   "displayName": "Display name",
   "displayNameHint": "This name is shared with your space members.",
   "enterNameError": "Enter your name",
-
-  "space": "Space",
   "spaceAndMembers": "Space & members",
   "categories": "Categories",
   "memberGroups": "Member Groups",
@@ -500,17 +535,16 @@
   "requestGroupDescription": "Ask the space owner to create a group containing you and the members you choose. Only the owner can create groups.",
   "requestGroupTitle": "Request Member Group",
   "requestGroupMembersHint": "Choose members to group with you. The group will be owned by you.",
-  "groupRequested": "Group request sent to the owner",
-  "groupRequestFailed": "Failed to send group request",
+  "groupRequested": "Group request sent",
+  "groupRequestFailed": "Couldn’t send group request. Try again.",
   "groupRequestAlreadyPending": "You already have a pending group request.",
   "noMembersToRequest": "No other members are available to group with",
   "requestGroupUnavailable": "Member groups need at least three members in this space.",
   "pendingGroupRequests": "Pending group requests",
-  "pendingGroupRequestsDescription": "Members have asked you to create a group for them. Approving creates the group owned by the requester.",
+  "pendingGroupRequestsDescription": "Approve to create a group owned by the requester.",
   "pendingApproval": "Pending approval",
   "pendingApprovalSection": "Waiting for approval",
   "openByDefault": "Open by default next time",
-  "defaultSpaceSetMessage": "{space} will open by default next time",
   "@defaultSpaceSetMessage": {
     "placeholders": {
       "space": {
@@ -518,11 +552,11 @@
       }
     }
   },
+  "defaultSpaceSetMessage": "{space} will open by default next time",
   "defaultSpaceRemovedMessage": "No longer the default space",
   "deleteSpace": "Delete",
   "leaveSpace": "Leave",
   "leaveBlockedOutstanding": "You have an outstanding balance. Settle your dues before leaving the space.",
-  "deletingSpaceIn": "Deleting {space} in {seconds}s",
   "@deletingSpaceIn": {
     "placeholders": {
       "space": {
@@ -533,7 +567,7 @@
       }
     }
   },
-  "leavingSpaceIn": "Leaving {space} in {seconds}s",
+  "deletingSpaceIn": "Deleting {space} in {seconds}s",
   "@leavingSpaceIn": {
     "placeholders": {
       "space": {
@@ -544,6 +578,8 @@
       }
     }
   },
+  "leavingSpaceIn": "Leaving {space} in {seconds}s",
+  "space": "Space",
   "undo": "Undo",
   "spaceActionCancelled": "Action cancelled. Nothing changed.",
   "spaceDeleted": "Space deleted.",
@@ -561,9 +597,8 @@
   "alreadyInGroup": "You already belong to a member group.",
   "createMemberGroup": "Create Member Group",
   "createGroupDescription": "Select members to add to this group. The group will be owned by you.",
-  "groupOwner": "Group Owner",
-  "youAreOwner": "You are the owner of this group",
-  "selectGroupMembers": "Select Members",
+  "youAreOwner": "You’re the owner of this group",
+  "selectGroupMembers": "Select members",
   "noOtherMembersToAdd": "No other space members to add",
   "managedByYou": "Managed by you",
   "managedBy": "Managed by",
@@ -575,7 +610,7 @@
   "groupDeleted": "Group deleted",
   "groupDeleteFailed": "Failed to delete group",
   "addGroupMember": "Add Member",
-  "addMember": "Add Member",
+  "addMember": "Add member",
   "memberAdded": "Member added",
   "memberAddFailed": "Failed to add member",
   "removeMember": "Remove",
@@ -590,7 +625,6 @@
   "noMembersInGroup": "No members in this group yet",
   "groupOwnerLabel": "Group Owner",
   "groupOwner": "Owner",
-  "members": "Members",
   "defaultCategories": "Default categories",
   "customCategories": "Custom categories",
   "newCategory": "New category",
@@ -604,14 +638,16 @@
   "duplicateCategoryError": "That category already exists",
   "inviteCodeCopied": "Invite code copied",
   "shareInviteHint": "Share this code so friends and roommates can join your space.",
-
   "inviteMember": "Invite a member",
   "inviteMemberHint": "person@example.com",
-  "inviteMemberHelper": "An invitation email is sent to the address. Invited members appear in expense splits.",
+  "inviteMemberHelper": "An invitation is sent to this email. The member will appear in expense splits.",
+  "description": "Description",
   "@invitedMember": {
     "description": "Toast after a member is invited by email",
     "placeholders": {
-      "email": { "type": "String" }
+      "email": {
+        "type": "String"
+      }
     }
   },
   "invitedMember": "{email} invited to the space",
@@ -639,7 +675,6 @@
   "statusPending": "Pending",
   "statusPartiallyPaid": "Partially paid",
   "statusCancelled": "Cancelled",
-
   "spendingCycle": "Spending cycle",
   "currentCycle": "Current cycle",
   "noActiveCycle": "No active cycle",
@@ -685,7 +720,6 @@
   "newCycleStarted": "New cycle started",
   "cycleClosed": "Cycle closed",
   "settleBeforeClose": "Settle all balances before closing the cycle",
-
   "csvExport": "CSV export",
   "currentCycleFallback": "Current cycle",
   "preview": "Preview",
@@ -695,30 +729,29 @@
   "csvCopiedShare": "CSV copied - paste it anywhere to share",
   "emptyPreview": "…",
   "noExpensesForExport": "No expenses to export yet",
-
   "language": "Language",
   "languageSubtitle": "App display language",
   "english": "English",
   "nepali": "Nepali",
-
   "expenseAmountError": "Enter an amount greater than 0.",
   "expenseDescriptionError": "Add a short description.",
   "expensePayerError": "Choose who paid.",
   "expenseParticipantError": "Select at least one participant.",
-
-  "hissaIncome": "Hissa income",
+  "hissaIncome": "Shared income",
   "addIncome": "Add income",
   "editIncome": "Edit income",
   "incomeDescriptionLabel": "Source",
   "incomeDescriptionHint": "e.g. Room rent, refund, subsidy",
   "receivedBy": "Received by",
   "receivedByHint": "Who physically received this money?",
-  "incomeSplitNote": "{name} received this money for the hissa. Its benefit is split across the selected members and lowers everyone's share of the net expense.",
   "@incomeSplitNote": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
+  "incomeSplitNote": "{name} received this for the group. It’s split among selected members and lowers everyone’s net share.",
   "saveIncome": "Save income",
   "incomeAddedToast": "Hissa income recorded",
   "incomeUpdatedToast": "Hissa income updated",
@@ -727,17 +760,21 @@
   "deleteIncomeMessage": "Balances will be recalculated without this contribution.",
   "netExpense": "Net hissa expense",
   "hissaIncomeSection": "Hissa income",
-  "receivedByMemberDay": "Received by {name} · {day}",
   "@receivedByMemberDay": {
     "placeholders": {
-      "name": { "type": "String" },
-      "day": { "type": "String" }
+      "name": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
     }
   },
+  "receivedByMemberDay": "Received by {name} · {day}",
+  "name": "Name",
   "expensePercentError": "Percentages must add up to 100%.",
   "expenseCustomError": "Custom amounts must add up to the total.",
   "expenseSharesError": "Enter at least one share unit.",
-
   "chooseCycleType": "Spending cycle",
   "monthlyCycle": "Monthly",
   "monthlyCycleDescription": "Tracks the running month automatically",
@@ -749,7 +786,6 @@
   "done": "Done",
   "cycleRenamed": "Cycle renamed",
   "previousCycles": "Previous cycles",
-  "previousCyclesCount": "{count} closed cycles",
   "@previousCyclesCount": {
     "placeholders": {
       "count": {
@@ -757,6 +793,7 @@
       }
     }
   },
+  "previousCyclesCount": "{count} closed cycles",
   "cycleDetails": "Cycle details",
   "spentLabel": "spent",
   "expensesCount": "Expenses",

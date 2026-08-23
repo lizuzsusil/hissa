@@ -386,18 +386,6 @@ abstract class AppLocalizations {
   /// **'Category'**
   String get category;
 
-  /// No description provided for @amount.
-  ///
-  /// In en, this message translates to:
-  /// **'Amount'**
-  String get amount;
-
-  /// No description provided for @description.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get description;
-
   /// No description provided for @descriptionHint.
   ///
   /// In en, this message translates to:
@@ -499,12 +487,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove group'**
   String get ungroup;
-
-  /// No description provided for @selectGroupMembers.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Members'**
-  String get selectGroupMembers;
 
   /// No description provided for @editExpense.
   ///
@@ -1208,18 +1190,6 @@ abstract class AppLocalizations {
   /// **'Who lives here?'**
   String get whoLivesHere;
 
-  /// No description provided for @addMember.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Member'**
-  String get addMember;
-
-  /// No description provided for @name.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get name;
-
   /// No description provided for @currency.
   ///
   /// In en, this message translates to:
@@ -1247,7 +1217,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteCodeHelp.
   ///
   /// In en, this message translates to:
-  /// **'Ask the space owner for their invite code. Codes are shown in Settings → Space.'**
+  /// **'Ask the space owner for their invite code. Find it in Settings > Space.'**
   String get inviteCodeHelp;
 
   /// No description provided for @inviteNotFound.
@@ -1289,7 +1259,7 @@ abstract class AppLocalizations {
   /// No description provided for @mySpacesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'All your expense spaces in one place'**
+  /// **'All your spaces in one place'**
   String get mySpacesSubtitle;
 
   /// No description provided for @yourSpaces.
@@ -1337,7 +1307,7 @@ abstract class AppLocalizations {
   /// No description provided for @switchSpace.
   ///
   /// In en, this message translates to:
-  /// **'My Spaces'**
+  /// **'Switch space'**
   String get switchSpace;
 
   /// No description provided for @switchSpaceSubtitle.
@@ -1565,7 +1535,7 @@ abstract class AppLocalizations {
   /// No description provided for @errIncorrectCredentials.
   ///
   /// In en, this message translates to:
-  /// **'Incorrect email or password. Try again or create an account.'**
+  /// **'Incorrect email or password. Please try again.'**
   String get errIncorrectCredentials;
 
   /// No description provided for @authGoogleConflict.
@@ -1631,7 +1601,7 @@ abstract class AppLocalizations {
   /// No description provided for @authFirestoreDenied.
   ///
   /// In en, this message translates to:
-  /// **'The database is rejecting this action. Publish the firestore.rules file to Firebase.'**
+  /// **'Database permission denied. Publish firestore.rules in Firebase.'**
   String get authFirestoreDenied;
 
   /// No description provided for @authFirestoreUnavailable.
@@ -1661,7 +1631,7 @@ abstract class AppLocalizations {
   /// No description provided for @authSomethingWentWrong.
   ///
   /// In en, this message translates to:
-  /// **'Something went wrong. Check the debug logs for the exact error.'**
+  /// **'Something went wrong. Please try again.'**
   String get authSomethingWentWrong;
 
   /// No description provided for @rememberMe.
@@ -1691,7 +1661,7 @@ abstract class AppLocalizations {
   /// No description provided for @biometricNotEnrolled.
   ///
   /// In en, this message translates to:
-  /// **'No biometrics enrolled. Set up Face ID / Touch ID in Settings.'**
+  /// **'No biometrics enrolled. Set up Face ID or Touch ID in your device settings.'**
   String get biometricNotEnrolled;
 
   /// No description provided for @security.
@@ -1805,7 +1775,7 @@ abstract class AppLocalizations {
   /// No description provided for @settleHint.
   ///
   /// In en, this message translates to:
-  /// **'You pay, then request settlement. The member you owe approves it before the balance updates.'**
+  /// **'Pay first, then request settlement. The recipient must approve before balances update.'**
   String get settleHint;
 
   /// No description provided for @settlementHistory.
@@ -1867,6 +1837,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Up to {amount}'**
   String maxOutstanding(String amount);
+
+  /// No description provided for @amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amount;
 
   /// No description provided for @pendingRequestsSection.
   ///
@@ -1952,12 +1928,6 @@ abstract class AppLocalizations {
   /// **'Enter your name'**
   String get enterNameError;
 
-  /// No description provided for @space.
-  ///
-  /// In en, this message translates to:
-  /// **'Space'**
-  String get space;
-
   /// No description provided for @spaceAndMembers.
   ///
   /// In en, this message translates to:
@@ -2027,13 +1997,13 @@ abstract class AppLocalizations {
   /// No description provided for @groupRequested.
   ///
   /// In en, this message translates to:
-  /// **'Group request sent to the owner'**
+  /// **'Group request sent'**
   String get groupRequested;
 
   /// No description provided for @groupRequestFailed.
   ///
   /// In en, this message translates to:
-  /// **'Failed to send group request'**
+  /// **'Couldn’t send group request. Try again.'**
   String get groupRequestFailed;
 
   /// No description provided for @groupRequestAlreadyPending.
@@ -2063,7 +2033,7 @@ abstract class AppLocalizations {
   /// No description provided for @pendingGroupRequestsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Members have asked you to create a group for them. Approving creates the group owned by the requester.'**
+  /// **'Approve to create a group owned by the requester.'**
   String get pendingGroupRequestsDescription;
 
   /// No description provided for @pendingApproval.
@@ -2125,6 +2095,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Leaving {space} in {seconds}s'**
   String leavingSpaceIn(String space, int seconds);
+
+  /// No description provided for @space.
+  ///
+  /// In en, this message translates to:
+  /// **'Space'**
+  String get space;
 
   /// No description provided for @undo.
   ///
@@ -2228,17 +2204,17 @@ abstract class AppLocalizations {
   /// **'Select members to add to this group. The group will be owned by you.'**
   String get createGroupDescription;
 
-  /// No description provided for @groupOwner.
-  ///
-  /// In en, this message translates to:
-  /// **'Owner'**
-  String get groupOwner;
-
   /// No description provided for @youAreOwner.
   ///
   /// In en, this message translates to:
-  /// **'You are the owner of this group'**
+  /// **'You’re the owner of this group'**
   String get youAreOwner;
+
+  /// No description provided for @selectGroupMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Select members'**
+  String get selectGroupMembers;
 
   /// No description provided for @noOtherMembersToAdd.
   ///
@@ -2305,6 +2281,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add Member'**
   String get addGroupMember;
+
+  /// No description provided for @addMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Add member'**
+  String get addMember;
 
   /// No description provided for @memberAdded.
   ///
@@ -2384,11 +2366,11 @@ abstract class AppLocalizations {
   /// **'Group Owner'**
   String get groupOwnerLabel;
 
-  /// No description provided for @members.
+  /// No description provided for @groupOwner.
   ///
   /// In en, this message translates to:
-  /// **'Members'**
-  String get members;
+  /// **'Owner'**
+  String get groupOwner;
 
   /// No description provided for @defaultCategories.
   ///
@@ -2483,8 +2465,14 @@ abstract class AppLocalizations {
   /// No description provided for @inviteMemberHelper.
   ///
   /// In en, this message translates to:
-  /// **'An invitation email is sent to the address. Invited members appear in expense splits.'**
+  /// **'An invitation is sent to this email. The member will appear in expense splits.'**
   String get inviteMemberHelper;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
 
   /// Toast after a member is invited by email
   ///
@@ -2551,6 +2539,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'wants to join this space'**
   String get wantsToJoinSpace;
+
+  /// No description provided for @members.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get members;
 
   /// No description provided for @addMemberFieldHint.
   ///
@@ -3005,7 +2999,7 @@ abstract class AppLocalizations {
   /// No description provided for @hissaIncome.
   ///
   /// In en, this message translates to:
-  /// **'Hissa income'**
+  /// **'Shared income'**
   String get hissaIncome;
 
   /// No description provided for @addIncome.
@@ -3047,7 +3041,7 @@ abstract class AppLocalizations {
   /// No description provided for @incomeSplitNote.
   ///
   /// In en, this message translates to:
-  /// **'{name} received this money for the hissa. Its benefit is split across the selected members and lowers everyone\'s share of the net expense.'**
+  /// **'{name} received this for the group. It’s split among selected members and lowers everyone’s net share.'**
   String incomeSplitNote(String name);
 
   /// No description provided for @saveIncome.
@@ -3103,6 +3097,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Received by {name} · {day}'**
   String receivedByMemberDay(String name, String day);
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
 
   /// No description provided for @expensePercentError.
   ///

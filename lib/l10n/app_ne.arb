@@ -1,9 +1,7 @@
 {
   "@@locale": "ne",
-
   "appTitle": "हिस्सा",
   "tagline": "तपाईंका सबै खर्च, एउटै ठाउँमा",
-
   "home": "गृह",
   "expenses": "खर्चहरू",
   "settle": "मिलान",
@@ -35,12 +33,10 @@
   "attached": "संलग्न",
   "other": "अन्य",
   "expense": "खर्च",
-
   "settlementsWaiting": "{count, plural, =1{1 सेटलमेन्ट पर्खिरहेको छ} other{{count} सेटलमेन्टहरू पर्खिरहेका छन्}}",
   "splitPersons": "{count, plural, =1{1 व्यक्ति} other{{count} व्यक्तिहरू}}",
   "expensesAndTotal": "{count, plural, =1{1 खर्च · {total}} other{{count} खर्चहरू · {total}}}",
   "spaceMembersCount": "{count, plural, =1{1 सदस्य} other{{count} सदस्यहरू}}",
-
   "memberPaidShare": "तिरेको {paid} · भाग {share}",
   "paidByMemberDay": "{name} ले तिर्नुभयो · {day}",
   "owes": "{from} ले {to} लाई तिर्न बाँकी",
@@ -51,9 +47,7 @@
   "addedMember": "{name} ठाउँमा थपियो",
   "removeMemberTitle": "{name} हटाउने हो?",
   "closeCycleTitle": "{name} बन्द गर्ने हो?",
-
   "category": "श्रेणी",
-  "amount": "रकम",
   "description": "विवरण",
   "descriptionHint": "यो केका लागि थियो?",
   "paidBy": "तिर्ने व्यक्ति",
@@ -72,7 +66,6 @@
   "totalShares": "कुल सेयर",
   "createGroup": "समूह बनाउनुहोस्",
   "ungroup": "समूह हटाउनुहोस्",
-  "selectGroupMembers": "समूहमा राख्न सदस्यहरू छान्नुहोस्",
   "editExpense": "खर्च सम्पादन गर्नुहोस्",
   "addExpense": "खर्च थप्नुहोस्",
   "yourBalance": "तपाईंको ब्यालेन्स",
@@ -123,7 +116,6 @@
   "monthCompare": "यो महिना र अघिल्लो महिना",
   "totalSpent": "जम्मा खर्च",
   "average": "औसत",
-
   "spendingOverview": "खर्च अवलोकन",
   "thisMonthTotal": "यो महिना",
   "thisYearTotal": "यो वर्ष",
@@ -146,14 +138,17 @@
   "noSpendingChartTitle": "चार्ट गर्न केही छैन",
   "noSpendingChartMessage": "आफ्नो समयसँगै खर्च हेर्न खर्चहरू थप्नुहोस्।",
   "showingRecentWindow": "सबैभन्दा भर्खरको अवधि देखाइँदै",
-  "spentInPeriod": "{period} मा {amount}",
   "@spentInPeriod": {
     "placeholders": {
-      "amount": { "type": "String" },
-      "period": { "type": "String" }
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
     }
   },
-
+  "spentInPeriod": "{period} मा {amount}",
   "addEstimate": "अनुमान थप्नुहोस्",
   "estimatedExpenses": "अनुमानित खर्चहरू",
   "estimatedExpense": "अनुमान",
@@ -164,12 +159,14 @@
   "removeEstimate": "अनुमान हटाउनुहोस्",
   "removeEstimateTitle": "यो अनुमान हटाउने हो?",
   "removeEstimateMessage": "योजना गरिएको रकम हटाइनेछ। कुनै वास्तविक खर्च प्रभावित हुँदैन।",
-  "estimateForMonth": "{month} को लागि अनुमान",
   "@estimateForMonth": {
     "placeholders": {
-      "month": { "type": "String" }
+      "month": {
+        "type": "String"
+      }
     }
   },
+  "estimateForMonth": "{month} को लागि अनुमान",
   "estimateDescriptionHint": "के को लागि योजना गर्दै हुनुहुन्छ?",
   "estimatedAmount": "अनुमानित खर्च रकम",
   "saveEstimate": "अनुमान बचत गर्नुहोस्",
@@ -179,20 +176,25 @@
   "spentSoFar": "अहिलेसम्म खर्च",
   "estimatedTotalShort": "अनुमानित",
   "remainingFromEstimate": "बाँकी",
-  "overEstimateBy": "{amount} ले बढी",
   "@overEstimateBy": {
     "placeholders": {
-      "amount": { "type": "String" }
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "overEstimateBy": "{amount} ले बढी",
+  "@spentOfEstimate": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "estimate": {
+        "type": "String"
+      }
     }
   },
   "spentOfEstimate": "{estimate} अनुमानमा {spent} खर्च भयो",
-  "@spentOfEstimate": {
-    "placeholders": {
-      "spent": { "type": "String" },
-      "estimate": { "type": "String" }
-    }
-  },
-
   "introTitle1": "हिस्सामा स्वागत छ",
   "introSubtitle1": "समूह, रूममेट र परिवारहरूले साझा खर्च सँगै ट्र्याक गर्ने सबैभन्दा सजिलो तरिका।",
   "introTitle2": "हरेक खर्च ट्र्याक गर्नुहोस्",
@@ -201,7 +203,6 @@
   "introSubtitle3": "कसले कसलाई तिर्न बाँकी छ एकै नजरमा हेर्नुहोस् र नगद, बैंक ट्रान्सफर, ई-सेवा वा खल्तीबाट एक ट्यापमा भुक्तानी रेकर्ड गर्नुहोस्।",
   "introTitle4": "आफ्नो खर्च बुझ्नुहोस्",
   "introSubtitle4": "मासिक विश्लेषण, श्रेणी विवरण र एक-ट्याप CSV निर्यातले पैसा कहाँ जाँदैछ भन्ने कुरामा तपाईंलाई सचेत राख्छ।",
-
   "onboardingTitle": "कसरी\nखर्च बाँड्दै हुनुहुन्छ?",
   "onboardingSubtitle": "तपाईंको समूहसँग मिल्ने सेटअप छान्नुहोस्। तपाईं कुनै पनि समयमा परिवर्तन गर्न सक्नुहुन्छ।",
   "modeTwoPeople": "दुई जना",
@@ -212,13 +213,10 @@
   "modeRoommatesSubtitle": "भाडा र सुविधाहरू बाँड्ने घरसाथीहरू",
   "modeOther": "अन्य",
   "modeOtherSubtitle": "खर्च बाँड्ने कुनै पनि सानो समूह",
-
   "setUpSubtitle": "इन्भाइट कोड प्रविष्ट गर्नुहोस् र स्पेसमा सामेल हुनुहोस्।",
   "create": "सिर्जना गर्नुहोस्",
   "join": "सामेल हुनुहोस्",
   "whoLivesHere": "यहाँ को-को बस्नुहुन्छ?",
-  "addMember": "सदस्य थप्नुहोस्",
-  "name": "नाम",
   "currency": "मुद्रा",
   "inviteLater": "पछि ठाउँ → सदस्यहरूबाट थप मानिसहरूलाई बोलाउन सक्नुहुन्छ",
   "inviteCode": "इन्भाइट कोड",
@@ -229,7 +227,6 @@
   "duplicateMemberError": "त्यो नाम सूचीमा पहिल्यै छ",
   "enterInviteCodeError": "इन्भाइट कोड लेख्नुहोस्",
   "inviteCodeFormatError": "इन्भाइट कोड ६ अक्षरको हुन्छ",
-
   "mySpaces": "मेरा स्पेसहरू",
   "mySpacesSubtitle": "तपाईंका सबै खर्च स्पेस एकै ठाउँमा",
   "yourSpaces": "तपाईंका स्वामित्वका स्पेसहरू",
@@ -239,7 +236,7 @@
   "noSpacesMessage": "खर्च ट्र्याक गर्न स्पेस सिर्जना गर्नुहोस्, वा अवस्थित स्पेसमा सामेल हुनुहोस्।",
   "createSpace": "स्पेस सिर्जना गर्नुहोस्",
   "joinSpace": "स्पेसमा सामेल हुनुहोस्",
-  "switchSpace": "मेरा स्पेसहरू",
+  "switchSpace": "स्पेस बदल्नुहोस्",
   "switchSpaceSubtitle": "आफ्ना स्पेसहरू बीच स्विच गर्नुहोस्",
   "splitMode": "विभाजन मोड",
   "personalMode": "व्यक्तिगत मोड",
@@ -253,7 +250,6 @@
   "createSpaceSubtitle": "आफ्नो स्पेसको नाम लेख्नुहोस् र कसरी प्रयोग गर्ने छान्नुहोस्।",
   "createdSpaceTitle": "स्पेस सिर्जना भयो",
   "joinedSpaceTitle": "स्पेसमा सामेल भयो",
-
   "createAccount": "खाता बनाउनुहोस्",
   "logIn": "लग इन गर्नुहोस्",
   "createYourAccount": "आफ्नो खाता बनाउनुहोस्",
@@ -279,7 +275,6 @@
   "errFieldRequired": "यो फिल्ड आवश्यक छ",
   "errTooLong": "नाम ४० अक्षर वा कम हुनुपर्छ",
   "errIncorrectCredentials": "इमेल वा पासवर्ड गलत छ। फेरि प्रयास गर्नुहोस् वा खाता बनाउनुहोस्।",
-
   "authGoogleConflict": "त्यो इमेलमा पहिल्यै पासवर्ड खाता छ। यसको सट्टा इमेल र पासवर्डबाट लग इन गर्नुहोस्।",
   "authEmailInUse": "त्यो इमेलमा पहिल्यै खाता छ। यसको सट्टा लग इन गर्नुहोस्।",
   "authWeakPassword": "त्यो पासवर्ड धेरै कमजोर छ। कम्तीमा ६ अक्षर प्रयोग गर्नुहोस्।",
@@ -296,7 +291,6 @@
   "authGooglePlayServices": "यो यन्त्रमा Google Play सेवाहरू उपलब्ध छैनन् वा गलत कन्फिगर छन्।",
   "authGoogleUi": "अहिले Google लगइन विन्डो देखाउन सकिएन। फेरि प्रयास गर्नुहोस्।",
   "authSomethingWentWrong": "केही गडबड भयो। सटीक त्रुटिका लागि डिबग लग जाँच्नुहोस्।",
-
   "validationFieldRequired": "{label} चाहिन्छ",
   "validationTooLong": "{label} {max} अक्षर वा कम हुनुपर्छ",
   "validationNameTooLong": "नाम ४० अक्षर वा कम हुनुपर्छ",
@@ -305,14 +299,12 @@
   "validationPasswordShort": "पासवर्ड कम्तीमा ६ अक्षरको हुनुपर्छ",
   "validationPasswordLong": "पासवर्ड ६४ अक्षर वा कम हुनुपर्छ",
   "validationInviteFormat": "इन्भाइट कोड ६ अक्षरको हुन्छ",
-
   "recordSettlement": "सेटलमेन्ट रेकर्ड गर्नुहोस्",
   "pays": "तिर्छ",
   "receives": "पाउँछ",
   "paymentMethod": "भुक्तानी विधि",
   "confirmPayment": "भुक्तानी पुष्टि गर्नुहोस्",
   "settlementRecorded": "सेटलमेन्ट रेकर्ड भयो",
-
   "toBeSettled": "मिलान गर्न बाँकी",
   "whoOwesWhom": "कसले कसलाई तिर्न बाँकी",
   "settleHint": "तपाईंले तिरेपछि सेटलमेन्ट अनुरोध पठाउनुहोस्। जसलाई पैसा दिनुभएको हो, उनले स्वीकृत गरेपछि मात्र ब्यालेन्स अपडेट हुन्छ।",
@@ -322,53 +314,60 @@
   "nothingToSettleTitle": "अहिले मिलान गर्नुपर्ने केही छैन",
   "noSettlementsMessage": "यस चक्रमा अहिलेसम्म कुनै खर्च रेकर्ड भएको छैन। पहिलो खर्च थप्नुहोस् र कसले कसलाई तिर्न बाँकी छ भन्ने विवरण यहाँ देखा पर्नेछ।",
   "settleAction": "मिलान",
-
   "requestSettlementTitle": "सेटलमेन्ट अनुरोध",
   "requestSettlementAction": "अनुरोध पठाउनुहोस्",
-  "creditorApprovalNote": "रकम मिलान भयो भनी चिन्ह लगाउन {name} को स्वीकृति आवश्यक छ।",
   "@creditorApprovalNote": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "creditorApprovalNote": "रकम मिलान भयो भनी चिन्ह लगाउन {name} को स्वीकृति आवश्यक छ।",
+  "@maxOutstanding": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
     }
   },
   "maxOutstanding": "{amount} सम्म",
-  "@maxOutstanding": {
-    "placeholders": {
-      "amount": { "type": "String" }
-    }
-  },
+  "amount": "रकम",
   "pendingRequestsSection": "स्वीकृतिको प्रतीक्षामा",
-  "waitingApprovalFrom": "{name} को स्वीकृतिको प्रतीक्षामा",
   "@waitingApprovalFrom": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "waitingApprovalFrom": "{name} को स्वीकृतिको प्रतीक्षामा",
+  "@awaitingDebtorRequest": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
     }
   },
   "awaitingDebtorRequest": "{name} ले तपाईंलाई तिर्नुपर्छ — उनीहरूको अनुरोधको प्रतीक्षामा",
-  "@awaitingDebtorRequest": {
-    "placeholders": {
-      "name": { "type": "String" }
-    }
-  },
   "statusApproved": "स्वीकृत · मिलान",
   "statusRejected": "अस्वीकृत",
   "requestAgain": "फेरि अनुरोध गर्नुहोस्",
-  "settlementRequestedToast": "{name} लाई सेटलमेन्ट अनुरोध पठाइयो",
   "@settlementRequestedToast": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
+  "settlementRequestedToast": "{name} लाई सेटलमेन्ट अनुरोध पठाइयो",
   "settlementApprovedToast": "सेटलमेन्ट स्वीकृत भई रेकर्ड भयो",
   "settlementRejectedToast": "अनुरोध अस्वीकृत भयो। फेरि पठाउन सक्नुहुन्छ।",
   "amountExceedsOutstanding": "रकम तपाईंले तिर्न बाँकी भन्दा बढी हुन सक्दैन।",
-
   "profile": "प्रोफाइल",
   "displayName": "देखाउने नाम",
   "displayNameHint": "यो नाम तपाईंको ठाउँका सदस्यहरूसँग साझा हुन्छ।",
   "enterNameError": "आफ्नो नाम लेख्नुहोस्",
-
-  "space": "ठाउँ",
   "spaceAndMembers": "ठाउँ र सदस्यहरू",
   "categories": "श्रेणीहरू",
   "memberGroups": "सदस्य समूहहरू",
@@ -390,7 +389,6 @@
   "pendingApproval": "स्वीकृतिको पर्खाइमा",
   "pendingApprovalSection": "स्वीकृतिको पर्खाइमा",
   "openByDefault": "अर्को पटक पूर्वनिर्धारित रूपमा खोल्नुहोस्",
-  "defaultSpaceSetMessage": "{space} अर्को पटक पूर्वनिर्धारित रूपमा खुल्नेछ",
   "@defaultSpaceSetMessage": {
     "placeholders": {
       "space": {
@@ -398,11 +396,11 @@
       }
     }
   },
+  "defaultSpaceSetMessage": "{space} अर्को पटक पूर्वनिर्धारित रूपमा खुल्नेछ",
   "defaultSpaceRemovedMessage": "अब पूर्वनिर्धारित ठाउँ छैन",
   "deleteSpace": "मेटाउनुहोस्",
   "leaveSpace": "छोड्नुहोस्",
   "leaveBlockedOutstanding": "तपाईंको बाँकी रकम छ। ठाउँ छोड्नु अघि आफ्नो बाँकी रकम मिलाउनुहोस्।",
-  "deletingSpaceIn": "{space} {seconds} सेकेन्डमा मेटिँदै",
   "@deletingSpaceIn": {
     "placeholders": {
       "space": {
@@ -413,7 +411,7 @@
       }
     }
   },
-  "leavingSpaceIn": "{space} {seconds} सेकेन्डमा छोडिँदै",
+  "deletingSpaceIn": "{space} {seconds} सेकेन्डमा मेटिँदै",
   "@leavingSpaceIn": {
     "placeholders": {
       "space": {
@@ -424,6 +422,8 @@
       }
     }
   },
+  "leavingSpaceIn": "{space} {seconds} सेकेन्डमा छोडिँदै",
+  "space": "ठाउँ",
   "undo": "पूर्ववत",
   "spaceActionCancelled": "कार्य रद्द गरियो। केही परिवर्तन भएन।",
   "spaceDeleted": "ठाउँ मेटियो।",
@@ -441,8 +441,7 @@
   "alreadyInGroup": "तपाई पहिले नै सदस्य समूहमा हुनुहुन्छ।",
   "createMemberGroup": "सदस्य समूह बन्नुहोस्",
   "createGroupDescription": "यस समूहमा थप्नका लागि सदस्यहरू छान्नुहोस्। समूहको स्वामी तपाई हुनेछ।",
-  "groupOwner": "समूह स्वामी",
-  "youAreOwner": "तपाई यो समूहको स्वामी हुनुहुन्��",
+  "youAreOwner": "तपाईं यो समूहको स्वामी हुनुहुन्छ",
   "selectGroupMembers": "सदस्यहरू छान्नुहोस्",
   "noOtherMembersToAdd": "थप्नका लागि अर्को स्पेस सदस्य छैनन्",
   "managedByYou": "तपाईंले व्यवस्थापन गर्नुभएको",
@@ -450,7 +449,7 @@
   "groupCreated": "समूह बनेको",
   "groupCreateFailed": "समूह बन्न असफल",
   "deleteGroupTitle": "समूह मेट्नुहोस्",
-  "deleteGroupMessage": "यो समूह मेटिने��। यस समूह प्रयोग गरेका ऐतिहासिक खर्चहरू प्रभावित हुन्ने��ैन।",
+  "deleteGroupMessage": "यो समूह मेटिनेछ। यस समूह प्रयोग गरेका ऐतिहासिक खर्चहरू प्रभावित हुने छैन।",
   "deleteGroup": "मेट्नुहोस्",
   "groupDeleted": "समूह मेटिएको",
   "groupDeleteFailed": "समूह मेट्न असफल",
@@ -463,14 +462,13 @@
   "memberRemoveFailed": "सदस्य हटाउन असफल",
   "removeGroupMemberTitle": "{name} लाई यो समूहबाट हटाउने हो?",
   "removeGroupMemberMessage": "उनीहरू अब यो समूहको हिस्सा हुनेछैनन्। पुराना खर्चहरू प्रभावित हुँदैनन्।",
-  "groupCountsAsOneParticipant": "यो समूह एकल भागीदारको रूपमा गनिने��।",
+  "groupCountsAsOneParticipant": "यो समूह एकल भागीदारको रूपमा गनिनेछ।",
   "noMembersAvailableToAdd": "थप्नका लागि सदस्यहरू उपलब्ध छैनन्",
   "groupFull": "यो समूह आफ्नो अधिकतम आकारमा पुगेको छ। अर्को थप्नु अघि एउटा सदस्य हटाउनुहोस्।",
   "groupMembers": "सदस्यहरू",
   "noMembersInGroup": "यस समूहमा हालसम्म कुनै सदस्य छैनन्",
   "groupOwnerLabel": "समूह स्वामी",
   "groupOwner": "स्वामी",
-  "members": "सदस्यहरू",
   "defaultCategories": "पूर्वनिर्धारित श्रेणीहरू",
   "customCategories": "अनुकूल श्रेणीहरू",
   "newCategory": "नयाँ श्रेणी",
@@ -512,7 +510,6 @@
   "statusPending": "पर्खिरहेको",
   "statusPartiallyPaid": "आंशिक भुक्तानी",
   "statusCancelled": "रद्द भयो",
-
   "spendingCycle": "खर्च चक्र",
   "currentCycle": "हालको चक्र",
   "noActiveCycle": "कुनै सक्रिय चक्र छैन",
@@ -558,7 +555,6 @@
   "newCycleStarted": "नयाँ चक्र सुरु भयो",
   "cycleClosed": "चक्र बन्द भयो",
   "settleBeforeClose": "चक्र बन्द गर्नुअघि सबै ब्यालेन्सहरू मिलान गर्नुहोस्",
-
   "csvExport": "CSV निर्यात",
   "currentCycleFallback": "हालको चक्र",
   "preview": "पूर्वावलोकन",
@@ -568,17 +564,14 @@
   "csvCopiedShare": "CSV प्रतिलिपि भयो – जहाँ पनि टाँसेर साझा गर्नुहोस्",
   "emptyPreview": "…",
   "noExpensesForExport": "निर्यात गर्न कुनै खर्च छैन",
-
   "language": "भाषा",
   "languageSubtitle": "एप प्रदर्शन भाषा",
   "english": "English",
   "nepali": "नेपाली",
-
   "expenseAmountError": "0 भन्दा बढी रकम लेख्नुहोस्।",
   "expenseDescriptionError": "छोटो विवरण लेख्नुहोस्।",
   "expensePayerError": "तिर्ने व्यक्ति छान्नुहोस्।",
   "expenseParticipantError": "कम्तीमा एक जना सहभागी छान्नुहोस्।",
-
   "hissaIncome": "घरायसी आम्दानी",
   "addIncome": "आम्दानी थप्नुहोस्",
   "editIncome": "आम्दानी सम्पादन",
@@ -586,12 +579,14 @@
   "incomeDescriptionHint": "जस्तै: कोठा भाडा, फिर्ता, सहयोग",
   "receivedBy": "प्राप्त गर्ने व्यक्ति",
   "receivedByHint": "यो पैसा शारीरिक रूपमा कसले प्राप्त गर्यो?",
-  "incomeSplitNote": "{name} ले घरायसी खर्चका लागि यो पैसा प्राप्त गरेका हुन्। यसको लाभ छानिएका सदस्यहरूमा बाँडिनेछ र सबैको शुद्ध खर्चबाट हिस्सा घट्नेछ।",
   "@incomeSplitNote": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
+  "incomeSplitNote": "{name} ले घरायसी खर्चका लागि यो पैसा प्राप्त गरेका हुन्। यसको लाभ छानिएका सदस्यहरूमा बाँडिनेछ र सबैको शुद्ध खर्चबाट हिस्सा घट्नेछ।",
   "saveIncome": "आम्दानी सेभ गर्नुहोस्",
   "incomeAddedToast": "घरायसी आम्दानी दर्ता भयो",
   "incomeUpdatedToast": "घरायसी आम्दानी अद्यावधिक भयो",
@@ -600,13 +595,18 @@
   "deleteIncomeMessage": "यो आम्दानी बिना ब्यालेन्स पुनः गणना गरिनेछ।",
   "netExpense": "शुद्ध घरायसी खर्च",
   "hissaIncomeSection": "घरायसी आम्दानी",
-  "receivedByMemberDay": "{name} ले प्राप्त गर्यो · {day}",
   "@receivedByMemberDay": {
     "placeholders": {
-      "name": { "type": "String" },
-      "day": { "type": "String" }
+      "name": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
     }
   },
+  "receivedByMemberDay": "{name} ले प्राप्त गर्यो · {day}",
+  "name": "नाम",
   "expensePercentError": "प्रतिशतहरूको जोड १००% हुनुपर्छ।",
   "expenseCustomError": "अनुकूल रकमहरूको जोड जम्मा बराबर हुनुपर्छ।",
   "expenseSharesError": "कम्तीमा एक सेयर लेख्नुहोस्।",
@@ -617,7 +617,6 @@
   "biometricNotEnrolled": "कुनै बायोमेट्रिक दर्ता छैन। सेटिङमा Face ID / Touch ID सेटअप गर्नुहोस्।",
   "security": "सुरक्षा",
   "usePassword": "पासवर्ड प्रयोग गर्नुहोस्",
-
   "chooseCycleType": "खर्च चक्र",
   "monthlyCycle": "मासिक",
   "monthlyCycleDescription": "हरेक महिना स्वतः ट्र्याक गर्छ",
@@ -629,7 +628,6 @@
   "done": "सकियो",
   "cycleRenamed": "चक्रको नाम बदलियो",
   "previousCycles": "अघिल्ला चक्रहरू",
-  "previousCyclesCount": "{count} वटा बन्द चक्रहरू",
   "@previousCyclesCount": {
     "placeholders": {
       "count": {
@@ -637,6 +635,7 @@
       }
     }
   },
+  "previousCyclesCount": "{count} वटा बन्द चक्रहरू",
   "cycleDetails": "चक्र विवरण",
   "spentLabel": "खर्च",
   "expensesCount": "खर्चहरू",

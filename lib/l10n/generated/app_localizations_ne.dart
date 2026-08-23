@@ -205,12 +205,6 @@ class AppLocalizationsNe extends AppLocalizations {
   String get category => 'श्रेणी';
 
   @override
-  String get amount => 'रकम';
-
-  @override
-  String get description => 'विवरण';
-
-  @override
   String get descriptionHint => 'यो केका लागि थियो?';
 
   @override
@@ -260,9 +254,6 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get ungroup => 'समूह हटाउनुहोस्';
-
-  @override
-  String get selectGroupMembers => 'सदस्यहरू छान्नुहोस्';
 
   @override
   String get editExpense => 'खर्च सम्पादन गर्नुहोस्';
@@ -642,12 +633,6 @@ class AppLocalizationsNe extends AppLocalizations {
   String get whoLivesHere => 'यहाँ को-को बस्नुहुन्छ?';
 
   @override
-  String get addMember => 'सदस्य थप्नुहोस्';
-
-  @override
-  String get name => 'नाम';
-
-  @override
   String get currency => 'मुद्रा';
 
   @override
@@ -709,7 +694,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get joinSpace => 'स्पेसमा सामेल हुनुहोस्';
 
   @override
-  String get switchSpace => 'मेरा स्पेसहरू';
+  String get switchSpace => 'स्पेस बदल्नुहोस्';
 
   @override
   String get switchSpaceSubtitle => 'आफ्ना स्पेसहरू बीच स्विच गर्नुहोस्';
@@ -1010,6 +995,9 @@ class AppLocalizationsNe extends AppLocalizations {
   }
 
   @override
+  String get amount => 'रकम';
+
+  @override
   String get pendingRequestsSection => 'स्वीकृतिको प्रतीक्षामा';
 
   @override
@@ -1058,9 +1046,6 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get enterNameError => 'आफ्नो नाम लेख्नुहोस्';
-
-  @override
-  String get space => 'ठाउँ';
 
   @override
   String get spaceAndMembers => 'ठाउँ र सदस्यहरू';
@@ -1163,6 +1148,9 @@ class AppLocalizationsNe extends AppLocalizations {
   }
 
   @override
+  String get space => 'ठाउँ';
+
+  @override
   String get undo => 'पूर्ववत';
 
   @override
@@ -1218,10 +1206,10 @@ class AppLocalizationsNe extends AppLocalizations {
       'यस समूहमा थप्नका लागि सदस्यहरू छान्नुहोस्। समूहको स्वामी तपाई हुनेछ।';
 
   @override
-  String get groupOwner => 'स्वामी';
+  String get youAreOwner => 'तपाईं यो समूहको स्वामी हुनुहुन्छ';
 
   @override
-  String get youAreOwner => 'तपाई यो समूहको स्वामी हुनुहुन्��';
+  String get selectGroupMembers => 'सदस्यहरू छान्नुहोस्';
 
   @override
   String get noOtherMembersToAdd => 'थप्नका लागि अर्को स्पेस सदस्य छैनन्';
@@ -1243,7 +1231,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get deleteGroupMessage =>
-      'यो समूह मेटिने��। यस समूह प्रयोग गरेका ऐतिहासिक खर्चहरू प्रभावित हुन्ने��ैन।';
+      'यो समूह मेटिनेछ। यस समूह प्रयोग गरेका ऐतिहासिक खर्चहरू प्रभावित हुने छैन।';
 
   @override
   String get deleteGroup => 'मेट्नुहोस्';
@@ -1256,6 +1244,9 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get addGroupMember => 'सदस्य थप्नुहोस्';
+
+  @override
+  String get addMember => 'सदस्य थप्नुहोस्';
 
   @override
   String get memberAdded => 'सदस्य थपिएको';
@@ -1283,7 +1274,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get groupCountsAsOneParticipant =>
-      'यो समूह एकल भागीदारको रूपमा गनिने��।';
+      'यो समूह एकल भागीदारको रूपमा गनिनेछ।';
 
   @override
   String get noMembersAvailableToAdd => 'थप्नका लागि सदस्यहरू उपलब्ध छैनन्';
@@ -1302,7 +1293,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get groupOwnerLabel => 'समूह स्वामी';
 
   @override
-  String get members => 'सदस्यहरू';
+  String get groupOwner => 'स्वामी';
 
   @override
   String get defaultCategories => 'पूर्वनिर्धारित श्रेणीहरू';
@@ -1355,6 +1346,9 @@ class AppLocalizationsNe extends AppLocalizations {
       'ठेगानामा आमन्त्रण इमेल पठाइन्छ। आमन्त्रित सदस्यहरू खर्च बाँडफाँटमा देखिनेछन्।';
 
   @override
+  String get description => 'विवरण';
+
+  @override
   String invitedMember(String email) {
     return '$email ठाउँमा आमन्त्रित गरियो';
   }
@@ -1391,6 +1385,9 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get wantsToJoinSpace => 'यस ठाउँमा सामेल हुन चाहन्छ';
+
+  @override
+  String get members => 'सदस्यहरू';
 
   @override
   String get addMemberFieldHint => 'नाम';
@@ -1686,6 +1683,9 @@ class AppLocalizationsNe extends AppLocalizations {
   String receivedByMemberDay(String name, String day) {
     return '$name ले प्राप्त गर्यो · $day';
   }
+
+  @override
+  String get name => 'नाम';
 
   @override
   String get expensePercentError => 'प्रतिशतहरूको जोड १००% हुनुपर्छ।';

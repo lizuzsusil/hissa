@@ -592,6 +592,23 @@ class AppState extends ChangeNotifier {
     if (member != null && _spaceId != null) {
       await _repo.saveMember(member.copyWith(name: trimmed), _spaceId);
     }
+    // Keep biometric account picker in sync with the display name
+    try {
+      const accountsKey = 'hissa_biometric_accounts_v1';
+      final prefs = SharedPreferencesAsync();
+      final raw = await prefs.getString(accountsKey);
+      if (raw != null && raw.isNotEmpty) {
+        final list = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+        var changed = false;
+        for (final m in list) {
+          if (m['uid'] == user.id) {
+            m['name'] = trimmed;
+            changed = true;
+          }
+        }
+        if (changed) await prefs.setString(accountsKey, jsonEncode(list));
+      }
+    } catch (_) {}
     await _commit();
   }
 

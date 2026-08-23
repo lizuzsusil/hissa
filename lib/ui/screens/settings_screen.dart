@@ -120,7 +120,9 @@ class SettingsScreen extends StatelessWidget {
                     _SettingTile(
                       icon: Icons.history_rounded,
                       title: l10n.previousCycles,
-                      subtitle: l10n.previousCyclesCount(state.closedCycles.length),
+                      subtitle: l10n.previousCyclesCount(
+                        state.closedCycles.length,
+                      ),
                       onTap: () => _push(context, const PreviousCyclesScreen()),
                     ),
                   if (state.isOwner)
@@ -187,15 +189,17 @@ class SettingsScreen extends StatelessWidget {
                   onTap: () => _showNotifications(context),
                 ),
                 _SettingTile(
-                  icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                  icon: isDark
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
                   title: l10n.darkMode,
                   subtitle: isDark ? l10n.onValue : l10n.offValue,
                   trailing: Switch(
                     value: isDark,
                     onChanged: (v) {
                       context.read<ThemeModeController>().setMode(
-                            v ? ThemeMode.dark : ThemeMode.light,
-                          );
+                        v ? ThemeMode.dark : ThemeMode.light,
+                      );
                     },
                   ),
                   onTap: null,
@@ -213,6 +217,7 @@ class SettingsScreen extends StatelessWidget {
             ),
 
             // ── Security ────────────────────────────────────────────────
+            // Per-uid binding: User A enabling never unlocks User B.
             if (hasBiometricRow) ...[
               const SizedBox(height: AppSpacing.xl),
               _SectionHeader(icon: Icons.shield_outlined, title: l10n.security),
@@ -221,10 +226,13 @@ class SettingsScreen extends StatelessWidget {
                   _SettingTile(
                     icon: Icons.fingerprint_rounded,
                     title: l10n.biometricLogin,
-                    subtitle: biometrics.enabled ? l10n.onValue : l10n.offValue,
+                    subtitle: biometrics.isEnabledFor(state.currentUser?.id)
+                        ? l10n.onValue
+                        : l10n.offValue,
                     trailing: Switch(
-                      value: biometrics.enabled,
-                      onChanged: (v) => _toggleBiometric(context, biometrics, v),
+                      value: biometrics.isEnabledFor(state.currentUser?.id),
+                      onChanged: (v) =>
+                          _toggleBiometric(context, biometrics, v),
                     ),
                     onTap: null,
                   ),
@@ -239,7 +247,6 @@ class SettingsScreen extends StatelessWidget {
                 _SettingTile(
                   icon: Icons.logout_rounded,
                   title: l10n.signOut,
-                  subtitle: l10n.signOutSubtitle,
                   destructive: true,
                   onTap: () => _confirmSignOut(context, state),
                 ),
@@ -250,14 +257,18 @@ class SettingsScreen extends StatelessWidget {
             Center(
               child: Text(
                 l10n.appName,
-                style: AppText.overline.copyWith(color: context.palette.textMuted),
+                style: AppText.overline.copyWith(
+                  color: context.palette.textMuted,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Center(
               child: Text(
                 l10n.version,
-                style: AppText.caption.copyWith(color: context.palette.textMuted),
+                style: AppText.caption.copyWith(
+                  color: context.palette.textMuted,
+                ),
               ),
             ),
           ],
@@ -276,24 +287,37 @@ class SettingsScreen extends StatelessWidget {
     bool value,
   ) async {
     final l10n = context.l10n;
+    final state = context.read<AppState>();
+    final uid = state.currentUser?.id;
+    if (uid == null) return;
     if (value) {
       final issue = await biometrics.availabilityIssue();
       if (!context.mounted) return;
       if (issue != null) {
         showToast(
           context,
-          issue == 'notEnrolled' ? l10n.biometricNotEnrolled : l10n.biometricUnavailable,
+          issue == 'notEnrolled'
+              ? l10n.biometricNotEnrolled
+              : l10n.biometricUnavailable,
           type: ToastType.warning,
         );
         return;
       }
-      final ok = await biometrics.enable(l10n.biometricLogin);
+      // Persist account profile so LockScreen can show the bound user and the
+      // multi-account picker can list it.
+      await biometrics.saveAccount(
+        uid: uid,
+        name: state.currentUser?.name ?? 'User',
+        email: state.currentUser?.email ?? '',
+        avatarUrl: state.currentUser?.avatarUrl,
+      );
+      final ok = await biometrics.enableFor(uid, l10n.biometricLogin);
       if (!context.mounted) return;
       if (!ok) {
         showToast(context, l10n.biometricFailed, type: ToastType.warning);
       }
     } else {
-      await biometrics.disable();
+      await biometrics.disableFor(uid);
     }
   }
 
@@ -350,14 +374,19 @@ class SettingsScreen extends StatelessWidget {
                     c.status == CycleStatus.closed
                         ? Icons.history_rounded
                         : Icons.radio_button_checked,
-                    color: c.status == CycleStatus.closed ? p.textMuted : AppColors.positive,
+                    color: c.status == CycleStatus.closed
+                        ? p.textMuted
+                        : AppColors.positive,
                   ),
                   title: Text(c.name),
-                  subtitle: Text(_cycleStatusLabel(sheetContext.l10n, c.status)),
+                  subtitle: Text(
+                    _cycleStatusLabel(sheetContext.l10n, c.status),
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (state.isOwner && state.space?.cycleType == CycleType.custom) ...[
+                      if (state.isOwner &&
+                          state.space?.cycleType == CycleType.custom) ...[
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, size: 20),
                           tooltip: sheetContext.l10n.renameCycle,
@@ -426,7 +455,9 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showNotifications(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
   }
 
   Future<void> _confirmSignOut(BuildContext context, AppState state) async {
@@ -564,7 +595,8 @@ class _SettingsGroup extends StatelessWidget {
       child: Column(
         children: [
           for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) const Divider(height: 1, indent: 68, endIndent: AppSpacing.lg),
+            if (i > 0)
+              const Divider(height: 1, indent: 68, endIndent: AppSpacing.lg),
             children[i],
           ],
         ],
@@ -594,13 +626,21 @@ class _ProfileCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Row(
           children: [
-            MemberAvatar(name: name, avatarUrl: avatarUrl, size: 58, outline: true),
+            MemberAvatar(
+              name: name,
+              avatarUrl: avatarUrl,
+              size: 58,
+              outline: true,
+            ),
             const SizedBox(width: AppSpacing.lg),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: AppText.titleL.copyWith(color: Colors.white)),
+                  Text(
+                    name,
+                    style: AppText.titleL.copyWith(color: Colors.white),
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     email,
@@ -651,7 +691,10 @@ class _SettingTile extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          gradient: AppGradients.tint(accent, alpha: context.isDark ? 0.18 : 0.12),
+          gradient: AppGradients.tint(
+            accent,
+            alpha: context.isDark ? 0.18 : 0.12,
+          ),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Icon(icon, size: 20, color: accent),
@@ -664,8 +707,12 @@ class _SettingTile extends StatelessWidget {
       ),
       subtitle: subtitle == null
           ? null
-          : Text(subtitle!, style: AppText.labelM.copyWith(color: p.textSecondary)),
-      trailing: trailing ??
+          : Text(
+              subtitle!,
+              style: AppText.labelM.copyWith(color: p.textSecondary),
+            ),
+      trailing:
+          trailing ??
           (onTap != null
               ? Icon(Icons.chevron_right_rounded, size: 20, color: p.textMuted)
               : null),

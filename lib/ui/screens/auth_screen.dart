@@ -258,7 +258,13 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final p = context.palette;
-    final biometricsEnabled = context.watch<BiometricAuthController>().enabled;
+    final biometrics = context.watch<BiometricAuthController>();
+    // Only show quick biometric shortcut when the *currently persisted* Firebase
+    // user is the one who enabled it. After a full sign-out there is no
+    // Firebase session to unlock — tapping biometric here would otherwise call
+    // onAuthenticated with no user and appear to create a separate user.
+    final fbUid = FirebaseAuth.instance.currentUser?.uid;
+    final biometricsEnabled = fbUid != null && biometrics.isEnabledFor(fbUid);
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(

@@ -205,12 +205,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get category => 'Category';
 
   @override
-  String get amount => 'Amount';
-
-  @override
-  String get description => 'Description';
-
-  @override
   String get descriptionHint => 'What was this for?';
 
   @override
@@ -260,9 +254,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ungroup => 'Remove group';
-
-  @override
-  String get selectGroupMembers => 'Select Members';
 
   @override
   String get editExpense => 'Edit expense';
@@ -642,12 +633,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whoLivesHere => 'Who lives here?';
 
   @override
-  String get addMember => 'Add Member';
-
-  @override
-  String get name => 'Name';
-
-  @override
   String get currency => 'Currency';
 
   @override
@@ -662,7 +647,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteCodeHelp =>
-      'Ask the space owner for their invite code. Codes are shown in Settings → Space.';
+      'Ask the space owner for their invite code. Find it in Settings > Space.';
 
   @override
   String get inviteNotFound =>
@@ -684,7 +669,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mySpaces => 'My Spaces';
 
   @override
-  String get mySpacesSubtitle => 'All your expense spaces in one place';
+  String get mySpacesSubtitle => 'All your spaces in one place';
 
   @override
   String get yourSpaces => 'Spaces you own';
@@ -709,7 +694,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get joinSpace => 'Join Space';
 
   @override
-  String get switchSpace => 'My Spaces';
+  String get switchSpace => 'Switch space';
 
   @override
   String get switchSpaceSubtitle => 'Switch between your spaces';
@@ -829,7 +814,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errIncorrectCredentials =>
-      'Incorrect email or password. Try again or create an account.';
+      'Incorrect email or password. Please try again.';
 
   @override
   String get authGoogleConflict =>
@@ -870,7 +855,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authFirestoreDenied =>
-      'The database is rejecting this action. Publish the firestore.rules file to Firebase.';
+      'Database permission denied. Publish firestore.rules in Firebase.';
 
   @override
   String get authFirestoreUnavailable =>
@@ -890,7 +875,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authSomethingWentWrong =>
-      'Something went wrong. Check the debug logs for the exact error.';
+      'Something went wrong. Please try again.';
 
   @override
   String get rememberMe => 'Remember me';
@@ -908,7 +893,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get biometricNotEnrolled =>
-      'No biometrics enrolled. Set up Face ID / Touch ID in Settings.';
+      'No biometrics enrolled. Set up Face ID or Touch ID in your device settings.';
 
   @override
   String get security => 'Security';
@@ -972,7 +957,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settleHint =>
-      'You pay, then request settlement. The member you owe approves it before the balance updates.';
+      'Pay first, then request settlement. The recipient must approve before balances update.';
 
   @override
   String get settlementHistory => 'Settlement history';
@@ -1009,6 +994,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String maxOutstanding(String amount) {
     return 'Up to $amount';
   }
+
+  @override
+  String get amount => 'Amount';
 
   @override
   String get pendingRequestsSection => 'Pending approvals';
@@ -1061,9 +1049,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterNameError => 'Enter your name';
 
   @override
-  String get space => 'Space';
-
-  @override
   String get spaceAndMembers => 'Space & members';
 
   @override
@@ -1102,10 +1087,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose members to group with you. The group will be owned by you.';
 
   @override
-  String get groupRequested => 'Group request sent to the owner';
+  String get groupRequested => 'Group request sent';
 
   @override
-  String get groupRequestFailed => 'Failed to send group request';
+  String get groupRequestFailed => 'Couldn’t send group request. Try again.';
 
   @override
   String get groupRequestAlreadyPending =>
@@ -1124,7 +1109,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pendingGroupRequestsDescription =>
-      'Members have asked you to create a group for them. Approving creates the group owned by the requester.';
+      'Approve to create a group owned by the requester.';
 
   @override
   String get pendingApproval => 'Pending approval';
@@ -1162,6 +1147,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String leavingSpaceIn(String space, int seconds) {
     return 'Leaving $space in ${seconds}s';
   }
+
+  @override
+  String get space => 'Space';
 
   @override
   String get undo => 'Undo';
@@ -1218,10 +1206,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Select members to add to this group. The group will be owned by you.';
 
   @override
-  String get groupOwner => 'Owner';
+  String get youAreOwner => 'You’re the owner of this group';
 
   @override
-  String get youAreOwner => 'You are the owner of this group';
+  String get selectGroupMembers => 'Select members';
 
   @override
   String get noOtherMembersToAdd => 'No other space members to add';
@@ -1256,6 +1244,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addGroupMember => 'Add Member';
+
+  @override
+  String get addMember => 'Add member';
 
   @override
   String get memberAdded => 'Member added';
@@ -1302,7 +1293,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupOwnerLabel => 'Group Owner';
 
   @override
-  String get members => 'Members';
+  String get groupOwner => 'Owner';
 
   @override
   String get defaultCategories => 'Default categories';
@@ -1352,7 +1343,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteMemberHelper =>
-      'An invitation email is sent to the address. Invited members appear in expense splits.';
+      'An invitation is sent to this email. The member will appear in expense splits.';
+
+  @override
+  String get description => 'Description';
 
   @override
   String invitedMember(String email) {
@@ -1391,6 +1385,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wantsToJoinSpace => 'wants to join this space';
+
+  @override
+  String get members => 'Members';
 
   @override
   String get addMemberFieldHint => 'Name';
@@ -1629,7 +1626,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseParticipantError => 'Select at least one participant.';
 
   @override
-  String get hissaIncome => 'Hissa income';
+  String get hissaIncome => 'Shared income';
 
   @override
   String get addIncome => 'Add income';
@@ -1651,7 +1648,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String incomeSplitNote(String name) {
-    return '$name received this money for the hissa. Its benefit is split across the selected members and lowers everyone\'s share of the net expense.';
+    return '$name received this for the group. It’s split among selected members and lowers everyone’s net share.';
   }
 
   @override
@@ -1683,6 +1680,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String receivedByMemberDay(String name, String day) {
     return 'Received by $name · $day';
   }
+
+  @override
+  String get name => 'Name';
 
   @override
   String get expensePercentError => 'Percentages must add up to 100%.';

@@ -177,12 +177,11 @@ class _RootGateState extends State<RootGate> {
     setState(() => _step = step);
   }
 
-  /// Where a signed-in user lands: a biometric gate when the user opted into
-  /// it, otherwise straight into their only Space, their chosen default Space,
-  /// or the Spaces dashboard.
+  /// Where a signed-in user lands: a biometric gate only when *that* uid
+  /// opted in. This prevents User A's toggle from locking User B.
   Future<_FlowStep> _signedInStep(AppState state) async {
     final biometrics = context.read<BiometricAuthController>();
-    if (biometrics.enabled) return _FlowStep.lock;
+    if (biometrics.isEnabledFor(state.currentUserId)) return _FlowStep.lock;
     return _spaceLanding(state);
   }
 

@@ -1,30 +1,104 @@
+import 'dart:convert';
+
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Holds the "log in with biometrics" preference and wraps `local_auth`.
+class BiometricAccount {
+  final String uid;
+  final String name;
+  final String email;
+  final String? avatarUrl;
+
+  const BiometricAccount({
+    required this.uid,
+    required this.name,
+    required this.email,
+    this.avatarUrl,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'uid': uid,
+        'name': name,
+        'email': email,
+        'avatarUrl': avatarUrl,
+      };
+
+  factory BiometricAccount.fromJson(Map<String, dynamic> j) => BiometricAccount(
+        uid: j['uid'] as String,
+        name: j['name'] as String? ?? 'User',
+        email: j['email'] as String? ?? '',
+        avatarUrl: j['avatarUrl'] as String?,
+      );
+}
+
+/// Holds per-user "log in with biometrics" preference and wraps `local_auth`.
 ///
-/// When [enabled], the app gates the shell behind a device biometric prompt
-/// on launch instead of showing the password login. The flag itself is a
-/// device-local preference; no credentials are ever stored.
+/// v1 was a global bool; v2 is per-uid so User A enabling never unlocks User B.
+/// The device biometrics never stores credentials — it only gates the locally
+/// cached Firebase session for that specific uid.
 class BiometricAuthController extends ChangeNotifier {
-  static const String _prefKey = 'hissa_biometric_enabled_v1';
+  static const String _legacyKey = 'hissa_biometric_enabled_v1';
+  static const String _usersKey = 'hissa_biometric_users_v1';
+  static const String _accountsKey = 'hissa_biometric_accounts_v1';
 
   final LocalAuthentication _auth = LocalAuthentication();
-  bool _enabled = false;
   bool _supported = false;
+  Set<String> _enabledUids = {};
+  Map<String, BiometricAccount> _accounts = {};
 
-  bool get enabled => _enabled;
-
-  /// Whether this device has biometric hardware and can check it. Used to
-  /// hide biometric options entirely on unsupported devices.
   bool get supported => _supported;
+
+  /// Global: is any account enabled? (keeps old UI callers working)
+  bool get enabled => _enabledUids.isNotEmpty;
+
+  Set<String> get enabledUids => Set.unmodifiable(_enabledUids);
+  List<BiometricAccount> get enabledAccounts =>
+      _enabledUids.map((uid) => _accounts[uid]).whereType<BiometricAccount>().toList();
+
+  bool isEnabledFor(String? uid) => uid != null && _enabledUids.contains(uid);
+
+  /// The account that will be unlocked on launch — the Firebase current user if
+  /// he is enabled, otherwise the last enabled account.
+  BiometricAccount? get boundAccountForCurrentUser {
+    final fbUid = FirebaseAuth.instance.currentUser?.uid;
+    if (fbUid != null && _accounts[fbUid] != null && _enabledUids.contains(fbUid)) {
+      return _accounts[fbUid];
+    }
+    if (_enabledUids.isEmpty) return null;
+    // Last enabled is last in list
+    final last = _enabledUids.last;
+    return _accounts[last];
+  }
 
   Future<void> load() async {
     final prefs = SharedPreferencesAsync();
-    _enabled = await prefs.getBool(_prefKey) ?? false;
     _supported = await _checkDeviceSupport();
+    final list = await prefs.getStringList(_usersKey);
+    _enabledUids = (list ?? []).toSet();
+    final raw = await prefs.getString(_accountsKey);
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw) as List;
+        _accounts = {
+          for (final e in decoded)
+            (e as Map)['uid'] as String: BiometricAccount.fromJson(e as Map<String, dynamic>)
+        };
+      } catch (_) {}
+    }
+    // Migrate legacy global bool -> per-user if needed
+    if (_enabledUids.isEmpty) {
+      final legacy = await prefs.getBool(_legacyKey);
+      if (legacy == true) {
+        final fbUid = FirebaseAuth.instance.currentUser?.uid;
+        if (fbUid != null) {
+          _enabledUids = {fbUid};
+          await prefs.setStringList(_usersKey, _enabledUids.toList());
+        }
+      }
+    }
     notifyListeners();
   }
 
@@ -36,9 +110,6 @@ class BiometricAuthController extends ChangeNotifier {
     }
   }
 
-  /// Returns `null` when biometrics can be used right now, otherwise a short
-  /// reason key ('notSupported' | 'notEnrolled') that callers map to a
-  /// localized message.
   Future<String?> availabilityIssue() async {
     try {
       if (!await _auth.isDeviceSupported()) return 'notSupported';
@@ -55,10 +126,7 @@ class BiometricAuthController extends ChangeNotifier {
     try {
       return await _auth.authenticate(
         localizedReason: localizedReason,
-        options: const AuthenticationOptions(
-          biometricOnly: true,
-          stickyAuth: true,
-        ),
+        options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
       );
     } on PlatformException catch (e) {
       debugPrint('Biometric auth PlatformException: ${e.code} ${e.message}');
@@ -69,23 +137,57 @@ class BiometricAuthController extends ChangeNotifier {
     }
   }
 
-  /// Requires a successful scan before the preference is persisted.
-  Future<bool> enable(String localizedReason) async {
-    if (!_enabled && await availabilityIssue() != null) return false;
+  Future<void> saveAccount({
+    required String uid,
+    required String name,
+    required String email,
+    String? avatarUrl,
+  }) async {
+    _accounts[uid] = BiometricAccount(uid: uid, name: name, email: email, avatarUrl: avatarUrl);
+    await _persistAccounts();
+    notifyListeners();
+  }
+
+  /// Requires a successful scan before the preference is persisted for [uid].
+  Future<bool> enableFor(String uid, String localizedReason) async {
+    if (await availabilityIssue() != null) return false;
     final ok = await authenticate(localizedReason);
     if (!ok) return false;
-    _enabled = true;
-    notifyListeners();
+    _enabledUids.add(uid);
     final prefs = SharedPreferencesAsync();
-    await prefs.setBool(_prefKey, true);
+    await prefs.setStringList(_usersKey, _enabledUids.toList());
+    notifyListeners();
     return true;
   }
 
-  Future<void> disable() async {
-    if (!_enabled) return;
-    _enabled = false;
-    notifyListeners();
+  /// Back-compat: enable for current Firebase user
+  Future<bool> enable(String localizedReason) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return false;
+    return enableFor(uid, localizedReason);
+  }
+
+  Future<void> disableFor(String uid) async {
+    if (!_enabledUids.contains(uid)) return;
+    _enabledUids.remove(uid);
     final prefs = SharedPreferencesAsync();
-    await prefs.setBool(_prefKey, false);
+    await prefs.setStringList(_usersKey, _enabledUids.toList());
+    notifyListeners();
+  }
+
+  Future<void> disable() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && _enabledUids.contains(uid)) {
+      await disableFor(uid);
+    } else if (_enabledUids.isNotEmpty) {
+      // Fallback: disable last enabled (old callers without uid)
+      await disableFor(_enabledUids.last);
+    }
+  }
+
+  Future<void> _persistAccounts() async {
+    final prefs = SharedPreferencesAsync();
+    final list = _accounts.values.map((a) => a.toJson()).toList();
+    await prefs.setString(_accountsKey, jsonEncode(list));
   }
 }
